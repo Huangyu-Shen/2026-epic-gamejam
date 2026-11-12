@@ -32,7 +32,7 @@ cd 2026-epic-gamejam
 git lfs pull
 ```
 
-UE 项目会在比赛期间建在仓库根目录。建好之前，仓库里只有工具配置、计划和设计文档。
+UE 项目在 `Game_01/`（C++ 工程，用 UE 5.8 打开 `Game_01/Game_01.uproject`）。`Game_Jam_01/` 是赛前热身项目，不在仓库里。
 
 ## 📦 Installation
 
@@ -48,6 +48,7 @@ UE 项目会在比赛期间建在仓库根目录。建好之前，仓库里只�
 - 项目配置在 `project.yaml`，包括引擎、模式和命名规范。
 - 设计和需求计划放在 `docs/plans/`，引擎 API 参考放在 `docs/engine-reference/unreal/`。
 - 在 `jam-start` 标签之前的提交只有工具、配置和脚本。游戏内容从这个标签之后开始。
+- 设计文档：总 PRD 在 `design/prd/master-prd.md`，各系统的分 PRD 在 `design/gdd/`。
 
 ## 🛠 Tech Stack
 

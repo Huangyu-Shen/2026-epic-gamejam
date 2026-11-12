@@ -16,6 +16,11 @@ paths:
 - Acceptance criteria must be testable — a QA tester must be able to verify pass/fail
 - No hand-waving: "the system should feel good" is not a valid specification
 - Balance values must link to their source formula or rationale
-- Design documents MUST be written incrementally: create skeleton first, then fill
-  each section one at a time with user approval between sections. Write each
-  approved section to the file immediately to persist decisions and manage context
+- A new design document whose content is still undecided is written incrementally:
+  create the skeleton first, then fill one section at a time with user approval
+  between sections, writing each approved section to the file immediately. The
+  reason is that open design decisions belong to the user. Exception: when the
+  decisions were already made (in a confirmed plan, PRD or earlier dialogue), or
+  the user asks for whole documents in one pass, or the change is an edit or
+  tuning pass on an existing doc, write the whole thing, then show a summary of
+  what was written and which values are defaults rather than decisions

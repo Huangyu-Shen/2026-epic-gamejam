@@ -79,6 +79,15 @@ Plugins/**/Intermediate/*
 # Cache files for the editor to use
 DerivedDataCache/*
 
+# ===== UE project in a subfolder =====
+# The template patterns above are anchored to the repo root. The jam project lives
+# in Game_01/, so ignore its generated folders at any depth (Intermediate alone
+# was 2.7 GB).
+**/Binaries/
+**/Intermediate/
+**/Saved/
+**/DerivedDataCache/
+
 # ===== Project-specific =====
 
 # Pre-jam warm-up UE project (made 11/6-11/7, before the jam start).

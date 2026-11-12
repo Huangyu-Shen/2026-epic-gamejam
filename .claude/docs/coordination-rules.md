@@ -1,7 +1,12 @@
 # Agent Coordination Rules
 
-1. **Vertical Delegation**: Leadership agents delegate to department leads, who
-   delegate to specialists. Never skip a tier for complex decisions.
+Rules 1–5 govern agents *inside* an orchestration (a `team-*` skill or another
+skill that spawns specialists). The main session working directly with the user
+does not route its own work through the agent hierarchy.
+
+1. **Vertical Delegation**: Within an orchestration, leadership agents delegate
+   to department leads, who delegate to specialists. Never skip a tier for
+   complex decisions.
 2. **Horizontal Consultation**: Agents at the same tier may consult each other
    but must not make binding decisions outside their domain.
 3. **Conflict Resolution**: When two agents disagree, escalate to the shared
@@ -41,9 +46,23 @@ Spawned via the `Agent` tool within a single Claude Code session. Used by all
 permission context, run sequentially or in parallel within the session, and
 return results to the parent.
 
-**When to spawn in parallel**: If two subagents' inputs are independent (neither
-needs the other's output to begin), spawn both `Agent` calls simultaneously
-rather than waiting. Example: `/review-all-gdds` **Phase 2** (consistency) and
+**What a subagent costs.** Each one starts cold, re-reads the context it needs,
+and runs a full model session of its own, so subagents can become a large share
+of the user's usage quota. Outside a skill that explicitly orchestrates agents,
+delegate only when the gain is clear:
+
+- **Worth it**: a broad search or review across many files whose raw output
+  would flood this context; several genuinely independent pieces of work that
+  are large enough to run in parallel; a task the user asked to delegate.
+- **Not worth it**: work a handful of tool calls settle; reviewing or
+  double-checking your own work (verify it directly: build, run, read the
+  output); anything that needs this conversation's context to make sense.
+- **How to brief one**: name the files or area, the question, and what the
+  result must contain, so it does not re-derive what you already know.
+
+**When to spawn in parallel** (inside an orchestration skill): If two
+subagents' inputs are independent (neither needs the other's output to begin),
+spawn both `Agent` calls simultaneously rather than waiting. Example: `/review-all-gdds` **Phase 2** (consistency) and
 **Phase 3** (design theory) are independent — spawn both at the same time.
 Phase 1 loads the GDDs and both depend on it, so it is the one phase here that
 must NOT be parallelised.
