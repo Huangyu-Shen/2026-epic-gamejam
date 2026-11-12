@@ -7,6 +7,9 @@ framework:
   version: 1.2.0
   last_upgraded: 2026-10-19
 
+project:
+  stage: Systems Design
+
 # NOTE: this template ships with no `modes:` block, and the six knobs below must
 # never be added to one.
 #
@@ -57,3 +60,7 @@ commands:
   test: '"D:/Game/EPIC/UE_5.8/Engine/Binaries/Win64/UnrealEditor-Cmd.exe" "$(pwd -W 2>/dev/null || pwd)/Game_Jam_01/Game_Jam_01.uproject" -ExecCmds="Automation RunTests Game_Jam_01.; Quit" -unattended -nullrhi -stdout -FullStdOutLogOutput'
   run: '"D:/Game/EPIC/UE_5.8/Engine/Binaries/Win64/UnrealEditor.exe" "$(pwd -W 2>/dev/null || pwd)/Game_Jam_01/Game_Jam_01.uproject" -game -windowed -ResX=1280 -ResY=720'
   smoke: '"D:/Game/EPIC/UE_5.8/Engine/Binaries/Win64/UnrealEditor-Cmd.exe" "$(pwd -W 2>/dev/null || pwd)/Game_Jam_01/Game_Jam_01.uproject" -game -nullrhi -unattended -stdout -ExecCmds="Quit"'
+
+modes:
+  rigor: minimal
+  automation: autonomous

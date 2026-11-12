@@ -1,6 +1,6 @@
 {
 	"FileVersion": 3,
-	"EngineAssociation": "{E4798BF9-4416-A050-5347-D18C637630F4}",
+	"EngineAssociation": "{82227EA2-4D13-7476-7BDD-74B91C9F45C4}",
 	"Category": "",
 	"Description": "",
 	"Modules": [
@@ -24,6 +24,10 @@
 		},
 		{
 			"Name": "AllToolsets",
+			"Enabled": true
+		},
+		{
+			"Name": "Terminal",
 			"Enabled": true
 		}
 	]
