@@ -1,16 +1,17 @@
-# 项目运行方式
+# 运行、测试与发布
+
+路径以仓库根为基准。引擎路径 `D:/Game/EPIC/UE_5.8` 是本机路径，按实际调整。
 
 ## 1. 环境准备
 
-| 依赖 | 说明 |
-|---|---|
-| Unreal Engine 5.8 | 项目实际 5.8.4；`project.yaml` 里 `engine.path` 指向 `D:/Game/EPIC/UE_5.8` |
-| Git + Git LFS | `.uasset`/`.umap` 等二进制资产走 LFS |
-| Visual Studio | 带「C++ 游戏开发」工作负载 |
-| Claude Code | 可选（AI 协作开发用），配合 Unreal MCP 插件 |
-| Git Bash + Python + jq | 运行 `.claude/hooks/` 的 shell 钩子（Windows 上） |
+| 工具 | 要求 | 说明 |
+|---|---|---|
+| Unreal Engine | 5.8（本机 5.8.4，见 [VERSION.md](../engine-reference/unreal/VERSION.md)） | `.uproject` 里的 `EngineAssociation` 是本机注册的 GUID，换机器会提示选引擎版本 |
+| Visual Studio | 带"使用 C++ 的游戏开发"工作负载 | 编译 C++；作者用 Rider 读代码 |
+| Git + Git LFS | — | `.uasset`、`.umap`、`.png` 等走 LFS（[.gitattributes](../../.gitattributes)） |
+| Git Bash、jq | — | 仅 Claude Code 的 hook 脚本用；纯跑游戏不需要 |
 
-## 2. 获取代码
+## 2. 获取与打开
 
 ```bash
 git clone https://github.com/Huangyu-Shen/2026-epic-gamejam.git
@@ -18,97 +19,127 @@ cd 2026-epic-gamejam
 git lfs pull
 ```
 
-> UE 项目在 `Game_01 5.8/`（C++ 工程）。`Game_Jam_01/` 是赛前热身项目，gitignored，不在仓库里。
+用 UE 5.8 打开 `Game_01 5.8/Game_01.uproject`。目录名带 "5.8" 是因为原 `Game_01/` 的引擎 GUID 指向本机已不存在的引擎；副本改了 GUID，是当前唯一在用的工程。仓库里不再有 `Game_01/`（见 `git ls-files`）。
 
-> **为什么目录名带 "5.8"**：原 `Game_01/` 的 `EngineAssociation` 指向本机已不存在的引擎 GUID（`{E4798BF9-…}`），用 UE 5.8 打开时会提示版本不匹配并要求复制。副本把 GUID 改成了本机注册的 `{82227EA2-…}`（→ `D:/Game/EPIC/UE_5.8`），目录名因此变成 `Game_01 5.8/`。两边 `Source/` 内容完全一致，**`Game_01 5.8/` 是当前唯一在用的工程**；`Game_01/` 是冻结在旧引擎上的残留副本，可择机删除。
+编辑器会默认打开 `L_Camp`（`EditorStartupMap`）。
 
-## 3. 打开与编译
+## 3. 编译
 
-1. 用 UE 5.8 打开 `Game_01 5.8/Game_01.uproject`（首次会提示重建项目模块并编译 C++）。
-2. 首次打开会编译 `Game_01` 模块；后续改动可用编辑器内 **Build**（`Ctrl+Alt+F11`）增量编译。
-
-> **注意**（来自会话检查点）：**不要用 Live Coding 热重载**，会导致状态异常；改 C++ 后走常规 Build 再重启编辑器/PIE。
-
-## 4. 运行游戏
-
-### 4.1 编辑器内 PIE
-
-- 打开 `Content/Maps/L_Greybox.umap`（灰盒地图），点 Play（PIE）。
-
-### 4.2 命令行运行（`project.yaml` 中的命令）
-
-以下命令摘自 [project.yaml](../../../project.yaml) 的 `commands` 段，引擎路径按本机实际调整：
+### 3.1 命令行（编辑器必须关闭）
 
 ```bash
-# 运行游戏（窗口化 1280x720）
-"D:/Game/EPIC/UE_5.8/Engine/Binaries/Win64/UnrealEditor.exe" \
-  "Game_01 5.8/Game_01.uproject" -game -windowed -ResX=1280 -ResY=720
-
-# 编译 + 打包（BuildCookRun）
-"D:/Game/EPIC/UE_5.8/Engine/Binaries/DotNET/AutomationTool/AutomationTool.exe" \
-  BuildCookRun -project="Game_01 5.8/Game_01.uproject" -platform=Win64 -build -cook
-
-# 冒烟测试（无渲染启动后退出）
-"D:/Game/EPIC/UE_5.8/Engine/Binaries/Win64/UnrealEditor-Cmd.exe" \
-  "Game_01 5.8/Game_01.uproject" -game -nullrhi -unattended -stdout -ExecCmds="Quit"
-
-# 自动化测试
-"D:/Game/EPIC/UE_5.8/Engine/Binaries/Win64/UnrealEditor-Cmd.exe" \
-  "Game_01 5.8/Game_01.uproject" -ExecCmds="Automation RunTests Game_01.; Quit" \
-  -unattended -nullrhi -stdout -FullStdOutLogOutput
+"D:/Game/EPIC/UE_5.8/Engine/Build/BatchFiles/Build.bat" Game_01Editor Win64 Development \
+  "-Project=$(pwd -W)/Game_01 5.8/Game_01.uproject" -WaitMutex
 ```
 
-> **提示**：`project.yaml` 中这些命令目前仍指向 `Game_Jam_01/`（热身项目路径），需按上表更新为 `Game_01 5.8/`（会话检查点中的待办项，改动需用户批准）。上面已替换为正确路径。
+成功时输出 `Result: Succeeded`。本仓库的 Claude 会话是通过名为 `GameBuild` 的 Windows 计划任务跑这条命令的，因为沙箱不能写 `%LOCALAPPDATA%\UnrealBuildTool`。
+
+### 3.2 编辑器里
+
+可以用编辑器的 Build，但**不要用 Live Coding 热重载**：它占着 UBT 的锁，之后命令行编译会失败；热重载还会让状态异常。改了 C++ 就关编辑器、命令行编译、再打开。
+
+### 3.3 常见编译错误
+
+| 现象 | 原因与处理 |
+|---|---|
+| `C2084 函数已有主体`，指向匿名命名空间里的辅助函数 | Unity 构建把多个 `.cpp` 合并，两个文件里有同名的辅助函数。给函数起不重名的名字 |
+| `error C2664 … TObjectPtr<UWidget>* 无法转换为 UWidget**` | 取 `TObjectPtr` 成员的地址传给要求原始指针的参数；先用局部原始指针接，再赋值 |
+| 打开编辑器崩溃在某个 `…Subsystem::Initialize` | 编辑器预览世界没有 `GameInstance`，见 [known-issues.md](known-issues.md#4-架构与健壮性) |
+
+## 4. 运行
+
+### 4.1 编辑器里（PIE）
+
+1. 编辑器自动打开 `L_Camp`，点 Play。
+2. 在营地左侧面板升级、拆解、选卡，点 **START RUN**。
+3. 跑图：搜刮、打怪、升级、站进撤离区；结算页点 **Return to Camp**。
+
+要直接测跑图，打开 `Content/Maps/L_Greybox.umap` 点 Play；没有营地加成，卡片为空。
+
+### 4.2 命令行运行（独立窗口）
+
+```bash
+"D:/Game/EPIC/UE_5.8/Engine/Binaries/Win64/UnrealEditor.exe" "Game_01 5.8/Game_01.uproject" -game -windowed -ResX=1280 -ResY=720
+```
+
+### 4.3 `project.yaml` 里的命令已过期
+
+[project.yaml](../../project.yaml) 的 `commands`（build、test、run、smoke）和 `engine.language: "Blueprint"` 还指向热身项目 `Game_Jam_01/`，见 [known-issues.md](known-issues.md)。上面的命令是按 `Game_01 5.8/` 写的。
 
 ## 5. 游戏操作
 
-| 按键 | 动作 |
+| 场景 | 操作 | 行为 |
+|---|---|---|
+| 跑图 | W A S D | 移动 |
+| 跑图 | Space | 闪避（冲刺、无敌、冷却） |
+| 跑图 | E | 搜刮最近的容器 |
+| 跑图 | 1 到 6 | 使用对应背包槽的遗物（升级面板出现时 1 到 3 选升级项） |
+| 跑图 | K | 调试：英雄立即死亡 |
+| 跑图 | 鼠标 | 点升级面板按钮、点结算页的 Return to Camp |
+| 营地 | 鼠标点 3D 建筑 | 升级 |
+| 营地 | 鼠标点左侧面板 | 升级、拆解遗物、加入或移出胶片卡、START RUN |
+
+## 6. 性能探针 `-PerfProbe`
+
+```bash
+"D:/Game/EPIC/UE_5.8/Engine/Binaries/Win64/UnrealEditor.exe" "Game_01 5.8/Game_01.uproject" /Game/Maps/L_Greybox -game -PerfProbe
+```
+
+在跑图游戏模式下：延迟 3 秒后英雄上帝模式、关武器、关刷怪调度、`SpawnHorde(150, true)`，采样 10 秒，输出一行 `PERFPROBE …` 到 `LogEnemies`（文件在 `Game_01 5.8/Saved/Logs/`）后退出。无该参数时不运行。
+
+必须指定跑图地图（`L_Greybox`），因为默认启动图是营地，营地里没有 `ADirectorGameMode`，探针不会启动。这一点是读代码推断，没有实际用命令行验证。
+
+故事 003 的实测记录（原文见 [证据文档](../../production/qa/evidence/story-003-combat-enemies-map-evidence.md)）：`enemies=152 avgFPS=132.3 minFPS=50.0 samples=1324`（1080p 独立窗口）。平均超过 60，最差单帧 50 低于 60，用户已接受。这是故事 003 时的结果，之后加了成长、界面等系统，没有重测。
+
+## 7. 测试
+
+**项目里没有自动化测试**：`Source/` 里没有 `IMPLEMENT_SIMPLE_AUTOMATION_TEST` 或 `DEFINE_SPEC`，也没有 `tests/` 目录。本次没有运行任何测试。`project.yaml` 的 `qa.level` 是 `minimal`，测试按规则豁免，改为"保留截图"作为证据。
+
+### 视觉与流程证据
+
+| 故事 | 位置 |
 |---|---|
-| WASD | 移动 |
-| Space | 闪避（带无敌帧 + 冷却） |
-| E | 搜索最近的未搜索容器 |
-| 1–6 | 使用对应背包槽位的遗物 |
-| K | 调试：死亡 |
-| N | 调试：新一局（清敌人/背包/热度/生命） |
-| H | 调试：刷尸潮（40 Grunt） |
-| B | 调试：刷 Boss |
+| 001 | [production/qa/evidence/story-001-loot-bag-heat/](../../production/qa/evidence/story-001-loot-bag-heat/) |
+| 002 | [production/qa/evidence/story-002-extraction-death/](../../production/qa/evidence/story-002-extraction-death/) |
+| 003 | [production/qa/evidence/story-003-combat-enemies-map/](../../production/qa/evidence/story-003-combat-enemies-map/)、[评估文档](../../production/qa/evidence/story-003-combat-enemies-map-evidence.md) |
+| 006 | [story-006-camp-colors.png](../../production/qa/evidence/story-006-camp-colors.png) |
+| 007 | [production/qa/evidence/story-007-flow-save-ui/](../../production/qa/evidence/story-007-flow-save-ui/)，共 11 张截图和一份证据戳 |
 
-> 屏幕上有每帧更新的调试状态（HP/热度/刷怪率/敌人数/击杀/背包/遗物/buff），便于验证。这些调试键与 HUD 在后续 story（004–007）会被正式卡片/UI 取代。
+## 8. 打包与发布
 
-## 6. 性能探针（`-PerfProbe`）
+`project.yaml` 的 build 命令是 `AutomationTool BuildCookRun -platform=Win64 -build -cook`，**目前没有为 `Game_01 5.8/` 跑通过**，也没有 Shipping 包。提交截止是 2026-11-16 01:59（英国时间），由用户本人提交。
 
-游戏模式内置自动性能探针，命令行加 `-PerfProbe` 触发：
+发布前的检查：
 
-- 延迟 `StartDelaySeconds`（默认 3s）后：英雄 god-mode、`SpawnHorde(EnemyCount=150, 忽略上限)`、开始采样 `SampleSeconds`（默认 10s）。
-- 采样结束输出一行 `PERFPROBE` 日志（到 `LogEnemies`，文件在 `Game_01 5.8/Saved/Logs/`）并退出。
-- 无 `-PerfProbe` 时探针逻辑完全不运行。
+- `ModelContextProtocol`、`AllToolsets` 插件限制到 Editor（[dependencies.md](dependencies.md#3-引擎插件)）。
+- Shipping 构建里武器的 `DrawDebug*` 示意线会消失（[known-issues.md](known-issues.md#3-遗留与死代码)）。
+- 英雄、敌人的染色问题（[known-issues.md](known-issues.md#21-英雄敌人经验宝石是灰色染色无效)）。
 
-实测记录（story 003）：`PERFPROBE enemies=152 avgFPS=132.3 minFPS=50.0 samples=1324`（1080p standalone `-game`）。
+## 9. Unreal MCP（AI 协作）
 
-## 7. Unreal MCP 连接（AI 协作开发）
+1. 编辑器里启用 `ModelContextProtocol` 和 `AllToolsets`（已在 `.uproject` 里启用）。
+2. 编辑器偏好设置里开 **Auto Start Server**（在 Editor Preferences，不是 Project Settings）。
+3. 服务地址 `http://127.0.0.1:8000/mcp`，根目录的 [.mcp.json](../../.mcp.json) 指向它。
+4. 工具调用：`list_toolsets`、`describe_toolset`、`call_tool`。
 
-1. 编辑器内启用插件 `ModelContextProtocol` + `AllToolsets`。
-2. 编辑器偏好设置里开启 **Auto Start Server**（在 Editor Preferences，非 Project Settings）。
-3. 服务地址 `http://127.0.0.1:8000/mcp`，仓库根 `.mcp.json` 指向它。
-4. 工具调用方式：`list_toolsets` / `describe_toolset` / `call_tool`（工具搜索已开启）。
+MCP 只在编辑器开着时可用。`Game_01 5.8/.mcp.json` 是同内容的副本。
 
-> **前提**：MCP 只在**编辑器打开**时可用。MCP 卡死/崩溃时靠频繁存档 + Git 恢复。
+## 10. 协作流程
 
-## 8. Claude Code 工作流（可选）
-
-在仓库根目录启动 Claude Code（才能加载 `CLAUDE.md`、hooks、权限规则），常用斜杠命令：
-
-| 命令 | 用途 |
+| 项 | 约定 |
 |---|---|
-| `/start` | 首次引导（配置引擎/阶段） |
-| `/brainstorm` / `/map-systems` | 设计 |
-| `/create-stories` / `/dev-story` / `/story-done` | 拆故事 → 实现 → 验收 |
-| `/story-readiness` | 故事可实施性校验 |
-| `/code-review` / `/perf-profile` | 代码审查 / 性能分析 |
+| 分支 | 主干开发，日常功能走 `feature/…` 分支加 PR（个人仓库自动合并） |
+| 提交 | Conventional Commits（`feat:`、`fix:`、`docs:`、`chore:`），正文写 `Story: …` |
+| 故事 | [production/epics/directors-cut/](../../production/epics/directors-cut/) 下 7 个故事，状态在每个故事文件头 |
+| 流程 | `/dev-story` 实现 → `/story-done` 验收 → `/git-push-project` 提交 |
+| 会话状态 | `production/session-state/active.md`（gitignore，不进仓库） |
 
-## 9. 已知限制与待办
+## 11. 常见问题
 
-- 敌人/英雄染色不生效：`BasicShapeMaterial` 无 `Color` 参数（`Enemy.cpp::Init` 与 `HeroCharacter.cpp::BeginPlay` 的动态材质 tint 无效），需改用带 Color 向量参数的材质。
-- `project.yaml` 的 `commands` 与 `engine.language` 待更新（见上文提示）。
-- story 004–007（局内成长、局前剪辑、营地、流程/存档/UI）尚未实现。
-- 无许可证；Fab 免费资产可用性与授权未核验。
+| 现象 | 原因与处理 |
+|---|---|
+| 编辑器每次打开的是未命名的模板地图 | 没设 `EditorStartupMap`，现在已设为营地 |
+| 点按钮后按 Space 会"按下"按钮 | 按钮保持了键盘焦点；`UUiActionButton` 点击后调 `ReturnFocusToGame()`，新建按钮必须用它 |
+| 命令行编译失败，提示被占用 | 编辑器或 Live Coding 还开着，先关 |
+| 营地点了没有反应 | 确认点的是左侧面板的按钮或 3D 建筑，营地没有可行走角色 |
+| 重开游戏后营地状态丢了 | 检查 `Game_01 5.8/Saved/SaveGames/CampSave.sav` 是否存在；`Saved/` 被清理会连存档一起清掉 |

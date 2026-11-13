@@ -1,117 +1,73 @@
 # 依赖关系
 
-本文描述三类依赖：UE 引擎模块依赖、源码模块间依赖、运行时对象（类/子系统）调用关系。
+## 1. 模块之间怎么依赖
 
-## 1. UE 引擎模块依赖
+整体依赖图见 [architecture.md 的第 3 节](architecture.md#3-分层与依赖图)。这里是按目录汇总的"谁引用谁"，由头文件 `#include` 和源码里的 `GetSubsystem<>` 调用整理得出。
 
-由 [Game_01.Build.cs](../../../Game_01%205.8/Source/Game_01/Game_01.Build.cs) 声明：
-
-| 依赖类型 | 模块 | 用途 |
+| 目录 | 引用（`#include` 统计） | 被谁引用 |
 |---|---|---|
-| Public | `Core` | 基础类型/容器 |
-| Public | `CoreUObject` | UObject/UCLASS/USTRUCT/UENUM |
-| Public | `Engine` | Actor/Component/World/GameMode/DataTable/DataAsset |
-| Public | `InputCore` | `EKeys` 等按键常量 |
-| Public | `EnhancedInput` | 增强输入（当前主要用原始按键绑定，仍声明依赖） |
+| `Camp/` | Extraction、Game、UI | Combat、Editing、Flow、Player、UI |
+| `Combat/` | Camp、Enemies、Extraction、Game、Loot、Progression | Game、Player、Progression、UI |
+| `Editing/` | Camp、Enemies、Extraction、Game | Player、UI |
+| `Enemies/` | Extraction、Game、Loot、Player、Progression | Combat、Editing、Game、Player、Progression |
+| `Extraction/` | Flow、Loot | Camp、Combat、Editing、Enemies、Flow、Player、UI |
+| `Flow/` | Camp、Extraction、Loot | Extraction |
+| `Game/` | Combat、Enemies、Player | Camp、Combat、Editing、Enemies、Progression |
+| `Loot/` | UI（只调 `UHudMessageSubsystem::Post`） | Combat、Enemies、Extraction、Flow、Player、UI |
+| `Player/` | Camp、Combat、Editing、Enemies、Extraction、Loot、Progression、UI | Enemies、Game、Progression、UI |
+| `Progression/` | Combat、Enemies、Game、Player | Combat、Enemies、Player、UI |
+| `UI/` | Camp、Combat、Editing、Extraction、Loot、Player、Progression | Camp、Loot、Player |
 
-**目标定义**（`Game_01.Target.cs` / `Game_01Editor.Target.cs`）：`BuildSettingsVersion.V7` + `EngineIncludeOrderVersion.Unreal5_8`。
+统计方法：对每个目录的头文件和实现文件，数它 `#include "<其他目录>/..."` 的目录集合（2026-11-13）。`Game/` 目录里的 `UDirectorTuningSettings` 被各系统读取，`ADirectorGameMode` 引用英雄、敌人和武器。
 
-**插件**（`Game_01.uproject`）：
+**有环**：Enemies↔Player↔Progression、Progression↔Combat、Extraction↔Flow、Camp↔UI、Loot↔UI。原因是敌人要伤害英雄、英雄要读成长、成长要加英雄生命、结算要写存档而存档要读库存。这些环都在同一个 C++ 模块 `Game_01` 里，编译没有问题；没有任何自动检查守住依赖方向，也没有规则文件。新增系统时参考 [architecture.md 的第 3 节](architecture.md#3-分层与依赖图)的约定：界面只读不改，营地状态放 GameInstance，每局状态放 World。
 
-| 插件 | 说明 |
+## 2. UE 模块依赖
+
+声明在 [Game_01.Build.cs](../../Game_01%205.8/Source/Game_01/Game_01.Build.cs)：
+
+| 类型 | 模块 | 用途 |
+|---|---|---|
+| Public | `Core`、`CoreUObject`、`Engine` | 基础 |
+| Public | `InputCore` | `EKeys`，原始按键绑定 |
+| Public | `EnhancedInput` | **声明了但源码里没有任何 `#include`**，当前没用到 |
+| Public | `DeveloperSettings` | `UDirectorTuningSettings`（项目设置页） |
+| Public | `UMG` | 界面控件 |
+| Public | `Slate`、`SlateCore` | 字体信息、`FSlateApplication::SetAllUserFocusToGameViewport` |
+| Private | 无 | — |
+
+`PCHUsage = UseExplicitOrSharedPCHs`。目标文件 [Game_01.Target.cs](../../Game_01%205.8/Source/Game_01.Target.cs) 和 [Game_01Editor.Target.cs](../../Game_01%205.8/Source/Game_01Editor.Target.cs) 都是 `BuildSettingsVersion.V7`、`EngineIncludeOrderVersion.Unreal5_8`。
+
+**Unity 构建的坑**：UBT 会把多个 `.cpp` 合并编译。匿名命名空间里同名的辅助函数会冲突。例如 `RunHudWidget.cpp` 和 `CampWidget.cpp` 曾各有一个 `RelicName`，合并后报 C2084，现在分别叫 `HudRelicLabel`、`CampRelicLabel`。新增文件时给内部函数起带文件特征的名字。
+
+## 3. 引擎插件
+
+[Game_01.uproject](../../Game_01%205.8/Game_01.uproject)：
+
+| 插件 | 范围 | 用途 |
+|---|---|---|
+| `ModelingToolsEditorMode` | 仅 Editor | 编辑器建模模式（模板默认） |
+| `ModelContextProtocol` | 全部 | 让 Claude 等 AI 通过 MCP 连接编辑器 |
+| `AllToolsets` | 全部 | MCP 的工具集合（Actor、资产、场景、UMG 等） |
+| `Terminal` | 全部 | 编辑器内终端 |
+
+`ModelContextProtocol` 和 `AllToolsets` 是开发期工具，不是游戏运行需要的；它们标记为"全部"，打包时会带上，发行前应该确认是否要限制到 Editor。
+
+## 4. 第三方依赖
+
+没有任何第三方库。游戏代码只依赖 UE 自带模块和上面的引擎插件。
+
+## 5. 刻意没有做的事
+
+- **没有 Enhanced Input 资产**：输入用 `BindKey` 绑原始按键，源码注释和故事都写明"无输入资产"，为了灰盒期快。
+- **没有 GAS**：技能、伤害、状态都是自己写的组件和子系统；[`.claude/agents`](../../.claude/agents/) 里有 `ue-gas-specialist` 但项目没使用 GAS。
+- **没有物理碰撞的敌人**：敌人无碰撞、不 Tick，目的是 150 个敌人的帧率。
+
+## 6. 仓库里不参与构建的目录
+
+| 目录 | 内容 |
 |---|---|
-| `ModelContextProtocol` | Unreal MCP 服务端（供 Claude Code 连接） |
-| `AllToolsets` | MCP 全部工具集 |
-| `ModelingToolsEditorMode` | 编辑器建模工具（仅 Editor） |
-
-## 2. 源码模块间依赖（include 方向）
-
-箭头「→」表示 include / 使用方向。
-
-```
-Combat（UAutoWeaponComponent, UHealthComponent）
-   ├─→ Loot（UAutoWeaponComponent 读 ULootBagComponent 的伤害倍率）
-
-Player（AHeroCharacter）
-   ├─→ Combat（持有 UAutoWeaponComponent、UHealthComponent）
-   ├─→ Loot（持有 ULootBagComponent；SearchNearestContainer 用 ALootContainer、ULootHeatSubsystem）
-   ├─→ Enemies（调试键 H/B 调 UEnemySpawnSubsystem；读 UEnemyManagerSubsystem 状态）
-   └─→ Extraction（死亡/新局调 URunOutcomeSubsystem）
-
-Enemies
-   ├─→ Player（UEnemyManagerSubsystem 读 AHeroCharacter 位置；UEnemySpawnSubsystem 绕英雄刷怪）
-   └─→ Extraction（UEnemyManagerSubsystem 读 URunOutcomeSubsystem 判断能否造成伤害）
-
-Extraction
-   ├─→ Loot（URunOutcomeSubsystem 读 ULootBagComponent、ULootHeatSubsystem）
-   └─→（UCampStockSubsystem 是 GameInstanceSubsystem，被 URunOutcomeSubsystem 调用来入库）
-
-Game（ADirectorGameMode）
-   ├─→ Player（默认 Pawn 指向 AHeroCharacter）
-   ├─→ Enemies（性能探针调 SpawnHorde）
-   └─→ Combat（god-mode 调 Health->bGodMode）
-
-StandIn → Loot（AStandInCharacter 持有 ULootBagComponent，历史占位）
-```
-
-**依赖方向总原则**：`Combat` 与 `Loot` 是相对底层的可复用能力；`Player`/`Enemies`/`Extraction`/`Game` 是上层编排者。子系统通过 `GetWorld()->GetSubsystem<T>()` / `GetGameInstance()->GetSubsystem<T>()` 解耦获取，不直接持有彼此指针。
-
-## 3. 运行时对象调用关系图
-
-```
-                 ┌───────────────────────┐
-                 │   ADirectorGameMode   │  (默认 Pawn / 性能探针)
-                 └───────────┬───────────┘
-                             │ 默认 Pawn
-                             ▼
-                 ┌───────────────────────┐
-                 │    AHeroCharacter     │
-                 │ Bag/Health/Weapon     │
-                 └──┬────────┬────────┬──┘
-                    │        │        │
-        ┌───────────▼─┐ ┌────▼─────┐ ┌▼──────────────┐
-        │UAutoWeapon  │ │UHealth   │ │ULootBag       │
-        │Component    │ │Component │ │Component      │
-        └─────┬───────┘ └────┬─────┘ └┬───────┬──────┘
-              │ 找最近敌人    │OnDied  │升温/降温│
-              ▼              ▼        ▼       │
-   ┌──────────────────┐  ┌──────────────────┐│
-   │UEnemyManager     │  │URunOutcome       ││
-   │Subsystem         │  │Subsystem         ││
-   │ (Tick: 追击/分离/│  │ (结束一次/结算)   ││
-   │  接触伤害)        │  └────────┬─────────┘│
-   └────────┬─────────┘           │           │
-            │接触伤害→ReceiveDamage│           │
-            └──────────→ AHeroCharacter ──────┘
-                         (ApplyDamage)
-            ▲
-            │ SpawnHorde/SpawnBoss
-   ┌────────┴─────────┐         ┌──────────────────┐
-   │UEnemySpawn       │◄─热度──│ULootHeatSubsystem│◄── ULootBagComponent
-   │Subsystem (刷怪)  │ 压力    └──────────────────┘
-   └──────────────────┘
-            ▲
-   ┌────────┴─────────┐   ┌──────────────────────────┐
-   │ AEnemy (N个)      │   │ AExtractionZone          │──读条满──► URunOutcomeSubsystem.ReportExtracted
-   └──────────────────┘   │ ALootContainer           │──Interact─► ULootBagComponent.TryAddLoot
-                          └──────────────────────────┘
-   URunOutcomeSubsystem.EndRun
-        │
-        ├─► UCampStockSubsystem (GameInstance, 跨局) : AddIron / AddRelics
-        ├─► ULootBagComponent.ClearBag()
-        └─► ULootHeatSubsystem.ResetHeat()
-```
-
-## 4. 关键依赖要点
-
-1. **性能关键路径**：`UEnemyManagerSubsystem` 单 Tick 驱动全部敌人（AEnemy 零 Tick），是割草手感与帧率的核心；`UEnemySpawnSubsystem` 按热度压力 + 时间斜坡调度刷怪。
-2. **"留着还是用掉"的闭环**：`ULootBagComponent`（拾取升温/使用降温）↔ `ULootHeatSubsystem`（压力）→ `UEnemySpawnSubsystem`（刷怪速率）→ 玩家承压 → 决定用遗物或带走。
-3. **结算闭环**：`URunOutcomeSubsystem` 是唯一「局结束」裁决点，向 `UCampStockSubsystem`（跨局）入库，实现"带出去建营地"。
-4. **解耦方式**：子系统间一律通过 `GetSubsystem<T>()` 运行时获取；组件间通过 `OwnerBag`/`OwnerHealth` 弱引用 + 委托（`OnDied`/`OnEnemyKilled` 等）通信，避免硬耦合。
-5. **数据驱动解耦**：所有调优数值经 `ULootConfig`（DataAsset）/`FEnemyTuning`/`FSwarmTuning`/`FSpawnTuning` 配置，代码不写死平衡数值。
-
-## 5. 仓库层的依赖
-
-- **设计 → 实现**：`design/prd/master-prd.md`（范围）→ `design/gdd/*.md`（系统）→ `production/epics/directors-cut/story-*.md`（故事）→ `Game_01 5.8/Source/**`（代码）。
-- **工具链 → 运行时**：`project.yaml`（配置唯一事实源）被 `.claude/skills/**` 经 `resolve_config` 读取；`CLAUDE.md` 决定 agent 行为与审批边界。
-- **引擎参考 → 实现**：`docs/engine-reference/unreal/` 为 skill/agent 提供版本锁定 API，指导 C++ 写法。
+| `.claude/` | AI 协作用的 agent、skill、hook、脚本、规则 |
+| `design/`、`docs/`、`production/` | 设计文档、计划、QA 证据 |
+| `Game_01 5.8/Binaries`、`Intermediate`、`Saved`、`DerivedDataCache` | 生成物，已 gitignore |
+| `Game_Jam_01/` | 赛前热身工程，gitignore，不在仓库里 |

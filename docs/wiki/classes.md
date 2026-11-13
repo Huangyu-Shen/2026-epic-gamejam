@@ -1,411 +1,155 @@
-# 关键类与函数说明
+# 关键类与函数
 
-按模块逐类说明职责、关键属性（`UPROPERTY`）与关键方法（`UFUNCTION`/虚函数）。文件路径均为 `Game_01 5.8/Source/Game_01/` 下。
+只列读代码时必须知道的类、签名、边界和"为什么"。路径省略前缀 `Game_01 5.8/Source/Game_01/`，类名链接到实现文件。界面类见 [ui.md](ui.md)，存档见 [data-and-storage.md](data-and-storage.md)。
 
----
+## 1. 英雄 `AHeroCharacter`
 
-## 1. Player — `AHeroCharacter`
+实现：[HeroCharacter.cpp](../../Game_01%205.8/Source/Game_01/Private/Player/HeroCharacter.cpp)，头文件 [HeroCharacter.h](../../Game_01%205.8/Source/Game_01/Public/Player/HeroCharacter.h)。
 
-**文件**：`Public/Player/HeroCharacter.h` / `Private/Player/HeroCharacter.cpp`
-**基类**：`ACharacter`。玩家角色：斜俯视相机、原始按键、闪避、交互、受击与死亡。
-
-### 关键组件
-
-| 属性 | 类型 | 说明 |
+| 成员 | 行为 | 边界 |
 |---|---|---|
-| `Bag` | `ULootBagComponent*` | 本局背包（Iron + 遗物 + buff） |
-| `Health` | `UHealthComponent*` | 生命值 |
-| `Weapon` | `UAutoWeaponComponent*` | 自动武器 |
-| `BodyMesh` | `UStaticMeshComponent*` | 灰盒身体（引擎圆柱） |
-| `CameraBoom`/`Camera` | `USpringArmComponent*`/`UCameraComponent*` | 固定斜俯视相机（-60° 俯角，不随 Pawn 旋转） |
+| `bool CanAct() const`（私有） | 一局进行中、没死、没有待选升级时才为 true | 没有 `URunOutcomeSubsystem` 时返回 false |
+| `void StartRun()`（私有） | 清敌人、重置击杀数和刷怪、清热度、清背包、设最大生命 = 基础 + Clinic 加成、重置成长、重置闪避、`StartNewRun`、应用胶片卡 | `BeginPlay` 里调用一次；没有"再来一局"按键，下一局靠重新加载跑图地图 |
+| `void CreateHud()`（私有） | 创建 `URunHudWidget`，设为 `SelfHitTestInvisible`（只有按钮吃点击），显示鼠标，输入模式 `GameAndUI` 不锁鼠标 | 控制器为空时回退到 `GetPlayerController(0)`；已有 HUD 不重复创建 |
+| `bool TryDodge()` | 方向为当前 WASD 方向，没按键则朝向；冲刺 0.18 秒、速度 1800、冷却 0.8 秒、无敌 0.25 秒 | `!CanAct()`、冲刺中、冷却中返回 false |
+| `bool SearchNearestContainer()` | 在 `InteractRange`（250）内找最近的未搜索 `ALootContainer`，调 `Interact` | 背包满则返回 false，容器保持可搜 |
+| `float ReceiveEnemyDamage(float)` | 先乘背包 buff 的 `DamageTakenMultiplier`，再交给 `UHealthComponent::ApplyDamage` | 返回实际伤害，无敌时为 0 |
+| `void HandleDied()` | 绑定 `OnDied`，调 `ReportPlayerDied` | — |
+| `Tick` | 读 WASD（`IsInputKeyDown`），移速 = `BaseWalkSpeed × 背包移速倍率 × 被动移速倍率`；冲刺期间用带扫掠的 `AddActorWorldOffset` 代替普通移动 | `CanAct()` 为 false 时输入清零 |
 
-### 关键属性
+按键：Space 闪避、E 搜索、1 到 6 使用对应背包槽、K 自杀（调试）。1 到 3 同时是升级三选一的快捷键，`UseRelicSlot` 在 `CanAct()` 为 false（即升级面板出现）时直接返回，所以不会冲突。
 
-| 属性 | 默认 | 说明 |
+## 2. 背包与遗物 `ULootBagComponent`
+
+实现：[LootBagComponent.cpp](../../Game_01%205.8/Source/Game_01/Private/Loot/LootBagComponent.cpp)。
+
+| 函数 | 行为 | 错误或边界 |
 |---|---|---|
-| `InteractRange` | 250 | E 键搜索容器的半径（cm） |
-| `BaseWalkSpeed` | 600 | 基础移速（遗物 buff 前） |
-| `CameraDistance` | 1400 | 相机高度 |
-| `Dodge` | `FDodgeTuning` | 闪避调优（时长/速度/冷却/无敌秒） |
-| `DebugHordeSize` | 40 | H 调试键刷的尸潮数量 |
+| `EBagAddResult CanAdd(int32 Iron, bool bWithRelic)` | 不修改，检查放得下吗 | `Iron < 0`，或 `Iron == 0` 且没有遗物 → `InvalidItem`；超过容量 → `BagFull` |
+| `TryAddLoot(int32 Iron, bool bAddRelic, ERelicType)` | 原子地加 Iron 和最多一个遗物；有遗物则 `AddRarePickupHeat` | 失败时什么都不加，发提示 `Pickup refused: ...`、广播 `OnPickupRefused` |
+| `bool UseRelic(int32 Index)` | 移除遗物，按 `FRelicRow` 加 buff，`ReduceHeatForRelicUse`，提示 `Used relic: ...` | 下标无效返回 false；没有对应数据行时只警告，不加 buff 但遗物仍被消耗 |
+| `FLootStatModifier GetActiveModifier() const` | 所有活跃 buff 的三个倍率相乘 | 无 buff 全部为 1.0 |
+| `ClearBag()` | 清 Iron、遗物、buff，停 Tick | 不动热度（热度由结算单独重置） |
+| `TickComponent` | 移除到期 buff；没有限时 buff 时关闭自己的 Tick | 默认关闭，只在有 buff 时开 |
 
-### 关键方法
+默认遗物数值（[LootConfig.cpp](../../Game_01%205.8/Source/Game_01/Private/Loot/LootConfig.cpp) 内联默认）：Swiftstep 移速 ×1.3、Warbrand 伤害 ×1.5、Aegis 受伤 ×0.6，均持续 20 秒。容器：补给箱 Iron 3 到 6、遗物概率 0.2；宝库 Iron 10 到 20、遗物概率 1.0。
 
-| 方法 | 说明 |
+## 3. 热度 `ULootHeatSubsystem`
+
+| 函数 | 行为 |
 |---|---|
-| `SearchNearestContainer()` | 在 `InteractRange` 内找最近未搜索容器并 `Interact`，返回是否成功 |
-| `TryDodge()` | 朝移动方向闪避；冷却/已闪避/不可行动时返回 false；闪避开始授予无敌帧 |
-| `ReceiveEnemyDamage(Amount)` | 敌人接触伤害入口：乘以背包 `DamageTakenMultiplier` 后交给 `Health->ApplyDamage` |
-| `IsDead()` | 委托给 `Health->IsDead()` |
-| `BeginPlay()` | 绑定 `Health->OnDied` → `HandleDied`；给身体染色（蓝） |
-| `Tick(DeltaSeconds)` | 读原始 WASD → 应用移动/闪避 → 更新移速倍率 → 打印调试状态 |
-| `SetupPlayerInputComponent(...)` | 绑定 Space/E/K/N 与 H/B/1–6 键 |
-| `HandleDied()` | 死亡时调用 `URunOutcomeSubsystem::ReportPlayerDied(Bag)` |
-| `StartNewRunKey()` | 复位敌人/杀敌数/刷怪/热度/背包/生命 → `StartNewRun` |
-| `CanAct()` | 局活跃且未死亡时返回 true（移动/交互/用遗物都受此门控） |
+| `float GetSpawnPressureMultiplier() const` | `Lerp(SpawnPressureAtZeroHeat, SpawnPressureAtMaxHeat, 热度/最大热度)`，默认 1.0 到 3.0 |
+| `AddHeat(float)` | 夹在 0 到 `MaxHeat`，变化为 0 则不广播 `OnHeatChanged` |
+| `AddRarePickupHeat()` / `ReduceHeatForRelicUse()` | 默认 +15 / -8 |
+| `SetTuning` | 背包 `BeginPlay` 时把自己的配置推进来；因此热度参数其实来自 `ULootConfig`，不在 `Director Tuning` 里 |
 
-> **调试键**：K 死亡、N 新局、H 尸潮（`SpawnHorde(DebugHordeSize)`）、B Boss（`SpawnBoss()`）。
+## 4. 生命值 `UHealthComponent`
 
----
+| 函数 | 行为 |
+|---|---|
+| `float ApplyDamage(float)` | 已死、无敌、上帝模式或 `Amount <= 0` 返回 0；否则扣血，死亡广播 `OnDied`，没死则给 `HitInvulnerabilitySeconds`（0.25）无敌 |
+| `Kill()` | 无视上帝模式和无敌直接清零并广播 |
+| `SetMaxHealth(float)` | 设最大值（至少 1）、回满、清无敌；Clinic 加成用它 |
+| `IncreaseMaxHealth(float)` | 加上限并同量治疗；Vitality 被动用它 |
+| `GetBaseMaxHealth()` | `BeginPlay` 时从 `HealthTuningTable` 的 `Hero` 行读出并记下，所以 Clinic 加成不会叠加 |
 
-## 2. Combat — `UAutoWeaponComponent`
+## 5. 自动武器 `UAutoWeaponComponent`
 
-**文件**：`Public/Combat/AutoWeaponComponent.h`
-**基类**：`UActorComponent`。起始武器：每 `Interval` 秒自动攻击范围内最近敌人。
+[AutoWeaponComponent.cpp](../../Game_01%205.8/Source/Game_01/Private/Combat/AutoWeaponComponent.cpp)。`TickComponent` 在 `bEnabled`、无待选升级、没死、一局进行中时，遍历三种武器，等级 > 0 且冷却到则开火。
 
-### 关键属性
+伤害公式：`(Row.Damage + Row.DamagePerLevel × (等级 - 1) + Smithy 加成) × 背包伤害倍率 × 被动伤害倍率`。
 
-| 属性 | 默认 | 说明 |
+| 武器 | 默认数值（`DefaultWeapon`） | 命中规则 |
 |---|---|---|
-| `Tuning` | `FWeaponTuning` | Damage 15 / Interval 0.4 / Range 600 / 命中线显示参数 |
-| `bEnabled` | true | 开关（性能探针会关闭以保敌人存活） |
-| `OwnerBag` | 瞬态 | 主人背包（读伤害倍率） |
-| `OwnerHealth` | 瞬态 | 主人生命（死亡停火） |
+| Blade | 伤害 15，每级 +8，间隔 0.4 秒，范围 600 | 最近的一个敌人 |
+| Bolt | 伤害 20，每级 +10，间隔 0.9 秒，范围 1200，半宽 80 | 朝最近敌人（没有则朝向）的一条线，穿透 |
+| Nova | 伤害 25，每级 +12，间隔 1.6 秒，范围 350 | 半径内全部敌人 |
 
-### 关键方法
+开火时用 `DrawDebugLine/Circle` 画 0.12 秒的示意，这些调用在发布构建里被引擎编译掉。
 
-| 方法 | 说明 |
+## 6. 敌人
+
+### `UEnemyManagerSubsystem::Tick`
+
+[EnemyManagerSubsystem.cpp](../../Game_01%205.8/Source/Game_01/Private/Enemies/EnemyManagerSubsystem.cpp)。三遍：
+
+1. **追击与伤害**：朝英雄在 XY 平面移动，在 `ContactRange × StopRangeFraction`（默认 0.8）处停下，所以敌人围成一圈而不是叠在一起；`Dist <= ContactRange` 且冷却到则 `ReceiveEnemyDamage`。一局结束后（`bCanHurt` 为 false）仍会移动，只是不再伤人。
+2. **分格**：按 `SeparationCellSize`（默认 250）把位置放进网格，作用是把两两检测从 O(n²) 降到只查 3×3 邻格。
+3. **推开**：重叠的两个身体沿连线方向互相推，速度 = 重叠量 × `SeparationStrength`（8），上限 `MaxSeparationSpeed`（400）。完全重合时用下标的 `cos/sin` 得到一个稳定的伪随机方向。
+
+升级面板出现时整个 Tick 直接返回。
+
+### `UEnemySpawnSubsystem`
+
+| 函数 | 行为 |
 |---|---|
-| `TickComponent(...)` | 冷却结束后在 `Range` 内找最近敌人并 `ApplyDamage(Damage × 背包伤害倍率)`，绘制调试命中线 |
+| `float GetCurrentSpawnRate() const` | `(BaseRate + RampPerMinute × RunTime/60) × 热度压力`，默认 0.8 + 1.5/分钟 |
+| `Tick` | 累加速率，每满 1 个刷一个 Grunt，直到 `MaxAlive`（200）；到上限时把累加器压到 ≤ 1，避免空位出现时一次爆发 |
+| `int32 SpawnHorde(int32 Count, bool bIgnoreCap)` | 在英雄周围圆环（半径 1500 到 1900）刷一批；返回实际刷的数量 |
+| `AEnemy* SpawnBoss()` | 刷一个 Boss，无视上限；没有英雄返回 null |
 
----
+Boss 默认值写在构造函数里：生命 1500、移速 180、伤害 35、范围 220、冷却 1.2、缩放 2.5。Grunt：生命 25、移速 330、伤害 10、范围 90、冷却 0.8、缩放 0.6。
 
-## 3. Combat — `UHealthComponent`
+## 7. 局内成长 `URunProgressionSubsystem`
 
-**文件**：`Public/Combat/HealthComponent.h`
-**基类**：`UActorComponent`。生命值 + 受击无敌窗口 + god-mode。
+[RunProgressionSubsystem.cpp](../../Game_01%205.8/Source/Game_01/Private/Progression/RunProgressionSubsystem.cpp)。
 
-### 关键属性
-
-| 属性 | 默认 | 说明 |
-|---|---|---|
-| `Tuning` | `FHealthTuning` | MaxHealth 100 / HitInvulnerabilitySeconds 0.25 |
-| `bGodMode` | false | 无敌开关 |
-| `OnDied` | 委托 | 生命归零时触发一次 |
-| `OnDamaged` | 委托 | 每次命中触发（参数：实际伤害、新生命值） |
-
-### 关键方法
-
-| 方法 | 说明 |
+| 函数 | 行为 |
 |---|---|
-| `ApplyDamage(Amount)` | 施加伤害；死亡/无敌/受击无敌期内忽略；存活命中开启受击无敌窗口；返回实际伤害（0 表示被忽略） |
-| `Kill()` | 无视无敌/god-mode 直接归零并触发 `OnDied` |
-| `ResetHealth()` | 回满并清无敌（新局） |
-| `GrantInvulnerability(Seconds)` | 授予免疫（取更长窗口） |
-| `IsDead()`/`IsInvulnerable()`/`GetHealth()`/`GetMaxHealth()` | 只读查询 |
+| `HandleEnemyKilled` | 在击杀位置生成 `AXpPickup`，值 = `XpPerKill`（5），Boss ×10；待选升级期间不生成 |
+| `Tick` | 倒序遍历拾取物：`CollectRadius`（80）内领取并 `GrantXp(值 × Greed 倍率)`，`MagnetRadius`（600）内以 `MagnetSpeed`（900）吸向英雄 |
+| `CheckLevelUp` | `Xp >= XpToNext` 时升级，`XpToNext = BaseXp × Growth^(Level-1)`（30，×1.3），然后 `GenerateOffer` |
+| `GenerateOffer` | 候选池 = 未满级的武器和被动；洗牌取最多 3 个；池空则不进入待选状态 |
+| `PickOffer(int32 Index)` | 无待选或下标无效时无操作；应用后继续检查是否又够升一级 |
+| `GetOfferDescriptions() const` | 界面用的文字，如 `NEW weapon: Bolt`、`Swiftness  Lv0 -> Lv1` |
+| `ResetProgression()` | 等级 1、清 XP、起手 Blade 1 级、清被动、销毁遗留拾取物 |
 
----
+被动默认：Swiftness 每层移速 +10%、Might 伤害 +15%、Vitality 最大生命 +20 并即时治疗、Greed 经验 +25%，每个最多 5 层。
 
-## 4. Enemies — `AEnemy`
+## 8. 一局 `URunOutcomeSubsystem`
 
-**文件**：`Public/Enemies/Enemy.h`
-**基类**：`AActor`。灰盒敌人：引擎方块、无碰撞、无 Tick、无移动组件（移动由管理器统一驱动）。
-
-### 关键属性
-
-| 属性 | 说明 |
+| 函数 | 行为 |
 |---|---|
-| `Tuning` | `FEnemyTuning`（该敌人参数行，`Init` 设置） |
-| `NextContactTime` | 下次可接触伤害的世界时间（由管理器写入） |
-| `Body` | 引擎方块网格（`UStaticMeshComponent`） |
-| `EngineCubeSize` | 静态常量 100（方块边长 cm） |
+| `ReportExtracted(ULootBagComponent*)` | 以 `Extracted` 结束 |
+| `ReportPlayerDied(ULootBagComponent*)` | 以 `Died` 结束 |
+| `EndRun`（私有） | 已结束则忽略；`FRunSettlement::Compute`；`AddIron` 和 `AddRelics` 进库存；`SaveNow`；清背包；重置热度；广播 `OnRunEnded` |
+| `StartNewRun()` | 重置状态，保留 `EarningsMultiplier` |
+| `SetEarningsMultiplier(float)` | 至少 0；由 `UFilmCardSubsystem` 在开局设置 |
 
-### 关键方法
+## 9. 撤离区 `AExtractionZone`
 
-| 方法 | 说明 |
+[ExtractionZone.cpp](../../Game_01%205.8/Source/Game_01/Private/Extraction/ExtractionZone.cpp)。占用者是带 `ULootBagComponent` 的 Pawn。进度 = 进度 + `DeltaSeconds / ExtractionSeconds`，满则 `ReportExtracted`。离开：`bResetProgressOnLeave`（默认 true）为真则清零并广播 `OnExtractionInterrupted`，否则每秒衰减 `ProgressDecayPerSecond`。关卡开始时已站在里面的 Pawn 在下一帧通过 `SetTimerForNextTick` 补登记，因为初始重叠不触发事件。进度只通过 `GetProgress()` 和 `OnExtractionProgress` 对外，HUD 读前者。
+
+## 10. 营地
+
+### `UCampMetaSubsystem`
+
+| 函数 | 行为 |
 |---|---|
-| `Init(InTuning)` | 应用参数行：缩放、生命值（生成后立即调用） |
-| `ApplyDamage(Amount)` | 减生命；归零时报给管理器并销毁 |
-| `GetBodyRadius()` | 半身宽（用于推挤分离） |
-| `EndPlay(...)` | 反注册（`UnregisterEnemy`） |
+| `int32 GetUpgradeCost(EBuildingType)` | `floor(BaseCost × CostGrowth^当前等级)`，默认 10 × 2^等级 |
+| `bool TryUpgrade(EBuildingType, FText& Reason)` | 已满级、Iron 不足时返回 false 并给出文字（`Not enough Iron (need N)`）；成功则扣 Iron、升级、广播 `OnMetaChanged` |
+| `float GetWeaponDamageBonus() const` | Smithy 等级 × `DamagePerLevel`（默认 5） |
+| `float GetMaxHealthBonus() const` | Clinic 等级 × `MaxHealthPerLevel`（默认 25） |
+| `int32 DismantleRelic(int32 Index)` | 移除仓库遗物并加 `RelicDismantleIron`（8，写死）；下标无效返回 0 |
+| `RestoreLevels(const TMap<…>&)` | 存档读取用，每个等级夹到 0 到 `MaxLevel`，不在 `Buildings` 里的键被丢弃 |
+| `TArray<FName> PendingFilmCards` | 局前选的卡，跨关卡保留，不存盘 |
 
----
+### `UCampStockSubsystem`
 
-## 5. Enemies — `UEnemyManagerSubsystem`
+`AddIron`（非正数忽略）、`AddRelics`、`SpendIron`（不足返回 false、什么都不改）、`RemoveRelicAt`、`RestoreState`（Iron 夹到 ≥ 0）。每次变化都广播 `OnStockChanged`。
 
-**文件**：`Public/Enemies/EnemyManagerSubsystem.h`
-**基类**：`UTickableWorldSubsystem`。持有全部存活敌人并**在一个 Tick** 内驱动所有敌人。
+## 11. 胶片卡 `UFilmCardSubsystem`
 
-### 关键属性
-
-| 属性 | 说明 |
+| 函数 | 行为 |
 |---|---|
-| `Tuning` | `FSwarmTuning`（StopRangeFraction/SeparationCellSize/SeparationStrength/MaxSeparationSpeed） |
-| `OnEnemyKilled` | 委托（story 004 用于经验） |
-| `Enemies`/`KillCount` | 存活列表 / 击杀计数 |
-| 复用 scratch buffer | `Positions`/`Yaws`/`Pushes`/`Grid`（避免每 Tick 分配） |
+| `AddCard(FName)` | 槽满（2）、已选、或不在表里则 false |
+| `ApplyActiveCards()` | `ForceHorde` 调 `SpawnHorde(HordeCount, true)`，`ForceBoss` 调 `SpawnBoss()`，再把所有卡的倍率相乘设给 `URunOutcomeSubsystem` |
+| `ResetCards()` | 清槽并把倍率设回 1.0；一局结束时自动调用 |
+| `DescribeCard(FName)` | 如 `HordeNight: a horde of 40 grunts at the start, Iron earned x1.50` |
+| 持久化 | `Initialize` 从 `PendingFilmCards` 恢复，`AddCard`、`RemoveCard`、`ResetCards` 写回 |
 
-### 关键方法
+默认两张卡的数值在 `DT_FilmCards` 里：`HordeNight`（40 个 Grunt，×1.5）和 `CutKnight`（Boss，×2.0）。数值以截图和 `DescribeCard` 输出为准。
 
-| 方法 | 说明 |
-|---|---|
-| `RegisterEnemy`/`UnregisterEnemy` | 加入/移出群体 |
-| `NotifyEnemyKilled(Enemy)` | 击杀计数 + 广播 `OnEnemyKilled` |
-| `FindNearestEnemy(Location, Range)` | 范围内最近存活敌人（供武器使用） |
-| `GetAliveCount()`/`GetKillCount()` | 只读统计 |
-| `ClearAll()` | 销毁全部敌人（不计数） |
-| `ResetKillCount()` | 击杀计数归零（新局） |
-| `Tick(DeltaTime)` | 三段式：① 追击+朝向+接触伤害；② 网格分桶；③ 3×3 邻域推挤分离，最后统一写回位置 |
+## 12. 性能探针 `ADirectorGameMode`
 
-> **性能设计**：敌人零 Tick，全部移动/碰撞集中在管理器单 Tick，避免数百 Actor 各自 Tick 的开销。
-
----
-
-## 6. Enemies — `UEnemySpawnSubsystem`
-
-**文件**：`Public/Enemies/EnemySpawnSubsystem.h`
-**基类**：`UTickableWorldSubsystem`。波次调度器（刷怪）。
-
-### 关键属性
-
-| 属性 | 说明 |
-|---|---|
-| `Tuning` | `FSpawnTuning`（BaseRate/RampPerMinute/MaxAlive/RingMinRadius/RingMaxRadius） |
-| `GruntTuning`/`BossTuning` | Grunt/Boss 参数行 |
-| `RunTime`/`SpawnAccumulator` | 活跃局时长 / 刷怪累加器 |
-
-### 关键方法
-
-| 方法 | 说明 |
-|---|---|
-| `SpawnHorde(Count, bIgnoreCap=false)` | 环绕英雄刷一波 Grunt，受 `MaxAlive` 限制（除非忽略），返回实际刷出数 |
-| `SpawnBoss()` | 在环上刷一个 Boss（忽略上限），无英雄返回 null |
-| `GetCurrentSpawnRate()` | 当前每秒刷怪率：`(BaseRate + RampPerMinute×分钟) × 热度压力倍率` |
-| `GetRunTime()` | 活跃局时长 |
-| `SetSchedulerEnabled(bool)` | 开关调度（性能探针用） |
-| `ResetRun()` | 清零局时长与累加器（不删敌人） |
-| `Tick(DeltaTime)` | 按速率累加并在环形带 `SpawnOnRing` 刷 Grunt |
-
----
-
-## 7. Loot — `ULootBagComponent`
-
-**文件**：`Public/Loot/LootBagComponent.h`
-**基类**：`UActorComponent`。玩家本局背包：Iron + 遗物共享硬槽位；实现"留着还是用掉"。
-
-### 关键属性
-
-| 属性 | 说明 |
-|---|---|
-| `Config` | `ULootConfig*`（未设置则用内联默认） |
-| `OnBagChanged`/`OnPickupRefused`/`OnRelicUsed`/`OnBuffsChanged` | 变化委托 |
-| `IronCount`/`Relics`/`ActiveBuffs` | 内部状态（Iron 数 / 遗物列表 / 激活 buff 列表） |
-
-### 关键方法
-
-| 方法 | 说明 |
-|---|---|
-| `CanAdd(Iron, bWithRelic)` | 检查是否放得下（不真正添加） |
-| `TryAddLoot(Iron, bAddRelic, RelicType)` | 原子添加 Iron + 可选遗物；失败则什么都不加并触发 `OnPickupRefused`；加遗物会升温 |
-| `TryAddIron`/`TryAddRelic` | 便捷封装 |
-| `UseRelic(Index)` | 移除该槽遗物、施加 buff、降温；索引无效返回 false |
-| `ClearBag()` | 清空背包与 buff（死亡/结算用，**不**动热度） |
-| `GetIronCount()`/`GetRelics()`/`GetRelicCount()`/`GetUsedSlots()`/`GetCapacitySlots()`/`IsFull()` | 只读内容 |
-| `GetActiveModifier()` | 合并所有激活 buff 的 `FLootStatModifier`（无 buff 时倍率全 1.0） |
-| `GetActiveBuffs()` | 激活 buff 列表（副本） |
-| `GetAddResultText(Result)` | 结果的人类可读文本（HUD/调试） |
-
----
-
-## 8. Loot — `ULootHeatSubsystem`
-
-**文件**：`Public/Loot/LootHeatSubsystem.h`
-**基类**：`UWorldSubsystem`。全局本局热度。
-
-### 关键方法
-
-| 方法 | 说明 |
-|---|---|
-| `SetTuning(InTuning)` | 背包在 BeginPlay 时把配置推给它 |
-| `GetHeat()`/`GetHeatNormalized()` | 当前热度 / 归一化 0..1 |
-| `GetSpawnPressureMultiplier()` | 刷怪压力倍率：按归一化热度从 `SpawnPressureAtZeroHeat` 插值到 `SpawnPressureAtMaxHeat` |
-| `AddHeat(Amount)`/`AddRarePickupHeat()`/`ReduceHeatForRelicUse()`/`ResetHeat()` | 增减/升温/降温/归零（均钳制到 0..MaxHeat） |
-| `OnHeatChanged` | 委托（参数：新热度、增量） |
-
----
-
-## 9. Loot — `ALootContainer`
-
-**文件**：`Public/Loot/LootContainer.h`
-**基类**：`AActor`。补给箱/宝库，每容器可搜一次。
-
-### 关键属性
-
-| 属性 | 说明 |
-|---|---|
-| `ContainerType` | 使用哪一行容器数据 |
-| `ConfigOverride` | 可选覆盖配置（否则用互动者背包的配置） |
-| `Mesh` | 引擎方块（搜索后压扁表示已打开） |
-| `OnSearched` | 委托（参数：容器、Iron、是否得遗物、遗物类型） |
-
-### 关键方法
-
-| 方法 | 说明 |
-|---|---|
-| `Interact(InInstigator)` | 代表互动者搜索；已搜/无背包/背包拒绝时返回 false；掷出的结果被记住，重试不会重新掷 |
-| `HasBeenSearched()` | 只读 |
-
----
-
-## 10. Loot — `ULootConfig`
-
-**文件**：`Public/Loot/LootConfig.h`
-**基类**：`UDataAsset`。数据驱动战利品配置，各 DataTable 可选，缺省回退到内联默认值（无内容也能跑）。
-
-### 关键属性
-
-| 属性 | 说明 |
-|---|---|
-| `RelicTable`/`ContainerTable`/`TuningTable` | 可选 DataTable |
-| `DefaultTuning`/`DefaultRelics`/`DefaultContainers` | 内联默认值 |
-
-### 关键方法
-
-| 方法 | 说明 |
-|---|---|
-| `GetTuning()` | 有效调优（表行优先，否则默认） |
-| `GetRelicRows()`/`FindRelicRow(Type, Out)`/`FindContainerRow(Type, Out)` | 取有效行 |
-| `PickRandomRelic(OutType)` | 按 DropWeight 加权随机遗物类型 |
-
----
-
-## 11. Extraction — `AExtractionZone`
-
-**文件**：`Public/Extraction/ExtractionZone.h`
-**基类**：`AActor`。撤离点（灰盒圆盘 + 盒子触发体）。
-
-### 关键属性
-
-| 属性 | 说明 |
-|---|---|
-| `Tuning` | `FExtractionTuning`（ExtractionSeconds 5 / bResetProgressOnLeave / ProgressDecayPerSecond） |
-| `OnExtractionProgress`/`OnExtractionInterrupted` | 读条委托 |
-| `DiscMesh`/`ZoneVolume` | 圆盘网格 / 触发盒 |
-| `Occupant` | 当前撤离者背包（弱引用） |
-
-### 关键方法
-
-| 方法 | 说明 |
-|---|---|
-| `GetProgress()` | 读条值 0..1 |
-| `Tick(DeltaSeconds)` | 有撤离者时读条递增，满后调用 `ReportExtracted`；仅在有人或读条衰减时 Tick |
-| `HandleBeginOverlap`/`HandleEndOverlap` | 进出触发体 |
-| `TryEnter(OtherActor)`/`Interrupt()` | 占位 / 中断并清读条 |
-
----
-
-## 12. Extraction — `URunOutcomeSubsystem`
-
-**文件**：`Public/Extraction/RunOutcomeSubsystem.h` / `Private/Extraction/RunOutcomeSubsystem.cpp`
-**基类**：`UWorldSubsystem`。本局状态机，**恰好结束一次**。
-
-### 关键属性
-
-| 属性 | 说明 |
-|---|---|
-| `OnRunEnded` | 委托（参数 `FRunResult`） |
-| `bRunActive`/`Outcome`/`LastResult` | 局状态 |
-| `EarningsMultiplier` | 结算倍率（story 005 的卡片会设置） |
-
-### 关键方法
-
-| 方法 | 说明 |
-|---|---|
-| `IsRunActive()`/`GetOutcome()`/`GetLastResult()`/`GetEarningsMultiplier()` | 只读 |
-| `SetEarningsMultiplier(NewMultiplier)` | 设置结算倍率（钳到 ≥0） |
-| `ReportExtracted(Bag)` | 成功撤离：`EndRun(Bag, Extracted)` |
-| `ReportPlayerDied(Bag)` | 死亡：`EndRun(Bag, Died)` |
-| `StartNewRun()` | 复位局状态（保留倍率） |
-| `EndRun(Bag, Outcome)` | 私有核心：算结算 → 营地入库 → 清背包 → 重置热度 → 打印/广播结果 |
-
----
-
-## 13. Extraction — `UCampStockSubsystem`
-
-**文件**：`Public/Extraction/CampStockSubsystem.h`
-**基类**：`UGameInstanceSubsystem`。营地 Iron 与仓库遗物（整个游戏会话跨局保留）。
-
-### 关键方法
-
-| 方法 | 说明 |
-|---|---|
-| `AddIron(Amount)`/`AddRelics(NewRelics)` | 入库（非正/空列表忽略） |
-| `GetIron()`/`GetWarehouseRelics()` | 只读 |
-| `OnStockChanged` | 委托（Iron 或仓库变化时） |
-
-> **持久化**：当前为内存态；持久化留待 story 007，营地 UI/建筑留待 story 006。
-
----
-
-## 14. Extraction — `FRunSettlement`
-
-**文件**：`Public/Extraction/ExtractionTypes.h`
-**纯静态结算数学**（不触碰 UObject，可脱离编辑器单测）。
-
-```cpp
-static FRunResult Compute(int32 BagIron, const TArray<ERelicType>& BagRelics,
-                          float EarningsMultiplier, ERunOutcome Outcome);
-```
-
-- **Extracted**：`IronGained = floor(BagIron × EarningsMultiplier)`，全部遗物入库（`RelicsBanked`）。
-- **Died**：一无所获，整包报为丢失（`IronLost` + `RelicsLost`）。
-- **None**：空结果。
-
----
-
-## 15. Game — `ADirectorGameMode`
-
-**文件**：`Public/Game/DirectorGameMode.h`
-**基类**：`AGameModeBase`。默认 Pawn 为英雄；`-PerfProbe` 触发性能探针。
-
-### 关键属性
-
-| 属性 | 说明 |
-|---|---|
-| `PerfProbe` | `FPerfProbeTuning`（StartDelaySeconds 3 / SampleSeconds 10 / EnemyCount 150） |
-
-### 关键方法
-
-| 方法 | 说明 |
-|---|---|
-| `BeginPlay()` | 检测 `-PerfProbe` 命令行，有则启动探针 |
-| `Tick(DeltaSeconds)` | 采样帧时间，采样结束输出 `PERFPROBE` 日志并退出 |
-| `StartPerfProbe()` | 英雄 god-mode、`SpawnHorde(EnemyCount, 忽略上限)`、开始采样 |
-
----
-
-## 16. StandIn — `AStandInCharacter` / `AStandInGameMode`（可弃）
-
-**文件**：`Public/StandIn/*.h`
-story 001 的一次性占位 Pawn/GameMode，已被 story 003 替换。`AStandInCharacter` 提供 WASD/E/1–6/K/N，`AStandInGameMode` 默认 Pawn 指向它。仅供历史参考。
-
----
-
-## 17. 数据结构汇总（`USTRUCT`）
-
-| 结构 | 模块 | 用途 |
-|---|---|---|
-| `FDodgeTuning` | Player | 闪避时长/速度/冷却/无敌 |
-| `FWeaponTuning` | Combat | 武器伤害/间隔/射程 |
-| `FHealthTuning` | Combat | 生命上限/受击无敌 |
-| `FEnemyTuning` | Enemies | 单怪：血量/移速/接触伤害/射程/冷却/缩放 |
-| `FSwarmTuning` | Enemies | 群体：停距/分离网格/分离强度/上限 |
-| `FSpawnTuning` | Enemies | 刷怪：基础速率/每分钟递增/上限/环形带 |
-| `FLootStatModifier` | Loot | 移速/伤害/受伤倍率（`Stack()` 合并） |
-| `FRelicRow` | Loot | 遗物定义行 |
-| `FLootContainerRow` | Loot | 容器产出定义行 |
-| `FLootTuning` | Loot | 背包/热度调优 |
-| `FActiveRelicBuff` | Loot | 当前生效 buff |
-| `FExtractionTuning` | Extraction | 撤离读条规则 |
-| `FRunResult` | Extraction | 结算结果 |
-| `FPerfProbeTuning` | Game | 性能探针参数 |
-
-### 枚举汇总（`UENUM`）
-
-| 枚举 | 值 |
-|---|---|
-| `EEnemyKind` | Grunt, Boss |
-| `ERelicType` | Swiftstep（移速）, Warbrand（伤害）, Aegis（减伤） |
-| `ELootContainerType` | SupplyCrate, Vault |
-| `EBagAddResult` | Success, BagFull, InvalidItem |
-| `ERunOutcome` | None, Extracted, Died |
+命令行 `-PerfProbe`：延迟 3 秒后英雄上帝模式、关武器、关调度、`SpawnHorde(150, true)`，采样 10 秒，输出一行 `PERFPROBE enemies=… avgFPS=… minFPS=… samples=…` 到 `LogEnemies`，然后退出。无此参数时 `Tick` 不启用。
