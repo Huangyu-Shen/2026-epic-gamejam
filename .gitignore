@@ -56,16 +56,17 @@ SourceArt/**/*.tga
 Binaries/*
 Plugins/**/Binaries/*
 
-# Builds
-Build/*
+# Builds (any depth: the UE project lives in "Game_01 5.8/", where the editor writes
+# Build/Windows/FileOpenOrder/*.log)
+**/Build/*
 
 # Whitelist PakBlacklist-<BuildConfiguration>.txt files
-!Build/*/
-Build/*/**
-!Build/*/PakBlacklist*.txt
+!**/Build/*/
+**/Build/*/**
+!**/Build/*/PakBlacklist*.txt
 
 # Don't ignore icon files in Build
-!Build/**/*.ico
+!**/Build/**/*.ico
 
 # Built data for maps
 *_BuiltData.uasset
@@ -105,8 +106,8 @@ Game_Jam_01/
 .claude/settings.local.json
 
 # CCGS session state and logs (local, ephemeral)
-production/session-state/
-production/session-logs/
+**/production/session-state/
+**/production/session-logs/
 
 # Obsidian per-user workspace layout
 .obsidian/workspace*.json
@@ -114,3 +115,16 @@ production/session-logs/
 # Scratch files from local build/MCP/PR helper scripts
 .tmp/
 .screenshots/
+
+# Local-only config (listed in .worktreeinclude; must never be committed)
+project.local.yaml
+CLAUDE.local.md
+
+# Debug symbols, logs, editor and tool leftovers
+*.pdb
+*.log
+.idea/
+*.DotSettings.user
+__pycache__/
+*.pyc
+Thumbs.db
