@@ -1,0 +1,12 @@
+LogEnemies: Display: OFFERPROBE first-offer level=2 cutsLeft=3 cutSoFar=0 loadout=[Blade Lv1*]
+LogEnemies: Display: OFFERPROBE   option: Blade  Lv1 -> Lv2   (1 more to 2-STAR)
+LogEnemies: Display: OFFERPROBE   option: NEW weapon: Bolt
+LogEnemies: Display: OFFERPROBE   option: Greed  Lv0 -> Lv1   (2 more to 2-STAR)
+LogTemp: GREED is now 2-STAR!
+LogTemp: NOVA is now 2-STAR!
+LogTemp: VITALITY is now 2-STAR!
+LogEnemies: Display: OFFERPROBE after-level-ups level=8 cutsLeft=0 cutSoFar=7 loadout=[Blade Lv1*   Bolt Lv2*   Nova Lv3**   Swiftness Lv1*   Vitality Lv3**   Greed Lv5**]
+LogEnemies: Display: OFFERPROBE late-offer level=9 cutsLeft=0 cutSoFar=7 loadout=[Blade Lv1*   Bolt Lv2*   Nova Lv3**   Swiftness Lv1*   Vitality Lv3**   Greed Lv5**]
+LogEnemies: Display: OFFERPROBE   option: Nova  Lv3 -> Lv4   (5 more to 3-STAR)
+LogEnemies: Display: OFFERPROBE   option: Vitality  Lv3 -> Lv4   (5 more to 3-STAR)
+LogEnemies: Display: OFFERPROBE   option: Greed  Lv5 -> Lv6   (3 more to 3-STAR)
