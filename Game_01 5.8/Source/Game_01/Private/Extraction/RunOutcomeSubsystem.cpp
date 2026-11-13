@@ -1,13 +1,11 @@
 #include "Extraction/RunOutcomeSubsystem.h"
 #include "Extraction/CampStockSubsystem.h"
+#include "Flow/CampSaveSubsystem.h"
 #include "Loot/LootBagComponent.h"
 #include "Loot/LootHeatSubsystem.h"
 #include "Engine/Engine.h"
 #include "Engine/GameInstance.h"
 #include "Engine/World.h"
-
-/** Fixed on-screen key so the summary replaces itself and StartNewRun can remove it. */
-static constexpr uint64 RunResultMessageKey = 1003;
 
 void URunOutcomeSubsystem::SetEarningsMultiplier(float NewMultiplier)
 {
@@ -29,10 +27,6 @@ void URunOutcomeSubsystem::StartNewRun()
 	bRunActive = true;
 	Outcome = ERunOutcome::None;
 	LastResult = FRunResult();
-	if (GEngine)
-	{
-		GEngine->RemoveOnScreenDebugMessage(RunResultMessageKey);
-	}
 	UE_LOG(LogExtraction, Log, TEXT("New run started."));
 }
 
@@ -52,6 +46,11 @@ void URunOutcomeSubsystem::EndRun(ULootBagComponent* Bag, ERunOutcome NewOutcome
 		Camp->AddIron(LastResult.IronGained);
 		Camp->AddRelics(LastResult.RelicsBanked);
 	}
+	// One save slot, written after every run (the stock listener fires only when the stock changed).
+	if (UCampSaveSubsystem* Save = GetWorld()->GetGameInstance()->GetSubsystem<UCampSaveSubsystem>())
+	{
+		Save->SaveNow();
+	}
 	Bag->ClearBag();
 	if (ULootHeatSubsystem* Heat = GetWorld()->GetSubsystem<ULootHeatSubsystem>())
 	{
@@ -64,10 +63,6 @@ void URunOutcomeSubsystem::EndRun(ULootBagComponent* Bag, ERunOutcome NewOutcome
 			LastResult.BagIron, LastResult.MultiplierUsed, LastResult.IronGained, LastResult.RelicsBanked.Num())
 		: FString::Printf(TEXT("DIED: lost %d Iron and %d relics"), LastResult.IronLost, LastResult.RelicsLost.Num());
 	UE_LOG(LogExtraction, Log, TEXT("%s"), *Summary);
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(RunResultMessageKey, 3600.0f, bExtracted ? FColor::Green : FColor::Red, Summary);
-	}
 
 	OnRunEnded.Broadcast(LastResult);
 }

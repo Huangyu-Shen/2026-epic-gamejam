@@ -308,17 +308,21 @@ void URunProgressionSubsystem::PickOffer(int32 Index)
 
 void URunProgressionSubsystem::ShowOffer() const
 {
-	if (!GEngine)
-	{
-		return;
-	}
+	// The level-up panel (story 007) reads GetOfferDescriptions(); nothing is drawn here.
+	UE_LOG(LogTemp, Log, TEXT("Level up -> %d, %d option(s) offered"), Level, Offer.Num());
+}
 
-	GEngine->AddOnScreenDebugMessage(2203, 0.0f, FColor::Green, FString::Printf(TEXT("LEVEL UP -> %d   (pick 1/2/3)"), Level));
-	for (int32 i = 0; i < 3; ++i)
+TArray<FString> URunProgressionSubsystem::GetOfferDescriptions() const
+{
+	TArray<FString> Lines;
+	if (bOfferPending)
 	{
-		const FString Text = Offer.IsValidIndex(i) ? FString::Printf(TEXT("[%d] %s"), i + 1, *DescribeOption(Offer[i])) : TEXT("");
-		GEngine->AddOnScreenDebugMessage(2200 + i, 0.0f, FColor::Green, Text);
+		for (const FOfferOption& Option : Offer)
+		{
+			Lines.Add(DescribeOption(Option));
+		}
 	}
+	return Lines;
 }
 
 FString URunProgressionSubsystem::DescribeOption(const FOfferOption& Option) const

@@ -1,6 +1,7 @@
 #include "Loot/LootBagComponent.h"
 #include "Loot/LootConfig.h"
 #include "Loot/LootHeatSubsystem.h"
+#include "UI/HudMessageSubsystem.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
 
@@ -83,11 +84,8 @@ EBagAddResult ULootBagComponent::TryAddLoot(int32 IronAmount, bool bAddRelic, ER
 	if (Result != EBagAddResult::Success)
 	{
 		UE_LOG(LogLoot, Log, TEXT("Pickup refused: %s"), *GetAddResultText(Result).ToString());
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 2.5f, FColor::Red,
-				FString::Printf(TEXT("Pickup refused: %s"), *GetAddResultText(Result).ToString()));
-		}
+		UHudMessageSubsystem::Post(this, FString::Printf(TEXT("Pickup refused: %s"), *GetAddResultText(Result).ToString()),
+			FLinearColor(0.95f, 0.35f, 0.3f));
 		OnPickupRefused.Broadcast(Result);
 		return Result;
 	}
@@ -145,11 +143,9 @@ bool ULootBagComponent::UseRelic(int32 Index)
 		}
 	}
 
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 2.5f, FColor::Green,
-			FString::Printf(TEXT("Used relic: %s"), *StaticEnum<ERelicType>()->GetDisplayNameTextByValue(static_cast<int64>(Type)).ToString()));
-	}
+	UHudMessageSubsystem::Post(this,
+		FString::Printf(TEXT("Used relic: %s"), *StaticEnum<ERelicType>()->GetDisplayNameTextByValue(static_cast<int64>(Type)).ToString()),
+		FLinearColor(0.35f, 0.9f, 0.4f));
 
 	OnRelicUsed.Broadcast(Type);
 	OnBagChanged.Broadcast();

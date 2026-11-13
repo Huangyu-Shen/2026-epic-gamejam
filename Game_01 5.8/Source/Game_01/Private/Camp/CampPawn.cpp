@@ -1,8 +1,9 @@
 #include "Camp/CampPawn.h"
 #include "Camp/CampBuilding.h"
 #include "Camp/CampMetaSubsystem.h"
-#include "Camp/CampWarehouse.h"
-#include "Extraction/CampStockSubsystem.h"
+#include "UI/CampWidget.h"
+#include "UI/HudMessageSubsystem.h"
+#include "Blueprint/UserWidget.h"
 #include "Camera/CameraComponent.h"
 #include "Components/InputComponent.h"
 #include "Components/SceneComponent.h"
@@ -11,16 +12,9 @@
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "InputCoreTypes.h"
-#include "Kismet/GameplayStatics.h"
-#include "Loot/LootTypes.h"
-
-/** Fixed on-screen key so the camp debug printout replaces itself every frame. */
-static constexpr uint64 CampDebugMessageKey = 1201;
 
 ACampPawn::ACampPawn()
 {
-	PrimaryActorTick.bCanEverTick = true;
-
 	Root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
 	RootComponent = Root;
 
@@ -42,11 +36,27 @@ void ACampPawn::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if (APlayerController* PC = GetWorld()->GetFirstPlayerController())
+	APlayerController* PC = GetWorld()->GetFirstPlayerController();
+	if (!PC)
 	{
-		PC->bShowMouseCursor = true;
-		PC->bEnableClickEvents = true;
-		PC->bEnableMouseOverEvents = true;
+		return;
+	}
+
+	PC->bShowMouseCursor = true;
+	PC->bEnableClickEvents = true;
+	PC->bEnableMouseOverEvents = true;
+	FInputModeGameAndUI Mode;
+	Mode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+	Mode.SetHideCursorDuringCapture(false);
+	PC->SetInputMode(Mode);
+
+	// The camp screen: Iron, building upgrades, warehouse, editing room, Start Run.
+	CampScreen = CreateWidget<UCampWidget>(PC);
+	if (CampScreen)
+	{
+		CampScreen->AddToViewport();
+		// Only the panel's controls take clicks; the rest of the screen reaches the 3D scene.
+		CampScreen->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
 	}
 }
 
@@ -55,21 +65,6 @@ void ACampPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
 	PlayerInputComponent->BindKey(EKeys::LeftMouseButton, IE_Pressed, this, &ACampPawn::OnClick);
-	PlayerInputComponent->BindKey(EKeys::N, IE_Pressed, this, &ACampPawn::OnDepartKey);
-
-	const FKey RelicKeys[] = { EKeys::One, EKeys::Two, EKeys::Three, EKeys::Four, EKeys::Five, EKeys::Six };
-	for (int32 Index = 0; Index < UE_ARRAY_COUNT(RelicKeys); ++Index)
-	{
-		FInputKeyBinding Binding(FInputChord(RelicKeys[Index]), IE_Pressed);
-		Binding.KeyDelegate.GetDelegateForManualSet().BindWeakLambda(this, [this, Index]() { OnDismantleKey(Index); });
-		PlayerInputComponent->KeyBindings.Add(Binding);
-	}
-}
-
-void ACampPawn::Tick(float DeltaSeconds)
-{
-	Super::Tick(DeltaSeconds);
-	DrawCampState();
 }
 
 void ACampPawn::OnClick()
@@ -86,106 +81,23 @@ void ACampPawn::OnClick()
 		return;
 	}
 
+	ACampBuilding* Building = Cast<ACampBuilding>(Hit.GetActor());
 	UCampMetaSubsystem* Camp = GetGameInstance()->GetSubsystem<UCampMetaSubsystem>();
-
-	if (ACampBuilding* Building = Cast<ACampBuilding>(Hit.GetActor()))
-	{
-		FText Reason;
-		if (Camp && Camp->TryUpgrade(Building->GetBuildingType(), Reason))
-		{
-			const FString Name = StaticEnum<EBuildingType>()->GetDisplayNameTextByValue(static_cast<int64>(Building->GetBuildingType())).ToString();
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green,
-				FString::Printf(TEXT("%s upgraded to level %d"), *Name, Camp->GetBuildingLevel(Building->GetBuildingType())));
-		}
-		else
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red, Reason.ToString());
-		}
-		return;
-	}
-
-	if (Cast<ACampWarehouse>(Hit.GetActor()))
-	{
-		bWarehouseOpen = !bWarehouseOpen;
-	}
-}
-
-void ACampPawn::OnDismantleKey(int32 Index)
-{
-	if (!bWarehouseOpen)
+	if (!Building || !Camp)
 	{
 		return;
 	}
 
-	UCampMetaSubsystem* Camp = GetGameInstance()->GetSubsystem<UCampMetaSubsystem>();
-	if (!Camp)
+	FText Reason;
+	if (Camp->TryUpgrade(Building->GetBuildingType(), Reason))
 	{
-		return;
+		const FString Name = StaticEnum<EBuildingType>()->GetDisplayNameTextByValue(static_cast<int64>(Building->GetBuildingType())).ToString();
+		UHudMessageSubsystem::Post(this,
+			FString::Printf(TEXT("%s upgraded to level %d"), *Name, Camp->GetBuildingLevel(Building->GetBuildingType())),
+			FLinearColor(0.35f, 0.9f, 0.4f));
 	}
-
-	const int32 Gained = Camp->DismantleRelic(Index);
-	if (GEngine)
+	else
 	{
-		if (Gained > 0)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Green, FString::Printf(TEXT("Dismantled relic %d -> +%d Iron"), Index + 1, Gained));
-		}
-		else
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Orange, FString::Printf(TEXT("No relic in slot %d"), Index + 1));
-		}
+		UHudMessageSubsystem::Post(this, Reason.ToString(), FLinearColor(0.95f, 0.35f, 0.3f));
 	}
-}
-
-void ACampPawn::OnDepartKey()
-{
-	UGameplayStatics::OpenLevel(this, TEXT("L_Greybox"));
-}
-
-void ACampPawn::DrawCampState() const
-{
-	if (!GEngine)
-	{
-		return;
-	}
-
-	const UCampMetaSubsystem* Camp = GetGameInstance()->GetSubsystem<UCampMetaSubsystem>();
-	const UCampStockSubsystem* Stock = GetGameInstance()->GetSubsystem<UCampStockSubsystem>();
-	if (!Camp || !Stock)
-	{
-		return;
-	}
-
-	FString BuildingLine;
-	for (uint8 B = 0; B < static_cast<uint8>(EBuildingType::Count); ++B)
-	{
-		const EBuildingType Type = static_cast<EBuildingType>(B);
-		const int32 Level = Camp->GetBuildingLevel(Type);
-		const FString Name = StaticEnum<EBuildingType>()->GetDisplayNameTextByValue(static_cast<int64>(Type)).ToString();
-		BuildingLine += Camp->IsMaxLevel(Type)
-			? FString::Printf(TEXT("%s Lv%d (MAX)\n"), *Name, Level)
-			: FString::Printf(TEXT("%s Lv%d -> %d Iron\n"), *Name, Level, Camp->GetUpgradeCost(Type));
-	}
-
-	FString RelicList;
-	const TArray<ERelicType> Relics = Stock->GetWarehouseRelics();
-	for (int32 i = 0; i < Relics.Num(); ++i)
-	{
-		RelicList += FString::Printf(TEXT(" [%d] %s"), i + 1,
-			*StaticEnum<ERelicType>()->GetDisplayNameTextByValue(static_cast<int64>(Relics[i])).ToString());
-	}
-	if (RelicList.IsEmpty())
-	{
-		RelicList = TEXT(" none");
-	}
-
-	const FString Text = FString::Printf(
-		TEXT("CAMP\nIron %d\n%sSmithy bonus: damage +%.0f   Clinic bonus: max health +%.0f\nWAREHOUSE %s\nRELICS:%s\nclick building = upgrade   click warehouse = open/close   1-6 dismantle   N depart"),
-		Stock->GetIron(),
-		*BuildingLine,
-		Camp->GetWeaponDamageBonus(), Camp->GetMaxHealthBonus(),
-		bWarehouseOpen ? TEXT("OPEN") : TEXT("closed"),
-		*RelicList);
-
-	GEngine->AddOnScreenDebugMessage(CampDebugMessageKey, 0.0f, FColor::White, Text);
 }

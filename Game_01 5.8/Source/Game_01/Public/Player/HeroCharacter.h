@@ -9,6 +9,7 @@ class UAutoWeaponComponent;
 class UCameraComponent;
 class UHealthComponent;
 class ULootBagComponent;
+class URunHudWidget;
 class USpringArmComponent;
 class UStaticMeshComponent;
 
@@ -39,9 +40,10 @@ struct GAME_01_API FDodgeTuning
  * The player: top-down camera, raw-key controls, health, the bag and the auto weapon.
  *
  * Controls: WASD move, Space dodge, E search the nearest container, 1-6 use the relic in that
- * bag position, [ / ] slot / unslot a film card, N start a new run (applies the slotted cards).
- * Debug: K die. The move-speed, damage and damage-taken multipliers come from the bag's active
- * relic buffs.
+ * bag position (1-3 also pick a level-up choice while the offer shows). Film cards are slotted
+ * in the camp's editing room; the run starts from the camp (StartRun applies the cards and the
+ * camp bonuses). Debug: K die. The move-speed, damage and damage-taken multipliers come from the
+ * bag's active relic buffs. The HUD is URunHudWidget (story 007).
  */
 UCLASS()
 class GAME_01_API AHeroCharacter : public ACharacter
@@ -102,14 +104,16 @@ private:
 	void DodgeKey();
 	void UseRelicSlot(int32 Index);
 	void DebugDieKey();
-	void AddCardKey();
-	void RemoveCardKey();
-	void StartNewRunKey();
-	void ReturnToCampKey();
+	/** Resets the run systems and applies the camp bonuses and slotted film cards. Called once when the run map loads. */
+	void StartRun();
+	/** Creates the HUD and puts the game in "game + mouse" input mode so its buttons can be clicked. */
+	void CreateHud();
 	/** Bound to UHealthComponent::OnDied, so it has to be a UFUNCTION. */
 	UFUNCTION()
 	void HandleDied();
-	void DrawDebugState() const;
+
+	UPROPERTY(Transient)
+	TObjectPtr<URunHudWidget> Hud;
 
 	UPROPERTY(VisibleAnywhere, Category = "Hero")
 	TObjectPtr<UStaticMeshComponent> BodyMesh;

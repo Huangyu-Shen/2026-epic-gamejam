@@ -51,7 +51,14 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Editing")
 	void ResetCards();
 
+	/** One readable line for the editing-room panel: id, effect and earnings multiplier. */
+	UFUNCTION(BlueprintPure, Category = "Editing")
+	FString DescribeCard(FName CardId) const;
+
 private:
+	/** Copies the slots into the game-instance store so they outlive this world. */
+	void StoreCards() const;
+
 	UFUNCTION()
 	void HandleRunEnded(const FRunResult& Result);
 

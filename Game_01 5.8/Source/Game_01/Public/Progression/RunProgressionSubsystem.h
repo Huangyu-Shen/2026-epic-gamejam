@@ -80,6 +80,10 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Progression")
 	bool IsOfferPending() const { return bOfferPending; }
 
+	/** One line per option of the pending offer (empty when no offer is showing), for the level-up panel. */
+	UFUNCTION(BlueprintPure, Category = "Progression")
+	TArray<FString> GetOfferDescriptions() const;
+
 	/** Picks offer entry Index (0..2) and resumes play. No-op if no offer or a bad index. */
 	UFUNCTION(BlueprintCallable, Category = "Progression")
 	void PickOffer(int32 Index);

@@ -1,6 +1,7 @@
 #include "Loot/LootContainer.h"
 #include "Loot/LootBagComponent.h"
 #include "Loot/LootConfig.h"
+#include "UI/HudMessageSubsystem.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
 #include "Engine/Engine.h"
@@ -36,9 +37,9 @@ bool ALootContainer::Interact(AActor* InInstigator)
 {
 	if (bSearched || !InInstigator)
 	{
-		if (bSearched && GEngine)
+		if (bSearched)
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Silver, TEXT("Already searched"));
+			UHudMessageSubsystem::Post(this, TEXT("Already searched"), FLinearColor(0.6f, 0.6f, 0.6f), 2.0f);
 		}
 		return false;
 	}
@@ -89,14 +90,11 @@ bool ALootContainer::Interact(AActor* InInstigator)
 
 	bSearched = true;
 	ShowOpened();
-	if (GEngine)
-	{
-		const FString RelicText = bRolledRelic
-			? FString::Printf(TEXT(" + relic %s"), *StaticEnum<ERelicType>()->GetDisplayNameTextByValue(static_cast<int64>(RolledRelicType)).ToString())
-			: FString();
-		GEngine->AddOnScreenDebugMessage(-1, 3.0f, FColor::Yellow,
-			FString::Printf(TEXT("Searched: +%d Iron%s"), RolledIron, *RelicText));
-	}
+	const FString RelicText = bRolledRelic
+		? FString::Printf(TEXT(" + relic %s"), *StaticEnum<ERelicType>()->GetDisplayNameTextByValue(static_cast<int64>(RolledRelicType)).ToString())
+		: FString();
+	UHudMessageSubsystem::Post(this, FString::Printf(TEXT("Searched: +%d Iron%s"), RolledIron, *RelicText),
+		FLinearColor(1.0f, 0.85f, 0.3f), 3.0f);
 	OnSearched.Broadcast(this, RolledIron, bRolledRelic, RolledRelicType);
 	return true;
 }
