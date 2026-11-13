@@ -3,7 +3,14 @@
 Indie game development managed through 49 coordinated Claude Code subagents.
 Each agent owns a specific domain, enforcing separation of concerns and quality.
 
-## Technology Stack
+> **First session?** If the project has no engine configured and no game concept,
+> run `/start` to begin the guided onboarding flow.
+
+---
+
+## Project Setup
+
+### Technology Stack
 
 - **Engine**: Unreal Engine 5.8
 - **Language**: C++ (primary, gameplay logic), Blueprint for data setup and presentation
@@ -14,11 +21,11 @@ Each agent owns a specific domain, enforcing separation of concerns and quality.
 > **Note**: Engine-specialist agents exist for Godot, Unity, and Unreal with
 > dedicated sub-specialists. Use the set matching your engine.
 
-## Project Structure
+### Project Structure
 
 @.claude/docs/directory-structure.md
 
-## Engine Version Reference
+### Engine Version Reference
 
 <!-- ENGINE-REFERENCE-IMPORT: the line below is engine-specific. /setup-engine
      rewrites it to @docs/engine-reference/<engine>/VERSION.md for the chosen
@@ -28,8 +35,7 @@ Each agent owns a specific domain, enforcing separation of concerns and quality.
      demand regardless of this import. -->
 @docs/engine-reference/unreal/VERSION.md
 
-
-## Technical Preferences
+### Technical Preferences
 
 `project.yaml` at the repo root is the primary config store — engine, specialists,
 naming, platform, performance, modes. Skills resolve it via `resolve_config`
@@ -40,11 +46,11 @@ when a key is absent from `project.yaml`. It is not imported here: before
 `/setup-engine` runs it is almost entirely `[TO BE CONFIGURED]` placeholders, and
 after it runs `project.yaml` holds the real values.
 
-## Coordination Rules
+---
 
-@.claude/docs/coordination-rules.md
+## How We Work
 
-## Collaboration Protocol
+### Collaboration Protocol
 
 **User-driven collaboration, not autonomous execution.**
 Every task follows: **Question -> Options -> Decision -> Draft -> Approval**
@@ -66,10 +72,10 @@ Every task follows: **Question -> Options -> Decision -> Draft -> Approval**
 
 See `docs/COLLABORATIVE-DESIGN-PRINCIPLE.md` for full protocol and examples.
 
-## Working Style (Claude Fable 5.2)
+### Working Style
 
-This project mostly runs on Claude Fable 5.2 at `high` effort. The user hands
-all code to Claude and reads it in Rider.
+These rules apply whichever Claude model runs the session. The user hands all
+code to Claude and reads it in Rider.
 
 **Ownership.** This codebase is yours: what it's for and how it's built are your
 call, and you'll keep building on it. Stay inside the scope of
@@ -101,14 +107,19 @@ sentences, and do not use names you made up during the work without saying what
 they are. End a long task with a short recap that stands on its own: what you
 did, what you verified, what is not done, and every file you changed.
 
-> **First session?** If the project has no engine configured and no game concept,
-> run `/start` to begin the guided onboarding flow.
+### Coordination Rules
 
-## Coding Standards
+@.claude/docs/coordination-rules.md
+
+---
+
+## Standards and Reference
+
+### Coding Standards
 
 @.claude/docs/coding-standards.md
 
-## Context Management
+### Context Management
 
 Read `.claude/docs/context-management.md` on demand — it is a reference, not
 session context. Two of its conventions are load-bearing and cited by name
