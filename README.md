@@ -32,7 +32,7 @@ cd 2026-epic-gamejam
 git lfs pull
 ```
 
-UE 项目在 `Game_01/`（C++ 工程，用 UE 5.8 打开 `Game_01/Game_01.uproject`）。`Game_Jam_01/` 是赛前热身项目，不在仓库里。
+UE 项目在 `Game_01 5.8/`（C++ 工程，用 UE 5.8 打开 `Game_01 5.8/Game_01.uproject`）。`Game_Jam_01/` 是赛前热身项目，不在仓库里。
 
 ## 📦 Installation
 
