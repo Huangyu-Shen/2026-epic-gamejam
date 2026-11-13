@@ -39,8 +39,9 @@ struct GAME_01_API FDodgeTuning
  * The player: top-down camera, raw-key controls, health, the bag and the auto weapon.
  *
  * Controls: WASD move, Space dodge, E search the nearest container, 1-6 use the relic in that
- * bag position. Debug: K die, N start a new run (clears enemies, bag, heat, health).
- * The move-speed, damage and damage-taken multipliers come from the bag's active relic buffs.
+ * bag position, [ / ] slot / unslot a film card, N start a new run (applies the slotted cards).
+ * Debug: K die. The move-speed, damage and damage-taken multipliers come from the bag's active
+ * relic buffs.
  */
 UCLASS()
 class GAME_01_API AHeroCharacter : public ACharacter
@@ -64,10 +65,6 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Hero")
 	FDodgeTuning Dodge;
-
-	/** How many grunts the H debug key spawns as a horde (story 005's Horde Night card will call the spawner itself). */
-	UPROPERTY(EditAnywhere, Category = "Hero|Debug")
-	int32 DebugHordeSize = 40;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Hero")
 	TObjectPtr<ULootBagComponent> Bag;
@@ -105,7 +102,10 @@ private:
 	void DodgeKey();
 	void UseRelicSlot(int32 Index);
 	void DebugDieKey();
+	void AddCardKey();
+	void RemoveCardKey();
 	void StartNewRunKey();
+	void ReturnToCampKey();
 	/** Bound to UHealthComponent::OnDied, so it has to be a UFUNCTION. */
 	UFUNCTION()
 	void HandleDied();

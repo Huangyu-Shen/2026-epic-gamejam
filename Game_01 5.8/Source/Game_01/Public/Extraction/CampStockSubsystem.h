@@ -30,6 +30,18 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Camp")
 	void AddRelics(const TArray<ERelicType>& NewRelics);
 
+	/** Deducts Amount Iron; returns false and changes nothing if the stock is too low (story 006 building upgrade). */
+	UFUNCTION(BlueprintCallable, Category = "Camp")
+	bool SpendIron(int32 Amount);
+
+	/** Removes the warehouse relic at Index; returns false if the index is out of range (story 006 dismantle). */
+	UFUNCTION(BlueprintCallable, Category = "Camp")
+	bool RemoveRelicAt(int32 Index);
+
+	/** Replaces Iron and the warehouse wholesale (save-game restore, story 007). Negative Iron is clamped to 0. */
+	UFUNCTION(BlueprintCallable, Category = "Camp")
+	void RestoreState(int32 InIron, const TArray<ERelicType>& InRelics);
+
 	UFUNCTION(BlueprintPure, Category = "Camp")
 	int32 GetIron() const { return Iron; }
 

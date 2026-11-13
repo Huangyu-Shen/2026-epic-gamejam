@@ -44,6 +44,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Enemies")
 	AEnemy* FindNearestEnemy(FVector Location, float Range) const;
 
+	/** The living enemies (read-only). Story 004's weapons filter this list. */
+	const TArray<TObjectPtr<AEnemy>>& GetEnemies() const { return Enemies; }
+
 	UFUNCTION(BlueprintPure, Category = "Enemies")
 	int32 GetAliveCount() const { return Enemies.Num(); }
 

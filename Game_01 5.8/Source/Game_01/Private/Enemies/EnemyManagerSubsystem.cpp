@@ -3,6 +3,7 @@
 #include "Extraction/RunOutcomeSubsystem.h"
 #include "Game/DirectorTuningSettings.h"
 #include "Player/HeroCharacter.h"
+#include "Progression/RunProgressionSubsystem.h"
 #include "Engine/DataTable.h"
 #include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
@@ -71,6 +72,15 @@ void UEnemyManagerSubsystem::ClearAll()
 void UEnemyManagerSubsystem::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	// Soft-pause while the level-up offer is showing (story 004).
+	if (const URunProgressionSubsystem* Progression = GetWorld()->GetSubsystem<URunProgressionSubsystem>())
+	{
+		if (Progression->IsOfferPending())
+		{
+			return;
+		}
+	}
 
 	AHeroCharacter* Hero = Cast<AHeroCharacter>(UGameplayStatics::GetPlayerPawn(this, 0));
 	if (!Hero || Enemies.IsEmpty())
