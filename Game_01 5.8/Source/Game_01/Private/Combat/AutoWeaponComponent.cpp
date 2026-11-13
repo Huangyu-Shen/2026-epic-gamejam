@@ -56,8 +56,12 @@ void UAutoWeaponComponent::TickComponent(float DeltaTime, ELevelTick TickType, F
 			continue;
 		}
 
-		const FWeaponRow& Row = Progression->GetWeaponRow(Type);
-		FireWeapon(Type, Level, Row, DamageMultiplier);
+		// Stars (brief v2) multiply damage and widen the weapon's reach, so a star-up is visible on screen.
+		FWeaponRow Row = Progression->GetWeaponRow(Type);
+		const float Reach = Progression->GetWeaponStarRangeMultiplier(Type);
+		Row.Range *= Reach;
+		Row.LineHalfWidth *= Reach;
+		FireWeapon(Type, Level, Row, DamageMultiplier * Progression->GetWeaponStarDamageMultiplier(Type));
 		Cooldown = Row.Interval;
 	}
 }

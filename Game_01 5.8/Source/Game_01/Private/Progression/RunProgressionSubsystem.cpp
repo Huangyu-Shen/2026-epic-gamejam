@@ -5,6 +5,7 @@
 #include "Game/DirectorTuningSettings.h"
 #include "Player/HeroCharacter.h"
 #include "Progression/XpPickup.h"
+#include "UI/HudMessageSubsystem.h"
 #include "Engine/DataTable.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
@@ -79,6 +80,7 @@ void URunProgressionSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	// Project Settings > Game > Director Tuning. Missing tables/rows silently keep the inline defaults.
 	const UDirectorTuningSettings* Settings = GetDefault<UDirectorTuningSettings>();
 	const TCHAR* Context = TEXT("URunProgressionSubsystem::Initialize");
+	Stars = Settings->StarTuning;
 
 	if (const UDataTable* XpTable = Settings->ProgressionTable.LoadSynchronous())
 	{
@@ -136,6 +138,10 @@ void URunProgressionSubsystem::ResetProgression()
 	PassiveStacks.Reset();
 	bOfferPending = false;
 	Offer.Reset();
+	CutWeapons.Reset();
+	CutPassives.Reset();
+	CuttingRoomFloor.Reset();
+	PermanentCutsLeft = Stars.PermanentCutsForPool(Weapons.Num() + Passives.Num());
 
 	// Clear any offer text still on screen.
 	if (GEngine)
@@ -159,24 +165,30 @@ void URunProgressionSubsystem::ResetProgression()
 	}
 }
 
+float URunProgressionSubsystem::PassiveTotal(EPassiveType Passive, float PerStack) const
+{
+	const int32 Stacks = PassiveStacks.FindRef(Passive);
+	return static_cast<float>(Stacks) * PerStack * Stars.PassiveMultiplier(Stars.StarsForCopies(Stacks));
+}
+
 float URunProgressionSubsystem::GetMoveSpeedMultiplier() const
 {
-	return 1.0f + static_cast<float>(PassiveStacks.FindRef(EPassiveType::Swiftness)) * Passives.FindChecked(EPassiveType::Swiftness).MoveSpeedAdd;
+	return 1.0f + PassiveTotal(EPassiveType::Swiftness, Passives.FindChecked(EPassiveType::Swiftness).MoveSpeedAdd);
 }
 
 float URunProgressionSubsystem::GetDamageMultiplier() const
 {
-	return 1.0f + static_cast<float>(PassiveStacks.FindRef(EPassiveType::Might)) * Passives.FindChecked(EPassiveType::Might).DamageAdd;
+	return 1.0f + PassiveTotal(EPassiveType::Might, Passives.FindChecked(EPassiveType::Might).DamageAdd);
 }
 
 float URunProgressionSubsystem::GetMaxHealthBonus() const
 {
-	return static_cast<float>(PassiveStacks.FindRef(EPassiveType::Vitality)) * Passives.FindChecked(EPassiveType::Vitality).MaxHealthAdd;
+	return PassiveTotal(EPassiveType::Vitality, Passives.FindChecked(EPassiveType::Vitality).MaxHealthAdd);
 }
 
 float URunProgressionSubsystem::GetXpGainMultiplier() const
 {
-	return 1.0f + static_cast<float>(PassiveStacks.FindRef(EPassiveType::Greed)) * Passives.FindChecked(EPassiveType::Greed).XpGainAdd;
+	return 1.0f + PassiveTotal(EPassiveType::Greed, Passives.FindChecked(EPassiveType::Greed).XpGainAdd);
 }
 
 void URunProgressionSubsystem::HandleEnemyKilled(EEnemyKind Kind, FVector Location)
@@ -216,31 +228,32 @@ void URunProgressionSubsystem::GenerateOffer()
 {
 	Offer.Reset();
 
+	// The pool: everything not cut for good and not yet at the copy cap.
 	TArray<FOfferOption> Pool;
 	for (uint8 W = 0; W < static_cast<uint8>(EWeaponType::Count); ++W)
 	{
 		const EWeaponType Type = static_cast<EWeaponType>(W);
-		const int32 Lvl = WeaponLevels.FindRef(Type);
-		if (Lvl < Weapons.FindChecked(Type).MaxLevel)
+		const int32 Copies = WeaponLevels.FindRef(Type);
+		if (!CutWeapons.Contains(Type) && Copies < MaxCopies(Weapons.FindChecked(Type).MaxLevel))
 		{
 			FOfferOption Opt;
 			Opt.bIsWeapon = true;
 			Opt.Weapon = Type;
-			Opt.bIsNewWeapon = (Lvl == 0);
-			Opt.CurrentLevel = Lvl;
+			Opt.bIsNewWeapon = (Copies == 0);
+			Opt.CurrentLevel = Copies;
 			Pool.Add(Opt);
 		}
 	}
 	for (uint8 P = 0; P < static_cast<uint8>(EPassiveType::Count); ++P)
 	{
 		const EPassiveType Type = static_cast<EPassiveType>(P);
-		const int32 Stacks = PassiveStacks.FindRef(Type);
-		if (Stacks < Passives.FindChecked(Type).MaxLevel)
+		const int32 Copies = PassiveStacks.FindRef(Type);
+		if (!CutPassives.Contains(Type) && Copies < MaxCopies(Passives.FindChecked(Type).MaxLevel))
 		{
 			FOfferOption Opt;
 			Opt.bIsWeapon = false;
 			Opt.Passive = Type;
-			Opt.CurrentLevel = Stacks;
+			Opt.CurrentLevel = Copies;
 			Pool.Add(Opt);
 		}
 	}
@@ -250,49 +263,102 @@ void URunProgressionSubsystem::GenerateOffer()
 	{
 		Pool.Swap(i, FMath::RandRange(0, i));
 	}
-	const int32 Num = FMath::Min(3, Pool.Num());
-	for (int32 i = 0; i < Num; ++i)
+
+	// With fewer than three options there is nothing to cut: the player simply gets what is left.
+	if (Pool.Num() < 3)
+	{
+		for (const FOfferOption& Option : Pool)
+		{
+			ApplyOption(Option);
+		}
+		return;
+	}
+
+	for (int32 i = 0; i < 3; ++i)
 	{
 		Offer.Add(Pool[i]);
 	}
-
-	bOfferPending = Offer.Num() > 0;
+	bOfferPending = true;
 	ShowOffer();
 }
 
 void URunProgressionSubsystem::ApplyOption(const FOfferOption& Option)
 {
+	int32 StarsBefore = 0;
+	int32 StarsAfter = 0;
+
 	if (Option.bIsWeapon)
 	{
-		int32& Lvl = WeaponLevels.FindOrAdd(Option.Weapon);
-		Lvl = FMath::Min(Lvl + 1, Weapons.FindChecked(Option.Weapon).MaxLevel);
-		return;
+		int32& Copies = WeaponLevels.FindOrAdd(Option.Weapon);
+		StarsBefore = Stars.StarsForCopies(Copies);
+		Copies = FMath::Min(Copies + 1, MaxCopies(Weapons.FindChecked(Option.Weapon).MaxLevel));
+		StarsAfter = Stars.StarsForCopies(Copies);
+	}
+	else
+	{
+		// Vitality's effect is applied immediately: raise max health (and heal) by however much the bonus grew,
+		// which includes the jump from a star-up.
+		const float HealthBonusBefore = GetMaxHealthBonus();
+
+		int32& Copies = PassiveStacks.FindOrAdd(Option.Passive);
+		StarsBefore = Stars.StarsForCopies(Copies);
+		Copies = FMath::Min(Copies + 1, MaxCopies(Passives.FindChecked(Option.Passive).MaxLevel));
+		StarsAfter = Stars.StarsForCopies(Copies);
+
+		const float HealthGained = GetMaxHealthBonus() - HealthBonusBefore;
+		if (HealthGained > 0.0f)
+		{
+			if (AHeroCharacter* Hero = Cast<AHeroCharacter>(UGameplayStatics::GetPlayerPawn(this, 0)))
+			{
+				Hero->Health->IncreaseMaxHealth(HealthGained);
+			}
+		}
 	}
 
-	const FPassiveRow& Row = Passives.FindChecked(Option.Passive);
-	int32& Stacks = PassiveStacks.FindOrAdd(Option.Passive);
-	Stacks = FMath::Min(Stacks + 1, Row.MaxLevel);
-
-	// Vitality's effect is applied immediately: raise max health and heal by the same amount.
-	if (Option.Passive == EPassiveType::Vitality)
+	// A star-up is the payoff moment: say so. (StarsBefore is 0 for a brand-new weapon, which is not a star-up.)
+	if (StarsAfter > StarsBefore && StarsBefore > 0)
 	{
-		if (AHeroCharacter* Hero = Cast<AHeroCharacter>(UGameplayStatics::GetPlayerPawn(this, 0)))
-		{
-			Hero->Health->IncreaseMaxHealth(Row.MaxHealthAdd);
-		}
+		const FString Message = FString::Printf(TEXT("%s is now %d-STAR!"), *OptionName(Option).ToUpper(), StarsAfter);
+		UHudMessageSubsystem::Post(this, Message, FLinearColor(1.0f, 0.85f, 0.2f), 4.0f);
+		UE_LOG(LogTemp, Log, TEXT("%s"), *Message);
 	}
 }
 
-void URunProgressionSubsystem::PickOffer(int32 Index)
+void URunProgressionSubsystem::CutOffer(int32 Index)
 {
 	if (!bOfferPending || !Offer.IsValidIndex(Index))
 	{
 		return;
 	}
 
-	ApplyOption(Offer[Index]);
+	// The cut option goes to the cutting-room floor; while permanent cuts remain it also leaves the pool.
+	const FOfferOption Cut = Offer[Index];
+	CuttingRoomFloor.Add(Cut);
+	if (PermanentCutsLeft > 0)
+	{
+		--PermanentCutsLeft;
+		if (Cut.bIsWeapon)
+		{
+			CutWeapons.Add(Cut.Weapon);
+		}
+		else
+		{
+			CutPassives.Add(Cut.Passive);
+		}
+		UHudMessageSubsystem::Post(this, FString::Printf(TEXT("CUT for good: %s"), *OptionName(Cut)), FLinearColor(1.0f, 0.4f, 0.4f), 3.0f);
+	}
+
+	// Keep the other two.
+	const TArray<FOfferOption> Kept = Offer;
 	bOfferPending = false;
 	Offer.Reset();
+	for (int32 i = 0; i < Kept.Num(); ++i)
+	{
+		if (i != Index)
+		{
+			ApplyOption(Kept[i]);
+		}
+	}
 
 	if (GEngine)
 	{
@@ -325,20 +391,57 @@ TArray<FString> URunProgressionSubsystem::GetOfferDescriptions() const
 	return Lines;
 }
 
+FString URunProgressionSubsystem::OptionName(const FOfferOption& Option) const
+{
+	return Option.bIsWeapon
+		? StaticEnum<EWeaponType>()->GetDisplayNameTextByValue(static_cast<int64>(Option.Weapon)).ToString()
+		: StaticEnum<EPassiveType>()->GetDisplayNameTextByValue(static_cast<int64>(Option.Passive)).ToString();
+}
+
 FString URunProgressionSubsystem::DescribeOption(const FOfferOption& Option) const
 {
-	if (Option.bIsWeapon)
+	const FString Name = OptionName(Option);
+	if (Option.bIsWeapon && Option.bIsNewWeapon)
 	{
-		const FString Name = StaticEnum<EWeaponType>()->GetDisplayNameTextByValue(static_cast<int64>(Option.Weapon)).ToString();
-		if (Option.bIsNewWeapon)
-		{
-			return FString::Printf(TEXT("NEW weapon: %s"), *Name);
-		}
-		return FString::Printf(TEXT("%s  Lv%d -> Lv%d"), *Name, Option.CurrentLevel, Option.CurrentLevel + 1);
+		return FString::Printf(TEXT("NEW weapon: %s"), *Name);
 	}
 
-	const FString Name = StaticEnum<EPassiveType>()->GetDisplayNameTextByValue(static_cast<int64>(Option.Passive)).ToString();
-	return FString::Printf(TEXT("%s  Lv%d -> Lv%d"), *Name, Option.CurrentLevel, Option.CurrentLevel + 1);
+	// What one more copy does to the star: a star-up, or how far the next one is.
+	const int32 After = Option.CurrentLevel + 1;
+	const int32 StarsAfter = Stars.StarsForCopies(After);
+	FString StarNote;
+	if (StarsAfter > Stars.StarsForCopies(Option.CurrentLevel) && Option.CurrentLevel > 0)
+	{
+		StarNote = FString::Printf(TEXT("   >> %d-STAR!"), StarsAfter);
+	}
+	else if (StarsAfter < 3)
+	{
+		StarNote = FString::Printf(TEXT("   (%d more to %d-STAR)"), Stars.CopiesToNextStar(After), StarsAfter + 1);
+	}
+	return FString::Printf(TEXT("%s  Lv%d -> Lv%d%s"), *Name, Option.CurrentLevel, After, *StarNote);
+}
+
+FString URunProgressionSubsystem::GetLoadoutSummary() const
+{
+	// "Blade Lv3**   Might Lv1*": one asterisk per star.
+	FString Out;
+	auto Append = [&Out, this](const FString& Name, int32 Copies)
+	{
+		if (Copies > 0)
+		{
+			Out += FString::Printf(TEXT("%s%s Lv%d%s"), Out.IsEmpty() ? TEXT("") : TEXT("   "), *Name, Copies,
+				*FString::ChrN(Stars.StarsForCopies(Copies), TEXT('*')));
+		}
+	};
+	for (uint8 W = 0; W < static_cast<uint8>(EWeaponType::Count); ++W)
+	{
+		Append(StaticEnum<EWeaponType>()->GetDisplayNameTextByValue(W).ToString(), WeaponLevels.FindRef(static_cast<EWeaponType>(W)));
+	}
+	for (uint8 P = 0; P < static_cast<uint8>(EPassiveType::Count); ++P)
+	{
+		Append(StaticEnum<EPassiveType>()->GetDisplayNameTextByValue(P).ToString(), PassiveStacks.FindRef(static_cast<EPassiveType>(P)));
+	}
+	return Out;
 }
 
 void URunProgressionSubsystem::RegisterPickup(AXpPickup* Pickup)

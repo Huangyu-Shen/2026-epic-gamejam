@@ -106,3 +106,75 @@ struct GAME_01_API FPassiveRow : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Passive")
 	float XpGainAdd = 0.0f;
 };
+
+/**
+ * Rules for "cut one, keep two" and the three-into-one star merge (design/game-brief.md v2, MVP items 1 and 2).
+ * Every pick adds one copy of a weapon or passive. Copies still count as its level; reaching the thresholds
+ * below also raises its star, which multiplies its effect on top of the per-level growth.
+ * Pure functions with no world access, so they are unit tested directly.
+ */
+USTRUCT(BlueprintType)
+struct GAME_01_API FStarTuning
+{
+	GENERATED_BODY()
+
+	/** Copies needed for two stars (three one-star copies merge into one). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stars", meta = (ClampMin = "2"))
+	int32 CopiesForTwoStar = 3;
+
+	/** Copies needed for three stars (three two-star sets). Also the most copies one item can hold. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stars", meta = (ClampMin = "3"))
+	int32 CopiesForThreeStar = 9;
+
+	/** Weapon damage multiplier at two and three stars. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stars", meta = (ClampMin = "1.0"))
+	float WeaponDamageTwoStar = 2.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stars", meta = (ClampMin = "1.0"))
+	float WeaponDamageThreeStar = 4.0f;
+
+	/** Weapon reach multiplier (range, line width, radius) at two and three stars: the visible part of a star-up. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stars", meta = (ClampMin = "1.0"))
+	float WeaponRangeTwoStar = 1.25f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stars", meta = (ClampMin = "1.0"))
+	float WeaponRangeThreeStar = 1.6f;
+
+	/** Multiplier on a passive's total effect at two and three stars. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stars", meta = (ClampMin = "1.0"))
+	float PassiveTwoStar = 1.5f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Stars", meta = (ClampMin = "1.0"))
+	float PassiveThreeStar = 2.5f;
+
+	/** Options that always stay in the level-up pool; a cut is only permanent while the pool is larger than this. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cut", meta = (ClampMin = "3"))
+	int32 MinPoolSize = 4;
+
+	/** 0 for an item the run does not own, otherwise 1 to 3. */
+	int32 StarsForCopies(int32 Copies) const
+	{
+		if (Copies <= 0)
+		{
+			return 0;
+		}
+		return Copies >= CopiesForThreeStar ? 3 : (Copies >= CopiesForTwoStar ? 2 : 1);
+	}
+
+	/** Copies still missing for the next star; 0 at three stars. */
+	int32 CopiesToNextStar(int32 Copies) const
+	{
+		if (Copies >= CopiesForThreeStar)
+		{
+			return 0;
+		}
+		return (Copies >= CopiesForTwoStar ? CopiesForThreeStar : CopiesForTwoStar) - FMath::Max(Copies, 0);
+	}
+
+	float WeaponDamageMultiplier(int32 Stars) const { return Stars >= 3 ? WeaponDamageThreeStar : (Stars == 2 ? WeaponDamageTwoStar : 1.0f); }
+	float WeaponRangeMultiplier(int32 Stars) const { return Stars >= 3 ? WeaponRangeThreeStar : (Stars == 2 ? WeaponRangeTwoStar : 1.0f); }
+	float PassiveMultiplier(int32 Stars) const { return Stars >= 3 ? PassiveThreeStar : (Stars == 2 ? PassiveTwoStar : 1.0f); }
+
+	/** How many cuts in one run remove an option for good: the pool never shrinks below MinPoolSize. */
+	int32 PermanentCutsForPool(int32 PoolSize) const { return FMath::Max(PoolSize - MinPoolSize, 0); }
+};

@@ -9,7 +9,7 @@
 
 class AXpPickup;
 
-/** One choice in a level-up offer: a new weapon, a weapon upgrade, or a passive upgrade. */
+/** One option in a level-up offer: a new weapon, another copy of a weapon, or another copy of a passive. */
 USTRUCT(BlueprintType)
 struct GAME_01_API FOfferOption
 {
@@ -28,16 +28,17 @@ struct GAME_01_API FOfferOption
 	UPROPERTY(BlueprintReadOnly, Category = "Progression")
 	bool bIsNewWeapon = false;
 
-	/** Level (or stacks) before this pick. */
+	/** Copies held before this pick (copies are also the level). */
 	UPROPERTY(BlueprintReadOnly, Category = "Progression")
 	int32 CurrentLevel = 0;
 };
 
 /**
  * Owns in-run growth: XP, level, the level-up offer and the weapon/passive loadout.
- * Enemies drop XP pickups on death (AC-1); collecting enough XP soft-pauses the game and
- * shows a 3-choice offer (AC-2). Weapons reuse story 003's auto-attack hook (AC-3);
- * passives apply on pick (AC-4). Resets with the run (AC-7).
+ * Enemies drop XP pickups on death; collecting enough XP soft-pauses the game and shows three options.
+ * Brief v2: the player CUTS one option and keeps the other two. Each kept option adds one copy;
+ * 3 copies make two stars and 9 make three (FStarTuning). While permanent cuts remain, the cut option
+ * leaves the pool for the rest of the run. Resets with the run.
  */
 UCLASS()
 class GAME_01_API URunProgressionSubsystem : public UTickableWorldSubsystem
@@ -69,9 +70,31 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Progression")
 	float GetXpGainMultiplier() const;
 
-	/** 0 = not owned. */
+	/** Copies of the weapon held; 0 = not owned. Copies are also its level. */
 	UFUNCTION(BlueprintPure, Category = "Progression")
 	int32 GetWeaponLevel(EWeaponType Weapon) const { return WeaponLevels.FindRef(Weapon); }
+
+	/** 0 = not owned, otherwise 1 to 3 stars. */
+	UFUNCTION(BlueprintPure, Category = "Progression")
+	int32 GetWeaponStars(EWeaponType Weapon) const { return Stars.StarsForCopies(WeaponLevels.FindRef(Weapon)); }
+
+	UFUNCTION(BlueprintPure, Category = "Progression")
+	int32 GetPassiveStars(EPassiveType Passive) const { return Stars.StarsForCopies(PassiveStacks.FindRef(Passive)); }
+
+	/** Star multipliers for a weapon the run owns (1.0 at one star). */
+	float GetWeaponStarDamageMultiplier(EWeaponType Weapon) const { return Stars.WeaponDamageMultiplier(GetWeaponStars(Weapon)); }
+	float GetWeaponStarRangeMultiplier(EWeaponType Weapon) const { return Stars.WeaponRangeMultiplier(GetWeaponStars(Weapon)); }
+
+	/** Cuts left this run that remove the cut option from the pool for good. */
+	UFUNCTION(BlueprintPure, Category = "Progression")
+	int32 GetPermanentCutsLeft() const { return PermanentCutsLeft; }
+
+	/** Everything cut this run, oldest first (permanent or not). Kept for the boss that fights with the cut footage. */
+	const TArray<FOfferOption>& GetCuttingRoomFloor() const { return CuttingRoomFloor; }
+
+	/** One line for the HUD: every owned weapon and passive with its level and stars. */
+	UFUNCTION(BlueprintPure, Category = "Progression")
+	FString GetLoadoutSummary() const;
 
 	/** The weapon's stats (never null; defaults are filled at init). */
 	const FWeaponRow& GetWeaponRow(EWeaponType Weapon) const { return Weapons.FindChecked(Weapon); }
@@ -84,9 +107,12 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Progression")
 	TArray<FString> GetOfferDescriptions() const;
 
-	/** Picks offer entry Index (0..2) and resumes play. No-op if no offer or a bad index. */
+	/** Cuts offer entry Index (0..2), keeps the other two and resumes play. No-op if no offer or a bad index. */
 	UFUNCTION(BlueprintCallable, Category = "Progression")
-	void PickOffer(int32 Index);
+	void CutOffer(int32 Index);
+
+	/** Adds XP and opens the level-up offer once the threshold is reached. Used by pickups and by the -OfferProbe harness. */
+	void GrantXp(float Amount);
 
 	/** Clears XP, level, weapons and passives for a fresh run (starter weapon restored). */
 	UFUNCTION(BlueprintCallable, Category = "Progression")
@@ -103,17 +129,21 @@ private:
 	UFUNCTION()
 	void HandleEnemyKilled(EEnemyKind Kind, FVector Location);
 
-	void GrantXp(float Amount);
 	void CheckLevelUp();
 	void GenerateOffer();
 	void ApplyOption(const FOfferOption& Option);
 	void ShowOffer() const;
 	FString DescribeOption(const FOfferOption& Option) const;
+	FString OptionName(const FOfferOption& Option) const;
+	int32 MaxCopies(int32 RowMaxLevel) const { return FMath::Max(RowMaxLevel, Stars.CopiesForThreeStar); }
+	/** A passive's total effect: stacks x per-stack amount x its star multiplier. */
+	float PassiveTotal(EPassiveType Passive, float PerStack) const;
 
 	// Loaded tuning (defaults are always present; tables override).
 	FXpCurveRow XpCurve;
 	TMap<EWeaponType, FWeaponRow> Weapons;
 	TMap<EPassiveType, FPassiveRow> Passives;
+	FStarTuning Stars;
 
 	// Run state.
 	int32 Level = 1;
@@ -123,6 +153,10 @@ private:
 	TMap<EPassiveType, int32> PassiveStacks;
 	bool bOfferPending = false;
 	TArray<FOfferOption> Offer;
+	TSet<EWeaponType> CutWeapons;
+	TSet<EPassiveType> CutPassives;
+	int32 PermanentCutsLeft = 0;
+	TArray<FOfferOption> CuttingRoomFloor;
 
 	UPROPERTY(EditAnywhere, Category = "Progression", meta = (ClampMin = "0.0"))
 	float MagnetRadius = 600.0f;

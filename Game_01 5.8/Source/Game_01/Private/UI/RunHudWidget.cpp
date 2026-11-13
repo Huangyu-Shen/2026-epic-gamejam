@@ -54,6 +54,8 @@ TSharedRef<SWidget> URunHudWidget::RebuildWidget()
 		HealthBar = DirectorUi::AddBar(WidgetTree, Stats, FLinearColor(0.85f, 0.15f, 0.15f), 296.0f, 14.0f);
 		LevelText = DirectorUi::AddText(WidgetTree, Stats, TEXT("Level 1"), 18);
 		XpBar = DirectorUi::AddBar(WidgetTree, Stats, FLinearColor(0.25f, 0.55f, 1.0f), 296.0f, 10.0f);
+		LoadoutText = DirectorUi::AddText(WidgetTree, Stats, TEXT(""), 14, DirectorUi::DimColor);
+		LoadoutText->SetAutoWrapText(true);
 		HeatText = DirectorUi::AddText(WidgetTree, Stats, TEXT("Heat"), 16);
 		HeatBar = DirectorUi::AddBar(WidgetTree, Stats, FLinearColor(1.0f, 0.55f, 0.1f), 296.0f, 8.0f);
 
@@ -91,15 +93,17 @@ TSharedRef<SWidget> URunHudWidget::RebuildWidget()
 		Centre.Anchor = FVector2D(0.5, 0.5);
 		Centre.Alignment = FVector2D(0.5, 0.5);
 		Centre.Position = FVector2D(0.0, 0.0);
-		Centre.Size = FVector2D(460.0, 0.0);
+		Centre.Size = FVector2D(640.0, 0.0); // wide enough for "[2] CUT   Swiftness  Lv5 -> Lv6   (3 more to 3-STAR)"
 		UPanelWidget* Offer = DirectorUi::MakePanel(WidgetTree, Canvas, Centre, false, &OfferRootRaw);
-		DirectorUi::AddText(WidgetTree, Offer, TEXT("LEVEL UP - choose one (click or press 1-3)"), 20, DirectorUi::GoodColor);
+		DirectorUi::AddText(WidgetTree, Offer, TEXT("LEVEL UP - CUT one, keep the other two"), 20, DirectorUi::GoodColor);
+		DirectorUi::AddText(WidgetTree, Offer, TEXT("Click or press 1-3 on the one to cut"), 14, DirectorUi::DimColor);
 		for (int32 Index = 0; Index < 3; ++Index)
 		{
 			UUiActionButton* Button = DirectorUi::AddButton(WidgetTree, Offer, TEXT(""), TEXT("Offer"), Index);
 			Button->OnAction.AddDynamic(this, &URunHudWidget::HandleAction);
 			OfferButtons.Add(Button);
 		}
+		CutInfoText = DirectorUi::AddText(WidgetTree, Offer, TEXT(""), 14, DirectorUi::DimColor);
 
 		// Centre: result screen.
 		FUiPlacement ResultPlacement = Centre;
@@ -145,6 +149,7 @@ void URunHudWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 		LevelText->SetText(FText::FromString(FString::Printf(TEXT("Level %d   XP %.0f / %.0f"),
 			Progression->GetLevel(), Progression->GetXp(), Progression->GetXpToNext())));
 		XpBar->SetPercent(Progression->GetXp() / FMath::Max(Progression->GetXpToNext(), 1.0f));
+		LoadoutText->SetText(FText::FromString(Progression->GetLoadoutSummary()));
 	}
 
 	// Heat.
@@ -199,9 +204,13 @@ void URunHudWidget::RefreshOfferPanel()
 			Button->SetVisibility(bHas ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
 			if (bHas)
 			{
-				Button->Label->SetText(FText::FromString(FString::Printf(TEXT("[%d]  %s"), Index + 1, *Lines[Index])));
+				Button->Label->SetText(FText::FromString(FString::Printf(TEXT("[%d] CUT   %s"), Index + 1, *Lines[Index])));
 			}
 		}
+		const int32 CutsLeft = Progression->GetPermanentCutsLeft();
+		CutInfoText->SetText(FText::FromString(CutsLeft > 0
+			? FString::Printf(TEXT("Permanent cuts left: %d - what you cut never comes back this run"), CutsLeft)
+			: FString(TEXT("No permanent cuts left - what you cut is only skipped this time"))));
 	}
 	OfferRoot->SetVisibility(bShow ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
 }
@@ -239,7 +248,7 @@ void URunHudWidget::HandleAction(FName Action, int32 Index)
 	{
 		if (URunProgressionSubsystem* Progression = GetWorld()->GetSubsystem<URunProgressionSubsystem>())
 		{
-			Progression->PickOffer(Index);
+			Progression->CutOffer(Index);
 		}
 	}
 	else if (Action == TEXT("Camp"))

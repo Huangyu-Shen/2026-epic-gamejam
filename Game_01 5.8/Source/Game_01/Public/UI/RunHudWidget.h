@@ -42,6 +42,7 @@ private:
 	UPROPERTY() TObjectPtr<UProgressBar> HealthBar;
 	UPROPERTY() TObjectPtr<UTextBlock> LevelText;
 	UPROPERTY() TObjectPtr<UProgressBar> XpBar;
+	UPROPERTY() TObjectPtr<UTextBlock> LoadoutText;
 	UPROPERTY() TObjectPtr<UTextBlock> HeatText;
 	UPROPERTY() TObjectPtr<UProgressBar> HeatBar;
 	UPROPERTY() TObjectPtr<UTextBlock> BagText;
@@ -55,6 +56,7 @@ private:
 	// Level-up panel.
 	UPROPERTY() TObjectPtr<UWidget> OfferRoot;
 	UPROPERTY() TArray<TObjectPtr<UUiActionButton>> OfferButtons;
+	UPROPERTY() TObjectPtr<UTextBlock> CutInfoText;
 
 	// Result screen.
 	UPROPERTY() TObjectPtr<UWidget> ResultRoot;

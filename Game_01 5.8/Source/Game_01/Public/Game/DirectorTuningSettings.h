@@ -4,6 +4,7 @@
 #include "CoreMinimal.h"
 #include "Engine/DataTable.h"
 #include "Engine/DeveloperSettings.h"
+#include "Progression/ProgressionTypes.h"
 #include "DirectorTuningSettings.generated.h"
 
 /**
@@ -49,6 +50,10 @@ public:
 	/** Table of FFilmCardRow. Rows "HordeNight" and "CutKnight" define the pre-run film cards. */
 	UPROPERTY(EditAnywhere, Config, Category = "Tuning", meta = (RequiredAssetDataTags = "RowStructure=/Script/Game_01.FilmCardRow"))
 	TSoftObjectPtr<UDataTable> FilmCardTable;
+
+	/** Star-merge thresholds and multipliers, and how small the level-up pool may be cut (brief v2). */
+	UPROPERTY(EditAnywhere, Config, Category = "Tuning")
+	FStarTuning StarTuning;
 
 	/** Table of FBuildingRow. Rows "Smithy" and "Clinic" define the camp buildings. */
 	UPROPERTY(EditAnywhere, Config, Category = "Tuning", meta = (RequiredAssetDataTags = "RowStructure=/Script/Game_01.BuildingRow"))

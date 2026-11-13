@@ -124,14 +124,14 @@ void AHeroCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		PlayerInputComponent->KeyBindings.Add(Binding);
 	}
 
-	// 1/2/3 also pick a level-up choice while the offer is showing (story 004). They double as relic slots otherwise.
+	// 1/2/3 also cut a level-up option while the offer is showing (brief v2). They double as relic slots otherwise.
 	const FKey OfferKeys[] = { EKeys::One, EKeys::Two, EKeys::Three };
 	for (int32 Index = 0; Index < UE_ARRAY_COUNT(OfferKeys); ++Index)
 	{
 		FInputKeyBinding Binding(FInputChord(OfferKeys[Index]), IE_Pressed);
 		Binding.KeyDelegate.GetDelegateForManualSet().BindWeakLambda(this, [this, Index]()
 		{
-			GetWorld()->GetSubsystem<URunProgressionSubsystem>()->PickOffer(Index);
+			GetWorld()->GetSubsystem<URunProgressionSubsystem>()->CutOffer(Index);
 		});
 		PlayerInputComponent->KeyBindings.Add(Binding);
 	}
