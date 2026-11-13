@@ -1,4 +1,5 @@
 // Director's Cut - Story 006. Point-and-click camera pawn for the camp scene (not walkable).
+// Story 007: it also owns the camp screen (UCampWidget) and starts the run from there.
 #pragma once
 
 #include "CoreMinimal.h"
@@ -6,6 +7,7 @@
 #include "CampPawn.generated.h"
 
 class UCameraComponent;
+class UCampWidget;
 class USceneComponent;
 class USpringArmComponent;
 
@@ -18,16 +20,13 @@ public:
 	ACampPawn();
 
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
-	virtual void Tick(float DeltaSeconds) override;
 
 protected:
 	virtual void BeginPlay() override;
 
 private:
+	/** Left click on a building in the scene upgrades it (the panel's buttons do the same). */
 	void OnClick();
-	void OnDismantleKey(int32 Index);
-	void OnDepartKey();
-	void DrawCampState() const;
 
 	UPROPERTY(VisibleAnywhere, Category = "Camp")
 	TObjectPtr<USceneComponent> Root;
@@ -38,5 +37,6 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "Camp")
 	TObjectPtr<UCameraComponent> Camera;
 
-	bool bWarehouseOpen = false;
+	UPROPERTY(Transient)
+	TObjectPtr<UCampWidget> CampScreen;
 };

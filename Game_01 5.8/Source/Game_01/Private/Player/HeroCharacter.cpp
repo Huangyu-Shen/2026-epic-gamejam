@@ -10,6 +10,9 @@
 #include "Loot/LootContainer.h"
 #include "Loot/LootHeatSubsystem.h"
 #include "Progression/RunProgressionSubsystem.h"
+#include "UI/HudMessageSubsystem.h"
+#include "UI/RunHudWidget.h"
+#include "Blueprint/UserWidget.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
@@ -25,9 +28,6 @@
 #include "Kismet/GameplayStatics.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "UObject/ConstructorHelpers.h"
-
-/** Fixed on-screen key so the debug printout replaces itself every frame. */
-static constexpr uint64 HeroDebugMessageKey = 1101;
 
 AHeroCharacter::AHeroCharacter()
 {
@@ -75,6 +75,37 @@ void AHeroCharacter::BeginPlay()
 	{
 		Material->SetVectorParameterValue(TEXT("Color"), FLinearColor(0.05f, 0.3f, 0.9f));
 	}
+
+	// The run map is entered from the camp: set the run up (camp bonuses, film cards) and show the HUD.
+	StartRun();
+	CreateHud();
+}
+
+void AHeroCharacter::CreateHud()
+{
+	APlayerController* PC = Cast<APlayerController>(GetController());
+	if (!PC)
+	{
+		PC = UGameplayStatics::GetPlayerController(this, 0);
+	}
+	if (!PC || Hud)
+	{
+		return;
+	}
+
+	Hud = CreateWidget<URunHudWidget>(PC);
+	if (Hud)
+	{
+		Hud->AddToViewport();
+		// Only the buttons take mouse clicks; the rest of the screen stays click-through.
+		Hud->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
+	}
+
+	PC->bShowMouseCursor = true;
+	FInputModeGameAndUI Mode;
+	Mode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+	Mode.SetHideCursorDuringCapture(false);
+	PC->SetInputMode(Mode);
 }
 
 void AHeroCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -84,14 +115,6 @@ void AHeroCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 	PlayerInputComponent->BindKey(EKeys::SpaceBar, IE_Pressed, this, &AHeroCharacter::DodgeKey);
 	PlayerInputComponent->BindKey(EKeys::E, IE_Pressed, this, &AHeroCharacter::SearchNearestContainerKey);
 	PlayerInputComponent->BindKey(EKeys::K, IE_Pressed, this, &AHeroCharacter::DebugDieKey);
-	PlayerInputComponent->BindKey(EKeys::N, IE_Pressed, this, &AHeroCharacter::StartNewRunKey);
-	// B returns to the camp scene (story 006); the polished loop is story 007.
-	PlayerInputComponent->BindKey(EKeys::B, IE_Pressed, this, &AHeroCharacter::ReturnToCampKey);
-
-	// Film-card slots (story 005): '[' slots the next available card, ']' unslots the last one.
-	// The editing-room UI itself is story 007; these keys stand in for it.
-	PlayerInputComponent->BindKey(EKeys::LeftBracket, IE_Pressed, this, &AHeroCharacter::AddCardKey);
-	PlayerInputComponent->BindKey(EKeys::RightBracket, IE_Pressed, this, &AHeroCharacter::RemoveCardKey);
 
 	const FKey RelicKeys[] = { EKeys::One, EKeys::Two, EKeys::Three, EKeys::Four, EKeys::Five, EKeys::Six };
 	for (int32 Index = 0; Index < UE_ARRAY_COUNT(RelicKeys); ++Index)
@@ -155,40 +178,12 @@ void AHeroCharacter::DebugDieKey()
 	Health->Kill();
 }
 
-void AHeroCharacter::AddCardKey()
-{
-	UFilmCardSubsystem* Cards = GetWorld()->GetSubsystem<UFilmCardSubsystem>();
-	for (const FName CardId : Cards->GetAvailableCards())
-	{
-		if (Cards->AddCard(CardId))
-		{
-			break;
-		}
-	}
-}
-
-void AHeroCharacter::RemoveCardKey()
-{
-	UFilmCardSubsystem* Cards = GetWorld()->GetSubsystem<UFilmCardSubsystem>();
-	const TArray<FName>& Active = Cards->GetActiveCards();
-	if (Active.Num() > 0)
-	{
-		Cards->RemoveCard(Active.Last());
-	}
-}
-
 void AHeroCharacter::HandleDied()
 {
 	GetWorld()->GetSubsystem<URunOutcomeSubsystem>()->ReportPlayerDied(Bag);
 }
 
-void AHeroCharacter::ReturnToCampKey()
-{
-	// Story 006 camp scene; the persistent building levels live in the game-instance subsystem.
-	UGameplayStatics::OpenLevel(this, TEXT("L_Camp"));
-}
-
-void AHeroCharacter::StartNewRunKey()
+void AHeroCharacter::StartRun()
 {
 	GetWorld()->GetSubsystem<UEnemyManagerSubsystem>()->ClearAll();
 	GetWorld()->GetSubsystem<UEnemyManagerSubsystem>()->ResetKillCount();
@@ -254,10 +249,10 @@ void AHeroCharacter::UseRelicSlot(int32 Index)
 	{
 		return;
 	}
-	if (!Bag->UseRelic(Index) && GEngine)
+	if (!Bag->UseRelic(Index))
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 1.5f, FColor::Orange,
-			FString::Printf(TEXT("No relic in slot %d"), Index + 1));
+		UHudMessageSubsystem::Post(this, FString::Printf(TEXT("No relic in slot %d"), Index + 1),
+			FLinearColor(1.0f, 0.6f, 0.2f), 1.5f);
 	}
 }
 
@@ -290,77 +285,4 @@ void AHeroCharacter::Tick(float DeltaSeconds)
 
 	const float ProgressionSpeed = GetWorld()->GetSubsystem<URunProgressionSubsystem>()->GetMoveSpeedMultiplier();
 	GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed * Bag->GetActiveModifier().MoveSpeedMultiplier * ProgressionSpeed;
-
-	DrawDebugState();
-}
-
-void AHeroCharacter::DrawDebugState() const
-{
-	if (!GEngine)
-	{
-		return;
-	}
-
-	float Heat = 0.0f;
-	float Pressure = 1.0f;
-	if (const ULootHeatSubsystem* HeatSystem = GetWorld()->GetSubsystem<ULootHeatSubsystem>())
-	{
-		Heat = HeatSystem->GetHeat();
-		Pressure = HeatSystem->GetSpawnPressureMultiplier();
-	}
-
-	FString RelicList;
-	const TArray<ERelicType> Relics = Bag->GetRelics();
-	for (int32 Index = 0; Index < Relics.Num(); ++Index)
-	{
-		RelicList += FString::Printf(TEXT(" [%d] %s"), Index + 1,
-			*StaticEnum<ERelicType>()->GetDisplayNameTextByValue(static_cast<int64>(Relics[Index])).ToString());
-	}
-	if (RelicList.IsEmpty())
-	{
-		RelicList = TEXT(" none");
-	}
-
-	FString CardList;
-	const UFilmCardSubsystem* Cards = GetWorld()->GetSubsystem<UFilmCardSubsystem>();
-	const TArray<FName> ActiveCards = Cards->GetActiveCards();
-	for (const FName CardId : ActiveCards)
-	{
-		CardList += FString::Printf(TEXT(" [%s]"), *CardId.ToString());
-	}
-	if (CardList.IsEmpty())
-	{
-		CardList = TEXT(" none");
-	}
-
-	const URunOutcomeSubsystem* RunSystem = GetWorld()->GetSubsystem<URunOutcomeSubsystem>();
-	const TCHAR* RunState = RunSystem && !RunSystem->IsRunActive() ? TEXT("RUN ENDED (N = new run)") : TEXT("run active");
-
-	const UEnemyManagerSubsystem* Enemies = GetWorld()->GetSubsystem<UEnemyManagerSubsystem>();
-	const UEnemySpawnSubsystem* Spawner = GetWorld()->GetSubsystem<UEnemySpawnSubsystem>();
-	const URunProgressionSubsystem* Progression = GetWorld()->GetSubsystem<URunProgressionSubsystem>();
-
-	// A plain text XP bar; the polished HUD is story 007.
-	FString XpBar = TEXT("[");
-	const float XpFraction = FMath::Clamp(Progression->GetXp() / FMath::Max(Progression->GetXpToNext(), 1.0f), 0.0f, 1.0f);
-	const int32 XpFilled = FMath::RoundToInt(XpFraction * 20.0f);
-	for (int32 i = 0; i < 20; ++i)
-	{
-		XpBar += (i < XpFilled) ? TEXT('#') : TEXT('-');
-	}
-	XpBar += TEXT("]");
-
-	const FLootStatModifier Modifier = Bag->GetActiveModifier();
-	const FString Text = FString::Printf(
-		TEXT("STATE: %s\nHP %.0f/%.0f%s   LEVEL %d  XP %s %.0f/%.0f\nHEAT %.0f  (spawn pressure x%.2f)   SPAWN %.2f/s   run time %.0fs\nENEMIES alive %d   kills %d\nBAG %d/%d slots   Iron %d\nRELICS:%s\nCARDS:%s  (earnings x%.2f)\nBUFFS %d active   speed x%.2f  damage x%.2f  damage taken x%.2f\nWASD move   Space dodge   E search   1-6 use relic   K die   N new run   [ ] film cards"),
-		RunState, Health->GetHealth(), Health->GetMaxHealth(), Health->bGodMode ? TEXT("  GOD MODE") : TEXT(""),
-		Progression->GetLevel(), *XpBar, Progression->GetXp(), Progression->GetXpToNext(),
-		Heat, Pressure, Spawner->GetCurrentSpawnRate(), Spawner->GetRunTime(),
-		Enemies->GetAliveCount(), Enemies->GetKillCount(),
-		Bag->GetUsedSlots(), Bag->GetCapacitySlots(), Bag->GetIronCount(), *RelicList,
-		*CardList, Cards->GetEarningsMultiplier(),
-		Bag->GetActiveBuffs().Num(), Modifier.MoveSpeedMultiplier, Modifier.DamageMultiplier, Modifier.DamageTakenMultiplier);
-
-	// A fixed key replaces the same message each frame instead of stacking new lines.
-	GEngine->AddOnScreenDebugMessage(HeroDebugMessageKey, 0.0f, FColor::White, Text);
 }

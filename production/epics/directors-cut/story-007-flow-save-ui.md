@@ -1,12 +1,12 @@
 # Story 007: Game flow, save and must-have UI
 
 > **Epic**: Director's Cut (MVP)
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: N/A (minimal)
 > **Type**: UI
 > **Estimate**: L
 > **Manifest Version**: N/A (minimal — no control manifest)
-> **Last Updated**:
+> **Last Updated**:2026-11-13
 
 ## Context
 
@@ -26,15 +26,15 @@
 
 ## Acceptance Criteria
 
-- [ ] The flow runs camp → editing room → run → result → camp with no dead ends.
-- [ ] A new save starts at the camp; one save slot auto-saves after each run and after each upgrade.
-- [ ] Reloading the game restores camp stock, building levels and stored relics.
-- [ ] In-run HUD shows HP, XP bar, heat, bag usage and the extraction bar.
-- [ ] Level-up 3-choice panel, bag view, search/extraction progress bar and result screen exist.
-- [ ] Camp panel and editing-room panel (from stories 006 and 005) are usable with mouse.
-- [ ] A fresh player can complete two full runs from the camp without developer help.
-- [ ] A retained screenshot of every screen touched is saved in `production/qa/evidence/`.
-- [ ] All in-game text is English.
+- [x] The flow runs camp → editing room → run → result → camp with no dead ends.
+- [x] A new save starts at the camp; one save slot auto-saves after each run and after each upgrade.
+- [x] Reloading the game restores camp stock, building levels and stored relics.
+- [x] In-run HUD shows HP, XP bar, heat, bag usage and the extraction bar.
+- [x] Level-up 3-choice panel, bag view, search/extraction progress bar and result screen exist.
+- [x] Camp panel and editing-room panel (from stories 006 and 005) are usable with mouse.
+- [x] A fresh player can complete two full runs from the camp without developer help.
+- [x] A retained screenshot of every screen touched is saved in `production/qa/evidence/`.
+- [x] All in-game text is English.
 
 ---
 
@@ -54,10 +54,9 @@
 
 ## Files
 
-- `Game_01/Source/Game_01/Public/Flow/*.h`, `Public/UI/*.h` and matching `Private/`
-- `Game_01/Content/UI/` widget blueprints
-
----
+- `Game_01 5.8/Source/Game_01/Public/UI/*.h` and `Private/UI/*.cpp` (`DirectorUi`, `RunHudWidget`, `CampWidget`); built in C++, no widget blueprints
+- Edited: `HeroCharacter` (StartRun, HUD), `CampPawn` (camp screen), `RunOutcomeSubsystem` (save after each run), `FilmCardSubsystem` and `CampMetaSubsystem` (cards survive the level change), `RunProgressionSubsystem` (offer text), `Game_01.Build.cs` (UMG, Slate), `Config/DefaultEngine.ini` (start maps)
+- Story 007 flow save files from the first pass: `Public/Flow/CampSaveGame.h`, `CampSaveSubsystem.h` and matching `Private/Flow/`
 
 ## QA Test Cases
 
@@ -72,7 +71,7 @@
 **Story Type**: UI
 **Required evidence**: a retained screenshot of each screen touched, in `production/qa/evidence/`
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created: `production/qa/evidence/story-007-flow-save-ui/` (camp x3, run HUD, level-up panel, extraction bar with bag, result screen)
 
 ---
 
@@ -80,3 +79,12 @@
 
 - Depends on: `production/epics/directors-cut/story-001-loot-bag-heat.md`, `production/epics/directors-cut/story-002-extraction-death.md`, `production/epics/directors-cut/story-004-run-progression.md`, `production/epics/directors-cut/story-005-pre-run-editing.md`, `production/epics/directors-cut/story-006-camp-meta.md`
 - Unlocks: None
+
+---
+
+## Completion Notes
+**Completed**: 2026-11-13
+**Criteria**: 9/9 passing (full loop, save restore and two runs confirmed by the user's own playthrough; every screen has a retained screenshot)
+**Deviations**: ADVISORY: no separate search progress bar, because searching a crate is instant (the extraction bar exists). FIXED after the first close: the old debug text ("EXTRACTING 31%", "Searched: ...") that overlapped the HP bar now goes through `UHudMessageSubsystem` and shows in a top-centre message area (`09-`, `10-`); the camp panel now fills the free height and START RUN is pinned at the bottom (`08-`). Final screens: `08-` to `11-`. OUT OF SCOPE: `DefaultEngine.ini` start-map settings.
+**Test Evidence**: waived at qa.level minimal; screenshots in `production/qa/evidence/story-007-flow-save-ui/`
+**Reviewed by**: self, no independent review

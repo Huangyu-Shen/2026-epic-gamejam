@@ -10,9 +10,6 @@
 #include "TimerManager.h"
 #include "UObject/ConstructorHelpers.h"
 
-/** Fixed on-screen key so the progress text replaces itself each tick. */
-static constexpr uint64 ExtractionMessageKey = 1002;
-
 AExtractionZone::AExtractionZone()
 {
 	PrimaryActorTick.bCanEverTick = true;
@@ -95,10 +92,6 @@ void AExtractionZone::HandleEndOverlap(UPrimitiveComponent* OverlappedComponent,
 
 void AExtractionZone::Interrupt()
 {
-	if (GEngine)
-	{
-		GEngine->RemoveOnScreenDebugMessage(ExtractionMessageKey);
-	}
 	if (Progress > 0.0f)
 	{
 		Progress = 0.0f;
@@ -126,11 +119,6 @@ void AExtractionZone::Tick(float DeltaSeconds)
 	{
 		Progress = FMath::Min(1.0f, Progress + DeltaSeconds / Tuning.ExtractionSeconds);
 		OnExtractionProgress.Broadcast(Progress);
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(ExtractionMessageKey, 0.0f, FColor::Cyan,
-				FString::Printf(TEXT("EXTRACTING %d%%"), FMath::FloorToInt(Progress * 100.0f)));
-		}
 		if (Progress >= 1.0f)
 		{
 			Progress = 0.0f;

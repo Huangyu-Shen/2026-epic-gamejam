@@ -60,6 +60,16 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Camp")
 	void ResetCamp();
 
+	/** Iron one dismantled relic yields. */
+	UFUNCTION(BlueprintPure, Category = "Camp")
+	int32 GetRelicDismantleIron() const { return RelicDismantleIron; }
+
+	/**
+	 * Film cards slotted in the editing room, kept here so they survive the camp -> run level change
+	 * (the film-card subsystem lives in the world and is rebuilt per level).
+	 */
+	TArray<FName> PendingFilmCards;
+
 	/** The building's data row (fallback defaults if the table is missing). */
 	const FBuildingRow& GetBuildingRow(EBuildingType Type) const;
 
