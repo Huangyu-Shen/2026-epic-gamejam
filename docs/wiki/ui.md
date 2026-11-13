@@ -1,78 +1,78 @@
-# 界面（UI）
+# UI
 
-故事 007 的产出。全部用 C++ 写成，没有 widget 蓝图：每个控件在 `RebuildWidget()` 里用 `WidgetTree->ConstructWidget<T>()` 搭树。这样界面和代码在同一处审查，缺点是改外观要重新编译。路径省略前缀 `Game_01 5.8/Source/Game_01/`。
+The output of story 007. Everything is written in C++ with no widget blueprints: each widget builds its tree in `RebuildWidget()` using `WidgetTree->ConstructWidget<T>()`. This way the UI and the code are reviewed in one place, at the cost that changing the look requires recompiling. Paths omit the prefix `Game_01 5.8/Source/Game_01/`.
 
-## 1. 文件
+## 1. Files
 
-| 文件 | 内容 |
+| File | Content |
 |---|---|
-| [Public/UI/DirectorUi.h](../../Game_01%205.8/Source/Game_01/Public/UI/DirectorUi.h)、[Private/UI/DirectorUi.cpp](../../Game_01%205.8/Source/Game_01/Private/UI/DirectorUi.cpp) | 共用构件：面板、文字、进度条、按钮、提示区、调色板 |
-| [RunHudWidget](../../Game_01%205.8/Source/Game_01/Private/UI/RunHudWidget.cpp) | 跑图界面 |
-| [CampWidget](../../Game_01%205.8/Source/Game_01/Private/UI/CampWidget.cpp) | 营地界面 |
-| [HudMessageSubsystem](../../Game_01%205.8/Source/Game_01/Private/UI/HudMessageSubsystem.cpp) | 屏幕提示的数据源 |
+| [Public/UI/DirectorUi.h](../../Game_01%205.8/Source/Game_01/Public/UI/DirectorUi.h), [Private/UI/DirectorUi.cpp](../../Game_01%205.8/Source/Game_01/Private/UI/DirectorUi.cpp) | Shared building blocks: panel, text, progress bar, button, toast area, palette |
+| [RunHudWidget](../../Game_01%205.8/Source/Game_01/Private/UI/RunHudWidget.cpp) | Run UI |
+| [CampWidget](../../Game_01%205.8/Source/Game_01/Private/UI/CampWidget.cpp) | Camp UI |
+| [HudMessageSubsystem](../../Game_01%205.8/Source/Game_01/Private/UI/HudMessageSubsystem.cpp) | Data source for on-screen messages |
 
-## 2. 共用构件 `DirectorUi`
+## 2. Shared Building Blocks `DirectorUi`
 
-一套样式（浅色字、半透明深色面板），之后换美术只改这里。
+One style (light text, semi-transparent dark panels). When the art is swapped later, only this needs to change.
 
-| 名称 | 签名 | 行为 |
+| Name | Signature | Behavior |
 |---|---|---|
-| `MakePanel` | `UPanelWidget* MakePanel(UWidgetTree*, UCanvasPanel*, const FUiPlacement&, bool bScroll = false, UWidget** OutRoot = nullptr)` | 在画布上加一个带边框的面板，返回放内容的竖排框（或滚动框）；`OutRoot` 返回最外层边框，用来整块显示或隐藏 |
-| `FUiPlacement` | `Anchor`、`Alignment`、`Position`、`Size`、`bFillHeight`、`BottomMargin` | `Size` 某分量为 0 表示按内容撑开；`bFillHeight` 为真时锚点固定在左侧、纵向从 `Position.Y` 拉伸到距底 `BottomMargin`，此时忽略 `Anchor` 和 `Alignment` |
-| `AddText` | `UTextBlock* AddText(Tree, Parent, Text, Size = 18, Color)` | 自动换行，字号通过 `FSlateFontInfo` 设置 |
-| `AddBar` | `UProgressBar* AddBar(Tree, Parent, Fill, Width, Height)` | 外面包一个 `USizeBox` 固定尺寸 |
-| `AddButton` | `UUiActionButton* AddButton(Tree, Parent, Caption, Action, Index = 0)` | 按钮带一个文字标签，已调用 `Init` |
-| `ReturnFocusToGame` | `void ReturnFocusToGame()` | `SetAllUserFocusToGameViewport()`；点完按钮必须调，否则按钮保持键盘焦点，后面按 Space（闪避）会"按下"它 |
+| `MakePanel` | `UPanelWidget* MakePanel(UWidgetTree*, UCanvasPanel*, const FUiPlacement&, bool bScroll = false, UWidget** OutRoot = nullptr)` | Adds a bordered panel to the canvas and returns the vertical box (or scroll box) that holds the content. `OutRoot` returns the outermost border, used to show or hide the whole block |
+| `FUiPlacement` | `Anchor`, `Alignment`, `Position`, `Size`, `bFillHeight`, `BottomMargin` | A zero component of `Size` means size to content. When `bFillHeight` is true the anchor is fixed to the left and the panel stretches vertically from `Position.Y` to `BottomMargin` above the bottom, ignoring `Anchor` and `Alignment` |
+| `AddText` | `UTextBlock* AddText(Tree, Parent, Text, Size = 18, Color)` | Wraps automatically, font size set through `FSlateFontInfo` |
+| `AddBar` | `UProgressBar* AddBar(Tree, Parent, Fill, Width, Height)` | Wrapped in a `USizeBox` to fix the size |
+| `AddButton` | `UUiActionButton* AddButton(Tree, Parent, Caption, Action, Index = 0)` | The button carries a text label and `Init` has already been called |
+| `ReturnFocusToGame` | `void ReturnFocusToGame()` | `SetAllUserFocusToGameViewport()`. It must be called after a button click, otherwise the button keeps keyboard focus and a later Space press (dodge) would "press" it |
 
-`UUiActionButton`（继承 `UButton`）：点击后广播 `OnAction(FName Action, int32 Index)`，然后调 `ReturnFocusToGame()`。拥有者把 `OnAction` 绑定到自己的 `HandleAction`，用 `Action` 名字分辨是哪个按钮，用 `Index` 带下标（建筑类型、遗物下标、卡片下标）。
+`UUiActionButton` (inherits `UButton`): after a click it broadcasts `OnAction(FName Action, int32 Index)`, then calls `ReturnFocusToGame()`. The owner binds `OnAction` to its own `HandleAction`, uses the `Action` name to tell which button it was, and uses `Index` to carry an index (building type, relic index, card index).
 
-`FToastPanel`：顶部居中的提示区，4 行文字，每帧 `Update(GameInstance)` 从 `UHudMessageSubsystem::GetActive()` 取尚未过期的消息显示，没有则整块隐藏。
+`FToastPanel`: the toast area at top center, 4 lines of text. Every frame `Update(GameInstance)` takes the not-yet-expired messages from `UHudMessageSubsystem::GetActive()` and shows them, and hides the whole block when there are none.
 
-**为什么用 `RebuildWidget` 而不是 `NativeOnInitialized`**：没有蓝图的 `UUserWidget` 子类，`WidgetTree` 在 `RebuildWidget` 时已经可用，且早于 `NativeConstruct`，是搭树最稳的时机。
+**Why `RebuildWidget` and not `NativeOnInitialized`**: for a `UUserWidget` subclass without a blueprint, the `WidgetTree` is already usable at `RebuildWidget` time and that is earlier than `NativeConstruct`, so it is the most reliable moment to build the tree.
 
-## 3. 跑图界面 `URunHudWidget`
+## 3. Run UI `URunHudWidget`
 
-创建者：[`AHeroCharacter::CreateHud`](../../Game_01%205.8/Source/Game_01/Private/Player/HeroCharacter.cpp)。每帧 `NativeTick` 读子系统刷新，不保存游戏状态。
+Created by [`AHeroCharacter::CreateHud`](../../Game_01%205.8/Source/Game_01/Private/Player/HeroCharacter.cpp). Every frame `NativeTick` reads the subsystems to refresh, and it does not store game state.
 
-| 区域 | 位置 | 内容 | 数据来源 |
+| Area | Position | Content | Data source |
 |---|---|---|---|
-| 状态 | 左上 | 血量文字和红条、等级与 XP 文字和蓝条、热度文字（含刷怪压力倍率）和橙条 | `UHealthComponent`、`URunProgressionSubsystem`、`ULootHeatSubsystem` |
-| 背包 | 右上 | `已用/容量 slots  Iron N`，下面列 `[1] Aegis` 这样的遗物 | `ULootBagComponent` |
-| 提示 | 顶部居中 | 搜刮、拾取被拒、使用遗物等短消息 | `UHudMessageSubsystem` |
-| 撤离条 | 底部居中 | `EXTRACTING - stay in the zone` 加绿条；只有进度 > 0 才显示 | `AExtractionZone::GetProgress()`（第一次找不到时用 `TActorIterator` 取第一个） |
-| 操作提示 | 左下 | `WASD move  Space dodge  E search a crate  1-6 use a relic` | 静态文字 |
-| 升级面板 | 居中 | 标题加 3 个按钮；只有 `IsOfferPending()` 且一局进行中才显示；多余的按钮折叠 | `URunProgressionSubsystem::GetOfferDescriptions()` |
-| 结算页 | 居中 | `EXTRACTED` 或 `YOU DIED`、数字、`Return to Camp` 按钮；一局结束后显示 | `URunOutcomeSubsystem::GetLastResult()` |
+| Status | Top left | Health text and red bar, level and XP text and blue bar, heat text (including the spawn pressure multiplier) and orange bar | `UHealthComponent`, `URunProgressionSubsystem`, `ULootHeatSubsystem` |
+| Bag | Top right | `used/capacity slots  Iron N`, below it a list of relics such as `[1] Aegis` | `ULootBagComponent` |
+| Toasts | Top center | Short messages for searching, a rejected pickup, using a relic, etc. | `UHudMessageSubsystem` |
+| Extraction bar | Bottom center | `EXTRACTING - stay in the zone` plus a green bar. Shown only when progress is > 0 | `AExtractionZone::GetProgress()` (when it is not found the first time, `TActorIterator` takes the first one) |
+| Control hints | Bottom left | `WASD move  Space dodge  E search a crate  1-6 use a relic` | Static text |
+| Level-up panel | Center | A title plus 3 buttons. Shown only when `IsOfferPending()` is true and a run is in progress. Extra buttons are collapsed | `URunProgressionSubsystem::GetOfferDescriptions()` |
+| Results page | Center | `EXTRACTED` or `YOU DIED`, the numbers, and a `Return to Camp` button. Shown after a run ends | `URunOutcomeSubsystem::GetLastResult()` |
 
-动作：`Offer`（`PickOffer(Index)`）、`Camp`（`OpenLevel(L_Camp)`）。
+Actions: `Offer` (`PickOffer(Index)`), `Camp` (`OpenLevel(L_Camp)`).
 
-没有搜索进度条：容器搜索是瞬间完成的（`ALootContainer::Interact` 同步返回），只做了撤离进度条。
+There is no search progress bar: container searching completes instantly (`ALootContainer::Interact` returns synchronously), so only the extraction progress bar was built.
 
-## 4. 营地界面 `UCampWidget`
+## 4. Camp UI `UCampWidget`
 
-创建者：[`ACampPawn::BeginPlay`](../../Game_01%205.8/Source/Game_01/Private/Camp/CampPawn.cpp)。左侧一个撑满高度的滚动面板（距底留 90 像素），左下角另一个固定面板放 START RUN，所以它永远点得到。
+Created by [`ACampPawn::BeginPlay`](../../Game_01%205.8/Source/Game_01/Private/Camp/CampPawn.cpp). On the left is one scroll panel that fills the height (leaving 90 pixels at the bottom), and in the bottom left a separate fixed panel holds START RUN, so it can always be clicked.
 
-面板内容：Iron、最近一次操作的结果文字、建筑（名称、等级、当前加成、升级按钮，满级时禁用）、仓库（每个遗物一个拆解按钮）、剪辑室（每张卡一行说明加"加入/移出"按钮）。
+Panel content: Iron, the result text of the most recent action, buildings (name, level, current bonus, upgrade button, disabled at max level), the warehouse (one dismantle button per relic), and the editing room (one row per card with a description plus an "add/remove" button).
 
-**状态签名**：`MakeSignature()` 把提示文字、Iron、仓库遗物、建筑等级、待用卡片拼成一个字符串；`NativeTick` 发现它变了才调 `Rebuild()` 清空重建所有行。这样不需要给每个控件绑变化事件，缺点是每次变化整个面板重建，按钮的悬停状态会丢。
+**State signature**: `MakeSignature()` joins the message text, Iron, warehouse relics, building levels and pending cards into one string. `NativeTick` calls `Rebuild()` to clear and rebuild all rows only when it sees the signature has changed. This avoids having to bind change events for every widget, at the cost that the whole panel is rebuilt on every change and button hover state is lost.
 
-动作：`Upgrade`（`TryUpgrade`）、`Dismantle`（`DismantleRelic`）、`Card`（加入或移出）、`Start`（`OpenLevel(L_Greybox)`）。
+Actions: `Upgrade` (`TryUpgrade`), `Dismantle` (`DismantleRelic`), `Card` (add or remove), `Start` (`OpenLevel(L_Greybox)`).
 
-3D 场景里点建筑也能升级（`ACampPawn::OnClick`，用 `GetHitResultUnderCursor`），结果走 `UHudMessageSubsystem` 的提示区。
+Clicking a building in the 3D scene also upgrades it (`ACampPawn::OnClick`, using `GetHitResultUnderCursor`), and the result goes to the toast area of `UHudMessageSubsystem`.
 
-## 5. 输入模式
+## 5. Input Mode
 
-两个界面都用 `FInputModeGameAndUI`（`DoNotLock`、`SetHideCursorDuringCapture(false)`）并显示鼠标：界面根控件设为 `SelfHitTestInvisible`，只有按钮和面板吃点击，其余点击穿透到 3D 场景（营地点建筑要用）。
+Both UIs use `FInputModeGameAndUI` (`DoNotLock`, `SetHideCursorDuringCapture(false)`) and show the mouse: the UI root widget is set to `SelfHitTestInvisible`, so only buttons and panels take clicks and all other clicks pass through to the 3D scene (needed for clicking buildings in the camp).
 
-## 6. 屏幕提示 `UHudMessageSubsystem`
+## 6. On-Screen Messages `UHudMessageSubsystem`
 
-[HudMessageSubsystem.h](../../Game_01%205.8/Source/Game_01/Public/UI/HudMessageSubsystem.h)。GameInstance 子系统，保存最近 4 条消息。
+[HudMessageSubsystem.h](../../Game_01%205.8/Source/Game_01/Public/UI/HudMessageSubsystem.h). A GameInstance subsystem that keeps the most recent 4 messages.
 
-| 函数 | 行为 |
+| Function | Behavior |
 |---|---|
-| `static void Post(const UObject* WorldContext, const FString& Text, const FLinearColor& Color, float Seconds = 2.5f)` | 没有 World 或 GameInstance（比如编辑器预览世界）时什么都不做 |
-| `TArray<FHudMessage> GetActive() const` | 过滤掉已过期的，从旧到新 |
+| `static void Post(const UObject* WorldContext, const FString& Text, const FLinearColor& Color, float Seconds = 2.5f)` | Does nothing when there is no World or GameInstance (for example an editor preview world) |
+| `TArray<FHudMessage> GetActive() const` | Filters out expired ones, oldest to newest |
 
-时间用 `FPlatformTime::Seconds()`（真实时间），所以游戏暂停时消息也会过期。调用点：`ULootBagComponent`（拾取被拒、使用遗物）、`ALootContainer`（搜刮、已搜过）、`AHeroCharacter`（无遗物）、`ACampPawn`（点击升级）。
+Time uses `FPlatformTime::Seconds()` (real time), so messages also expire while the game is paused. Call sites: `ULootBagComponent` (pickup rejected, using a relic), `ALootContainer` (searching, already searched), `AHeroCharacter` (no relic), `ACampPawn` (click upgrade).
 
-这套消息取代了引擎的 `AddOnScreenDebugMessage`，后者固定画在屏幕左上角，会压在血条上。
+This message system replaces the engine's `AddOnScreenDebugMessage`, which is always drawn at the top left of the screen and would sit on top of the health bar.

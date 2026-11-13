@@ -1,56 +1,56 @@
-# 整体架构
+# Overall Architecture
 
-对应代码：`main` 分支提交 `cd44b7f`（2026-11-13，故事 001–007 全部完成）。源码根目录 [`Game_01 5.8/Source/Game_01/`](../../Game_01%205.8/Source/Game_01/)，下文简称 `Source/`。
+Corresponds to commit `cd44b7f` on the `main` branch (2026-11-13, stories 001-007 all done). Source root: [`Game_01 5.8/Source/Game_01/`](../../Game_01%205.8/Source/Game_01/), referred to below as `Source/`.
 
-## 1. 技术栈
+## 1. Tech stack
 
-| 层 | 选择 | 位置 |
+| Layer | Choice | Location |
 |---|---|---|
-| 引擎 | Unreal Engine 5.8（本机 5.8.4） | [Game_01.uproject](../../Game_01%205.8/Game_01.uproject) |
-| 语言 | C++20（引擎 5.8 最低要求），全部玩法和界面都是 C++，没有蓝图类 | [Source/](../../Game_01%205.8/Source/Game_01/) |
-| 界面 | UMG，用 C++ 在 `RebuildWidget` 里搭控件树，没有 widget 蓝图 | [Public/UI](../../Game_01%205.8/Source/Game_01/Public/UI/) |
-| 数据 | 9 张 DataTable（`Content/Data/`），由项目设置 `Director Tuning` 引用 | [DirectorTuningSettings.h](../../Game_01%205.8/Source/Game_01/Public/Game/DirectorTuningSettings.h) |
-| 存档 | `USaveGame`，单槽 `CampSave` | [CampSaveGame.h](../../Game_01%205.8/Source/Game_01/Public/Flow/CampSaveGame.h) |
-| 输入 | 原始按键绑定（`BindKey`），没有输入资产 | [HeroCharacter.cpp](../../Game_01%205.8/Source/Game_01/Private/Player/HeroCharacter.cpp) |
-| AI 协作 | Unreal MCP 插件（`ModelContextProtocol`、`AllToolsets`） | [.uproject](../../Game_01%205.8/Game_01.uproject) |
+| Engine | Unreal Engine 5.8 (5.8.4 on this machine) | [Game_01.uproject](../../Game_01%205.8/Game_01.uproject) |
+| Language | C++20 (the engine 5.8 minimum); all gameplay and UI are C++, no Blueprint classes | [Source/](../../Game_01%205.8/Source/Game_01/) |
+| UI | UMG; the widget tree is built in C++ inside `RebuildWidget`, no widget Blueprints | [Public/UI](../../Game_01%205.8/Source/Game_01/Public/UI/) |
+| Data | 9 DataTables (`Content/Data/`), referenced by the project setting `Director Tuning` | [DirectorTuningSettings.h](../../Game_01%205.8/Source/Game_01/Public/Game/DirectorTuningSettings.h) |
+| Save | `USaveGame`, single slot `CampSave` | [CampSaveGame.h](../../Game_01%205.8/Source/Game_01/Public/Flow/CampSaveGame.h) |
+| Input | Raw key bindings (`BindKey`), no input assets | [HeroCharacter.cpp](../../Game_01%205.8/Source/Game_01/Private/Player/HeroCharacter.cpp) |
+| AI collaboration | Unreal MCP plugins (`ModelContextProtocol`, `AllToolsets`) | [.uproject](../../Game_01%205.8/Game_01.uproject) |
 
-游戏是奇幻斜俯视的"割草 × 搜打撤 × 薄营地"：在跑图地图里搜刮、打怪、升级，带着背包撤离；撤离的 Iron 和遗物进营地，营地升级建筑，下一局生效。
+The game is a fantasy angled-top-down "mow-down x search-and-extract x thin camp" game: on the run map you loot, fight and level up, then extract with your bag; extracted Iron and relics go into camp, where buildings are upgraded and take effect from the next run.
 
-## 2. 两张地图，两个游戏模式
+## 2. Two maps, two game modes
 
-| 地图 | 游戏模式 | 默认 Pawn | 作用 |
+| Map | Game mode | Default Pawn | Role |
 |---|---|---|---|
-| `L_Camp`（默认启动图） | [`ACampGameMode`](../../Game_01%205.8/Source/Game_01/Private/Camp/CampGameMode.cpp) | [`ACampPawn`](../../Game_01%205.8/Source/Game_01/Private/Camp/CampPawn.cpp) | 营地：不可行走，鼠标点击建筑，左侧面板操作 |
-| `L_Greybox` | [`ADirectorGameMode`](../../Game_01%205.8/Source/Game_01/Private/Game/DirectorGameMode.cpp) | [`AHeroCharacter`](../../Game_01%205.8/Source/Game_01/Private/Player/HeroCharacter.cpp) | 跑图：移动、自动攻击、搜刮、撤离 |
+| `L_Camp` (default startup map) | [`ACampGameMode`](../../Game_01%205.8/Source/Game_01/Private/Camp/CampGameMode.cpp) | [`ACampPawn`](../../Game_01%205.8/Source/Game_01/Private/Camp/CampPawn.cpp) | Camp: not walkable, click buildings with the mouse, operate from the left panel |
+| `L_Greybox` | [`ADirectorGameMode`](../../Game_01%205.8/Source/Game_01/Private/Game/DirectorGameMode.cpp) | [`AHeroCharacter`](../../Game_01%205.8/Source/Game_01/Private/Player/HeroCharacter.cpp) | Run: move, auto-attack, loot, extract |
 
-游戏模式不在 ini 里设置，是每张地图的 World Settings 里指定的（PIE 日志里能看到 `Game class is 'DirectorGameMode'`）。
-地图名 `L_Camp`、`L_Greybox` 在代码里写死：[`CampWidget.cpp`](../../Game_01%205.8/Source/Game_01/Private/UI/CampWidget.cpp) 的 `Start` 动作、[`RunHudWidget.cpp`](../../Game_01%205.8/Source/Game_01/Private/UI/RunHudWidget.cpp) 的 `Camp` 动作。
+The game mode is not set in an ini; it is specified in each map's World Settings (the PIE log shows `Game class is 'DirectorGameMode'`).
+The map names `L_Camp` and `L_Greybox` are hardcoded: in the `Start` action of [`CampWidget.cpp`](../../Game_01%205.8/Source/Game_01/Private/UI/CampWidget.cpp) and the `Camp` action of [`RunHudWidget.cpp`](../../Game_01%205.8/Source/Game_01/Private/UI/RunHudWidget.cpp).
 
-## 3. 分层与依赖图
+## 3. Layers and dependency graph
 
 ```mermaid
 graph TD
-  subgraph 会话级 GameInstance 子系统 跨关卡存在
-    Stock[UCampStockSubsystem<br/>Iron 与仓库遗物]
-    Meta[UCampMetaSubsystem<br/>建筑等级与加成<br/>待用胶片卡]
-    Save[UCampSaveSubsystem<br/>单槽存档]
-    Msg[UHudMessageSubsystem<br/>屏幕提示]
+  subgraph Session-level GameInstance subsystems persist across levels
+    Stock[UCampStockSubsystem<br/>Iron and stored relics]
+    Meta[UCampMetaSubsystem<br/>Building levels and bonuses<br/>Pending film cards]
+    Save[UCampSaveSubsystem<br/>Single-slot save]
+    Msg[UHudMessageSubsystem<br/>On-screen messages]
   end
-  subgraph 关卡级 World 子系统 每张地图重建
-    Run[URunOutcomeSubsystem<br/>一局的开始与结束]
+  subgraph Level-level World subsystems rebuilt on every map
+    Run[URunOutcomeSubsystem<br/>Start and end of a run]
     Heat[ULootHeatSubsystem]
-    Prog[URunProgressionSubsystem<br/>XP 升级 武器 被动]
+    Prog[URunProgressionSubsystem<br/>XP level-up weapons passives]
     Spawn[UEnemySpawnSubsystem]
     Mgr[UEnemyManagerSubsystem]
     Cards[UFilmCardSubsystem]
   end
-  subgraph 角色与组件
+  subgraph Characters and components
     Hero[AHeroCharacter]
     Bag[ULootBagComponent]
     HP[UHealthComponent]
     Weapon[UAutoWeaponComponent]
   end
-  UI[UI 控件<br/>RunHudWidget CampWidget]
+  UI[UI widgets<br/>RunHudWidget CampWidget]
   Hero --> Bag & HP & Weapon
   Bag --> Heat
   Bag --> Msg
@@ -67,30 +67,30 @@ graph TD
   UI --> Hero & Run & Prog & Heat & Cards & Meta & Stock & Msg
 ```
 
-依赖没有自动检查（没有架构测试，也没有 lint 规则）；方向靠约定：
+Dependencies are not checked automatically (there are no architecture tests and no lint rules); the direction is kept by convention:
 
-- `Loot/` 是最底层：除了往 `UHudMessageSubsystem` 发提示（`LootBagComponent`、`LootContainer`），不引用任何其他玩法目录，只通过委托向上暴露事件。`Combat/` 不是底层：武器组件要读成长、敌人管理器和营地加成（统计见 [dependencies.md](dependencies.md#1-模块之间怎么依赖)）。
-- 界面只读子系统和组件，改状态一律通过子系统的公开函数（升级、拆解、选卡、选升级项）。
-- 营地状态（Iron、遗物、建筑等级）放在 GameInstance 子系统，因为 `OpenLevel` 会销毁整个 World；每局状态（敌人、热度、XP）放在 World 子系统，换图自然清零。
+- `Loot/` is the lowest layer: apart from sending messages to `UHudMessageSubsystem` (`LootBagComponent`, `LootContainer`), it references no other gameplay directory and exposes events upward only through delegates. `Combat/` is not a bottom layer: the weapon component has to read progression, the enemy manager and camp bonuses (see the tally in [dependencies.md](dependencies.md#1-how-modules-depend-on-each-other)).
+- The UI only reads subsystems and components; all state changes go through the subsystems' public functions (upgrade, dismantle, pick a card, pick a level-up option).
+- Camp state (Iron, relics, building levels) lives in a GameInstance subsystem because `OpenLevel` destroys the whole World; per-run state (enemies, heat, XP) lives in World subsystems and is naturally cleared on a map change.
 
-## 4. 运行时结构
+## 4. Runtime structure
 
-| 对象 | 生命周期 | 说明 |
+| Object | Lifetime | Notes |
 |---|---|---|
-| GameInstance 子系统 | 整个进程 | `CampStock`、`CampMeta`、`CampSave`、`HudMessage` |
-| World 子系统 | 一张地图 | `RunOutcome`、`LootHeat`、`RunProgression`（可 Tick）、`EnemySpawn`（可 Tick）、`EnemyManager`（可 Tick）、`FilmCard` |
-| 敌人 | 一局 | [`AEnemy`](../../Game_01%205.8/Source/Game_01/Private/Enemies/Enemy.cpp) 不 Tick、无碰撞、无移动组件；[`UEnemyManagerSubsystem`](../../Game_01%205.8/Source/Game_01/Private/Enemies/EnemyManagerSubsystem.cpp) 在一个循环里移动全部敌人 |
-| UMG 控件 | 一张地图 | 由 `AHeroCharacter::CreateHud` 或 `ACampPawn::BeginPlay` 创建 |
+| GameInstance subsystems | The whole process | `CampStock`, `CampMeta`, `CampSave`, `HudMessage` |
+| World subsystems | One map | `RunOutcome`, `LootHeat`, `RunProgression` (can Tick), `EnemySpawn` (can Tick), `EnemyManager` (can Tick), `FilmCard` |
+| Enemies | One run | [`AEnemy`](../../Game_01%205.8/Source/Game_01/Private/Enemies/Enemy.cpp) does not Tick and has no collision or movement component; [`UEnemyManagerSubsystem`](../../Game_01%205.8/Source/Game_01/Private/Enemies/EnemyManagerSubsystem.cpp) moves all enemies in a single loop |
+| UMG widgets | One map | Created by `AHeroCharacter::CreateHud` or `ACampPawn::BeginPlay` |
 
-"软暂停"：升级三选一出现时，`UEnemyManagerSubsystem`、`UEnemySpawnSubsystem`、`UAutoWeaponComponent`、`URunProgressionSubsystem` 的 Tick 都检查 `IsOfferPending()` 直接返回，英雄的 `CanAct()` 也返回 false。引擎时间并没有暂停。
+"Soft pause": while the three-way level-up choice is shown, the Ticks of `UEnemyManagerSubsystem`, `UEnemySpawnSubsystem`, `UAutoWeaponComponent` and `URunProgressionSubsystem` all check `IsOfferPending()` and return immediately, and the hero's `CanAct()` also returns false. Engine time is not paused.
 
-## 5. 关键数据流
+## 5. Key data flows
 
-### 5.1 一局：从营地出发到回到营地
+### 5.1 One run: from leaving camp to returning to camp
 
 ```mermaid
 sequenceDiagram
-  participant P as 玩家
+  participant P as Player
   participant C as CampWidget
   participant L as OpenLevel
   participant H as AHeroCharacter
@@ -98,78 +98,78 @@ sequenceDiagram
   participant R as URunOutcomeSubsystem
   participant S as UCampSaveSubsystem
   participant HUD as RunHudWidget
-  P->>C: 点 START RUN
+  P->>C: Click START RUN
   C->>L: OpenLevel(L_Greybox)
-  L->>F: Initialize 从 CampMeta.PendingFilmCards 恢复卡片
+  L->>F: Initialize restores cards from CampMeta.PendingFilmCards
   L->>H: BeginPlay
-  H->>H: StartRun 清敌人 清热度 清背包<br/>设最大生命 = 基础 + Clinic 加成
-  H->>F: ApplyActiveCards 强制尸潮或 Boss 设收益倍率
+  H->>H: StartRun clears enemies, heat, bag<br/>sets max health = base + Clinic bonus
+  H->>F: ApplyActiveCards forces horde or Boss, sets earnings multiplier
   H->>HUD: CreateHud
-  P->>H: 搜刮 打怪 升级 站进撤离区
-  H->>R: ReportExtracted 或 HandleDied 调 ReportPlayerDied
-  R->>R: 结算 Compute 加入 Stock
+  P->>H: Loot, fight, level up, stand in the extraction zone
+  H->>R: ReportExtracted, or HandleDied calls ReportPlayerDied
+  R->>R: Settle: Compute, add to Stock
   R->>S: SaveNow
-  R-->>HUD: OnRunEnded 结算页出现
-  F-->>F: HandleRunEnded 清空卡片
-  P->>HUD: 点 Return to Camp
+  R-->>HUD: OnRunEnded settlement page appears
+  F-->>F: HandleRunEnded clears cards
+  P->>HUD: Click Return to Camp
   HUD->>L: OpenLevel(L_Camp)
 ```
 
-要点：
+Key points:
 
-- 结算只会发生一次：[`URunOutcomeSubsystem::EndRun`](../../Game_01%205.8/Source/Game_01/Private/Extraction/RunOutcomeSubsystem.cpp) 开头检查 `bRunActive`，撤离和死亡同一帧发生时先到先得。
-- 存档在 `EndRun` 里显式写一次，因为"死亡且背包没有 Iron"时库存没变，`OnStockChanged` 不会触发存档监听。
-- 营地加成不累积：每局 `StartRun` 用 `GetBaseMaxHealth() + Clinic 加成` 重新设值；Smithy 加成在每次开火时实时读取。
+- Settlement happens only once: [`URunOutcomeSubsystem::EndRun`](../../Game_01%205.8/Source/Game_01/Private/Extraction/RunOutcomeSubsystem.cpp) checks `bRunActive` at the start, so if extraction and death happen in the same frame, first come first served.
+- The save is written explicitly in `EndRun`, because when the player dies with no Iron in the bag the stock does not change and `OnStockChanged` would not trigger the save listener.
+- Camp bonuses do not accumulate: every run's `StartRun` resets the value to `GetBaseMaxHealth() + Clinic bonus`; the Smithy bonus is read live on every shot.
 
-### 5.2 营地升级
+### 5.2 Camp upgrade
 
 ```mermaid
 sequenceDiagram
-  participant P as 玩家
+  participant P as Player
   participant W as CampWidget
   participant M as UCampMetaSubsystem
   participant S as UCampStockSubsystem
   participant V as UCampSaveSubsystem
-  P->>W: 点 Upgrade
-  W->>M: TryUpgrade(类型, 原因)
-  M->>S: SpendIron(费用)
-  S-->>M: 够则扣除并广播 OnStockChanged
+  P->>W: Click Upgrade
+  W->>M: TryUpgrade(type, reason)
+  M->>S: SpendIron(cost)
+  S-->>M: If enough, deduct and broadcast OnStockChanged
   M-->>V: OnMetaChanged
   S-->>V: OnStockChanged
   V->>V: SaveNow
-  M-->>W: 等级变化 面板签名变化后重建
+  M-->>W: Level changes; panel rebuilds when its signature changes
 ```
 
-### 5.3 升级三选一
+### 5.3 Three-way level-up choice
 
-击杀 → `UEnemyManagerSubsystem::OnEnemyKilled` → `URunProgressionSubsystem::HandleEnemyKilled` 生成 `AXpPickup` → 每帧磁吸和拾取 → `GrantXp` → `CheckLevelUp` → `GenerateOffer`（Fisher-Yates 洗牌取前三）→ `RunHudWidget` 读 `GetOfferDescriptions()` 显示按钮 → `PickOffer(Index)` → `ApplyOption`。
+Kill -> `UEnemyManagerSubsystem::OnEnemyKilled` -> `URunProgressionSubsystem::HandleEnemyKilled` spawns an `AXpPickup` -> magnet and pickup every frame -> `GrantXp` -> `CheckLevelUp` -> `GenerateOffer` (Fisher-Yates shuffle, take the first three) -> `RunHudWidget` reads `GetOfferDescriptions()` to show buttons -> `PickOffer(Index)` -> `ApplyOption`.
 
-## 6. 设计原则
+## 6. Design principles
 
-1. **数据驱动，代码给兜底**：所有数值来自 `Director Tuning` 引用的 DataTable；表或行缺失时静默使用 C++ 成员初始值，游戏照样能跑。例：[`UEnemySpawnSubsystem::Initialize`](../../Game_01%205.8/Source/Game_01/Private/Enemies/EnemySpawnSubsystem.cpp)。
-2. **行键是身份**：表里行的 `Kind` / `BuildingType` / `WeaponType` 字段会被行名覆盖，防止漏填的单元格把 Boss 变成 Grunt（`BossTuning.Kind = EEnemyKind::Boss` 等）。
-3. **一个循环管全部敌人**：敌人不 Tick，管理器单循环做追击、分格推开、接触伤害，目标 150 敌人帧率；故事 003 实测见 [build-and-run.md](build-and-run.md#6-性能探针--perfprobe)。
-4. **难度只来自玩家选的卡**：胶片卡强制尸潮或 Boss；刷怪速率只受时间和热度影响，没有随机难度。
-5. **界面不拥有状态**：HUD 和营地面板每帧读子系统，营地面板用"状态签名"检测变化再重建行。
-6. **灰盒优先**：全部几何体是引擎自带立方体和圆柱，视觉区分靠材质的 `Color` 参数（有缺陷，见 [known-issues.md](known-issues.md)）。
+1. **Data-driven, with code as the fallback**: all values come from the DataTables referenced by `Director Tuning`; when a table or row is missing, the C++ member initial values are silently used and the game still runs. Example: [`UEnemySpawnSubsystem::Initialize`](../../Game_01%205.8/Source/Game_01/Private/Enemies/EnemySpawnSubsystem.cpp).
+2. **The row key is the identity**: the `Kind` / `BuildingType` / `WeaponType` fields of a table row are overwritten by the row name, to stop a forgotten cell from turning a Boss into a Grunt (`BossTuning.Kind = EEnemyKind::Boss`, and so on).
+3. **One loop manages all enemies**: enemies do not Tick; the manager does chasing, grid-based push-apart and contact damage in a single loop, targeting a frame rate with 150 enemies; for the story 003 measurements see [build-and-run.md](build-and-run.md#6-performance-probe--perfprobe).
+4. **Difficulty comes only from the cards the player picks**: film cards force a horde or a Boss; the spawn rate depends only on time and heat, with no random difficulty.
+5. **The UI owns no state**: the HUD and camp panel read the subsystems every frame, and the camp panel uses a "state signature" to detect changes before rebuilding rows.
+6. **Greybox first**: all geometry is the engine's built-in cubes and cylinders, and visual distinction relies on the material's `Color` parameter (which has a defect, see [known-issues.md](known-issues.md)).
 
-## 7. 仓库目录树
+## 7. Repository tree
 
 ```
 2026-epic-ai-megajam/
-├── CLAUDE.md, project.yaml      # AI 协作配置与项目机器配置
-├── README.md, PLAN.md           # 项目简介、比赛时间线
-├── Game_01 5.8/                 # 当前唯一在用的 UE 工程
+├── CLAUDE.md, project.yaml      # AI collaboration config and machine-readable project config
+├── README.md, PLAN.md           # Project intro, competition timeline
+├── Game_01 5.8/                 # The only UE project currently in use
 │   ├── Game_01.uproject
 │   ├── Config/                  # DefaultEngine / DefaultGame / DefaultInput ...
-│   ├── Content/Data/            # 9 张 DataTable（LFS）
-│   ├── Content/Maps/            # L_Camp、L_Greybox
+│   ├── Content/Data/            # 9 DataTables (LFS)
+│   ├── Content/Maps/            # L_Camp, L_Greybox
 │   └── Source/Game_01/{Public,Private}/
 │       ├── Camp/ Combat/ Editing/ Enemies/ Extraction/
 │       ├── Flow/ Game/ Loot/ Player/ Progression/ StandIn/ UI/
-├── design/                      # 游戏简报、PRD、GDD
-├── docs/                        # 本 wiki、计划文档、引擎参考、工作流指南
-├── production/                  # 史诗/故事、QA 证据、会话状态
-├── .claude/                     # agent、skill、hook、脚本（不参与构建）
-└── Game_Jam_01/                 # 赛前热身工程，gitignore，不在仓库里
+├── design/                      # Game brief, PRD, GDDs
+├── docs/                        # This wiki, planning docs, engine reference, workflow guides
+├── production/                  # Epics/stories, QA evidence, session state
+├── .claude/                     # agents, skills, hooks, scripts (not part of the build)
+└── Game_Jam_01/                 # Pre-contest warm-up project, gitignored, not in the repository
 ```

@@ -1,50 +1,50 @@
 # Game Brief: Director's Cut (v2)
 
-> 工作名。范围的唯一闸门是 `design/prd/master-prd.md`;本页是它的一页摘要,冲突时以 PRD 为准。
-> v2(2026-11-13):v1 的 7 项 MVP 已全部完成(故事 001–007)。v2 把主题从局前菜单搬进每一次升级。
+> Working title. The only gate on scope is `design/prd/master-prd.md`; this page is a one-page summary of it, and the PRD wins on any conflict.
+> v2 (2026-11-13): all 7 v1 MVP items are done (stories 001-007). v2 moves the theme out of the pre-run menu and into every level-up.
 
-**One-sentence pitch:** 奇幻斜俯视割草搜打撤。升级时三张里剪掉一张,另外两张都拿;三份相同的合成升星;把失落的胶片活着带出去,以后每一局的升级池就多一样。
+**One-sentence pitch:** A fantasy top-down mower-style search-and-extract game. At each level-up, cut one of three cards and keep the other two; three identical copies merge into a star upgrade; carry a lost film reel out alive, and every later run's upgrade pool gains one more option.
 
 ## Core loop
-- 营地:材料升级建筑;出发前插胶片卡定难度和倍率(不变)
-- 局内:割草,升级时**剪一留二**;3 份升二星,9 份升三星;被剪的永久出池
-- 搜宝库拿**失落的胶片**,背着它热度上升
-- 撤离:材料 × 倍率,带出的胶片永久解锁一样新升级项;死亡全丢
+- Camp: upgrade buildings with materials; before departure, slot film cards to set difficulty and multiplier (unchanged)
+- In run: mow down enemies; at level-up, **cut one, keep two**; 3 copies make a 2-star, 9 copies make a 3-star; cut cards leave the pool permanently
+- Search vaults for **lost film reels**; heat rises while you carry one
+- Extraction: materials x multiplier, and the reel you carry out permanently unlocks a new upgrade option; dying loses everything
 
 ## Player goal & fail state — what "working" looks like
-- 目标:把构筑剪成型打出高数值,并把胶片带出去让升级池变大。
-- 失败:死亡,背包全丢。
-- 验收(冷启动 15 分钟内):至少 2 局;一次升星;一次永久剪掉;一次带出胶片并在下一局看到新升级项;一次营地建筑变化。
+- Goal: cut your build into shape to hit big numbers, and carry reels out to grow the upgrade pool.
+- Fail: death, and the whole bag is lost.
+- Acceptance (within 15 minutes from a cold start): at least 2 runs; one star-up; one permanent cut; one reel carried out and its new upgrade option seen in the next run; one camp building change.
 
-## MVP v2 — 新增工作(v1 的 7 项已完成)
-1. **剪一留二**:升级界面改造;被剪的永久出池,可剪次数 = 池子大小 − 4,用完后剪掉的只是这次不拿
-2. **三合一升星**:叠在现有等级上;升星时数值和外观(弹道、范围、大小)一起跃升
-3. **失落的胶片**:遗物改为解锁钥匙;去掉"使用"和"分解";存档记录已解锁项
-4. **3 个可解锁升级项**:2 个被动 + 1 把武器
-5. **数值重调**:经验曲线、怪物强度、热度
-6. **美术、音频与手感**:统一风格的资产、核心音效、配乐、命中反馈
-7. **剪辑骑士带废片**:Boss 使用你这局剪掉的东西(时间够才做)
+## MVP v2 — new work (the 7 v1 items are done)
+1. **Cut one, keep two**: rework the level-up screen; cut cards leave the pool permanently; number of cuts = pool size − 4, and once used up, a cut card is only skipped for this level-up
+2. **Three-into-one star merge**: stacks on top of the existing level; on star-up, numbers and look (projectile, area, size) jump together
+3. **Lost film reels**: relics become unlock keys; remove "use" and "salvage"; the save records unlocked options
+4. **3 unlockable upgrade options**: 2 passives + 1 weapon
+5. **Number retune**: XP curve, monster strength, heat
+6. **Art, audio and feel**: a unified-style asset set, core sound effects, music, hit feedback
+7. **The Cut Knight brings the rejects**: the boss uses what you cut this run (only if time allows)
 
 ## Out of scope — not building this
-- 讨论过但不做:分场结构、金币商店、CUT 清屏、灰到彩的恢复项、连场倍率、成就解锁
-- 原计划里砍掉:更多卡、怪、材料、建筑;NG 胶片
-- 永久不做:联机、随机地图、可拖拽时间线、可行走营地、手柄、多语言、抽卡/氪金/强制联网
+- Discussed but not doing: scene-based structure, gold shop, CUT screen wipe, gray-to-color restore options, cross-run multiplier, achievement unlocks
+- Cut from the original plan: more cards, monsters, materials, buildings; NG film
+- Never doing: multiplayer, random maps, drag-and-drop timeline, walkable camp, gamepad, multiple languages, gacha / pay-to-win / forced online
 
 ## Build order
-1. 打包测试(不是功能,但必须先确认能打包)
-2. 剪一留二 → 三合一升星 → 第一轮数值
-3. 失落的胶片 → 3 个解锁项
-4. 美术、音频、手感(Day 3,晚 23:00 冻结功能)
-5. 剪辑骑士带废片(有余力才做)
+1. Package test (not a feature, but we must confirm first that it packages)
+2. Cut one, keep two -> three-into-one star merge -> first number pass
+3. Lost film reels -> 3 unlock options
+4. Art, audio, feel (Day 3, features frozen at 23:00 that night)
+5. The Cut Knight brings the rejects (only if there is spare capacity)
 
-## 对 v1 行为的改动
-- 升级从三选一变成剪一留二。
-- 遗物不能再使用,也不能在仓库分解。
-- "留着还是用掉"不再是卖点。
+## Changes to v1 behavior
+- Level-up goes from pick one of three to cut one, keep two.
+- Relics can no longer be used, and can no longer be salvaged at the warehouse.
+- "Keep it or use it" is no longer a selling point.
 
 ---
-**Who it's for / what they feel:** 一个人、键鼠、没玩过的评委,试玩 10–20 分钟;感觉每次升级都在剪自己的构筑,数值越滚越大。
+**Who it's for / what they feel:** One player, keyboard and mouse, a judge who has never played it, playing for 10-20 minutes; they feel that every level-up is cutting their own build, and the numbers keep rolling bigger.
 
-**Art & audio direction:** 统一材质和调色把素材拉齐;少量主角资产用 AI 生成或免费包;音频用 WeLoveIndies(仅限非商业)和引擎自带。
+**Art & audio direction:** A unified material and palette pulls the assets together; a few hero assets are AI-generated or from free packs; audio uses WeLoveIndies (non-commercial only) and the engine's built-ins.
 
-**Reference game:** Vampire Survivors(自动攻击割草)、Brotato(构筑滚大的爽感)、Vampire Crawlers(遗物当解锁钥匙);撤离类只保留"站点撤离、死亡全丢"。
+**Reference game:** Vampire Survivors (auto-attack mowing), Brotato (the thrill of a snowballing build), Vampire Crawlers (relics as unlock keys); from extraction games we keep only "station extraction, death loses everything".

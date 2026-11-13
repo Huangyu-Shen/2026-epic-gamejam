@@ -1,59 +1,59 @@
 # Run Progression
 
 > **Status**: Designed
-> **Author**: 开发者本人 + Claude
+> **Author**: The developer + Claude
 > **Last Updated**: 2026-11-12
 > **Last Verified**: 2026-11-12
-> **Implements Pillar**: P3 Short takes(局内要快速变强)
+> **Implements Pillar**: P3 Short takes (grow strong fast within a run)
 
 ## Summary
 
-吸血鬼幸存者式的局内成长:击杀掉落经验宝石,攒满经验升级,每次升级从 3 个选项里挑 1 个(新武器、武器升级、被动强化)。本文件定义经验曲线、升级池规则、全部武器和被动的逐级数值。局内成长在本局结束时清零。
+Vampire Survivors-style in-run growth: kills drop XP gems, filling XP triggers a level-up, and each level-up lets the player pick 1 of 3 options (a new weapon, a weapon upgrade, or a passive boost). This file defines the XP curve, the upgrade pool rules, and the per-level numbers for every weapon and passive. In-run growth resets to zero when the run ends.
 
 > **Quick reference** — Layer: `Core` · Priority: `MVP` · Key deps: `player-combat`, `enemies-spawning`, `camp-meta`
 
 ## Overview
 
-开局只有 1 把起始武器。每升一级就多一个选择,一局下来大约升到 10–15 级,凑出一套自己的 build。营地剪辑室可以把新武器加进升级池,这就是"恢复被剪掉的片段"在局内的体现。
+The run starts with only 1 starting weapon. Each level-up adds a choice, and a run reaches roughly level 10-15, assembling a build of the player's own. The camp Editing Room can add new weapons to the upgrade pool, which is how "restoring cut footage" shows up in the run.
 
 ## Player Fantasy
 
-"从一把破剑,到满屏的刀光、法球和火圈。"每次升级都是一个小小的决定,而每一局的 build 都会因为选择不同而不一样。
+"From a broken sword to a screen full of blade arcs, orbs and fire rings." Every level-up is a small decision, and every run's build comes out different because of the choices made.
 
 ## Detailed Design
 
 ### Core Rules
 
-1. **经验宝石**:敌人死亡时在原地掉落经验宝石。玩家进入拾取半径后,宝石被吸向玩家,碰到即获得经验。
-2. 宝石在地上存在 60 s 后消失;同屏宝石超过 300 个时,最旧的宝石合并成一颗大宝石,经验相加,不会丢失。
-3. **升级**:当前经验 ≥ 升级所需经验时立刻升级,溢出的经验带到下一级。一次获得大量经验可以连续升多级,每一级都弹出一次选择。
-4. **升级选择**:进入 LevelUp 状态(游戏暂停),显示 3 张选项卡,玩家选 1 张。不能跳过,不能重抽(Must)。
-5. **槽位**:武器最多 4 把,被动最多 4 个(Must 档的被动正好 4 个,所以被动实际不受限)。
-6. **升级池构成**(每次升级时重新计算):
-   - 已持有、且未满级的武器 → "升级"选项
-   - 武器槽未满时:未持有、且已解锁的武器 → "新武器"选项
-   - 未满级的被动 → "被动"选项
-7. **抽取规则**:从升级池里按权重不放回地抽 3 个。池子不足 3 个时,用 "Craft Services"(回复 30 生命)补足;池子为空时 3 个选项都是 Craft Services。
-8. **武器解锁**:Must 档 3 把武器从一开始就在池子里;Should 档 2 把要在营地剪辑室解锁后才进池子(见 `camp-meta.md`)。
-9. 本局结束时,所有局内等级、武器、被动全部清零。
+1. **XP gems**: when an enemy dies, it drops an XP gem where it fell. Once the player enters the pickup radius, the gem is pulled toward the player, and touching it grants the XP.
+2. A gem disappears after 60 s on the ground; when more than 300 gems are on screen, the oldest gems merge into one large gem, their XP added together, so none is lost.
+3. **Level-up**: as soon as current XP >= the XP required, the player levels up and the overflow XP carries to the next level. Gaining a lot of XP at once can level up several times in a row, and each level pops up one choice.
+4. **Upgrade choice**: enter the LevelUp state (game paused) and show 3 option cards; the player picks 1. No skipping, no rerolls (Must).
+5. **Slots**: at most 4 weapons and at most 4 passives (the Must tier has exactly 4 passives, so passives are effectively unlimited).
+6. **Upgrade pool composition** (recomputed at each level-up):
+   - Weapons already held and not at max level -> "upgrade" options
+   - When weapon slots are not full: weapons not held and already unlocked -> "new weapon" options
+   - Passives not at max level -> "passive" options
+7. **Draw rule**: draw 3 from the upgrade pool by weight, without replacement. When the pool has fewer than 3, fill with "Craft Services" (restores 30 HP); when the pool is empty, all 3 options are Craft Services.
+8. **Weapon unlocks**: the 3 Must-tier weapons are in the pool from the start; the 2 Should-tier weapons enter the pool only after being unlocked in the camp Editing Room (see `camp-meta.md`).
+9. When the run ends, all in-run levels, weapons and passives reset to zero.
 
 ### States and Transitions
 
-升级时的流程:`InRun → LevelUp(暂停)→ 选择 → 再次检查经验是否够升下一级 → InRun 或 再次 LevelUp`。
+Level-up flow: `InRun -> LevelUp (paused) -> choose -> recheck whether XP is enough for the next level -> InRun or LevelUp again`.
 
 ### Interactions with Other Systems
 
-| 系统 | 交互 |
+| System | Interaction |
 |---|---|
-| `enemies-spawning.md` | 每种敌人的经验掉落值 |
-| `player-combat.md` | 武器按本文件的数值开火;被动修改角色属性 |
-| `camp-meta.md` | 剪辑室解锁新武器;营地属性和局内被动是加法叠加 |
-| `loot-inventory-heat.md` | 遗物 Warlord's Sigil 直接给 2 次升级;Magnet 被动只影响经验宝石的拾取,不影响物资 |
-| `game-flow.md` | 请求进入和退出 LevelUp 状态 |
+| `enemies-spawning.md` | The XP drop value of each enemy type |
+| `player-combat.md` | Weapons fire using this file's numbers; passives modify character stats |
+| `camp-meta.md` | The Editing Room unlocks new weapons; camp stats and in-run passives stack additively |
+| `loot-inventory-heat.md` | The relic Warlord's Sigil grants 2 level-ups directly; the Magnet passive only affects XP gem pickup, not supplies |
+| `game-flow.md` | Requests entering and leaving the LevelUp state |
 
 ## Formulas
 
-**升级所需经验**
+**XP required to level up**
 
 ```
 XPToNext(L) = round(5 + 6 × (L − 1)^1.35)
@@ -63,43 +63,43 @@ XPToNext(L) = round(5 + 6 × (L − 1)^1.35)
 |---|---|---|---|---|---|---|---|
 | XPToNext | 5 | 11 | 20 | 44 | 85 | 121 | 228 |
 
-预期:一局 5 分钟约击杀 500–700 只怪,升到 10–12 级;10 分钟升到 14–16 级。这个节奏让每 20–40 秒有一次升级。
+Expectation: a 5-minute run kills about 500-700 monsters and reaches level 10-12; 10 minutes reaches level 14-16. This pace gives a level-up every 20-40 seconds.
 
-**选项权重**
+**Option weights**
 
-| 类型 | 权重 |
+| Type | Weight |
 |---|---|
-| 已持有武器的升级 | 1.2 |
-| 新武器 | 0.8 |
-| 被动 | 1.0 |
+| Upgrade of a held weapon | 1.2 |
+| New weapon | 0.8 |
+| Passive | 1.0 |
 
-例:持有 Sword Arc(2 级)、空 3 个武器槽、2 个未满级的被动,另有 2 把未持有的武器 → 池子共 5 项,总权重 `1.2 + 0.8×2 + 1.0×2 = 4.8`;Sword Arc 升级第一次被抽中的概率是 `1.2 / 4.8 = 25%`。
+Example: holding Sword Arc (level 2), with 3 empty weapon slots, 2 passives not at max level, and 2 weapons not held -> the pool has 5 entries, total weight `1.2 + 0.8×2 + 1.0×2 = 4.8`; the probability that the Sword Arc upgrade is drawn first is `1.2 / 4.8 = 25%`.
 
-**经验宝石拾取半径**
+**XP gem pickup radius**
 
 ```
 PickupRadius = 300 cm × (1 + 0.3 × MagnetLevel)
 ```
 
-MagnetLevel 范围 0–5,半径 300–750 cm。
+MagnetLevel ranges 0-5, giving a radius of 300-750 cm.
 
-## 武器数据
+## Weapon Data
 
-所有武器 5 级封顶。"Amount" 表示一次发射的数量;营地铁匠铺的 Amount 属性给所有投射物类武器 +1(标注 *)。
+All weapons cap at level 5. "Amount" is the number fired at once; the camp Smithy's Amount stat gives +1 to all projectile weapons (marked *).
 
-**Sword Arc**(起始武器,Must)— 索敌:`Facing`;朝朝向挥出扇形斩击。
+**Sword Arc** (starting weapon, Must) — targeting: `Facing`; swings a fan-shaped slash in the facing direction.
 
-| 级 | 伤害 | 冷却 | 扇形角度 | 半径 | 说明 |
+| Lv | Damage | Cooldown | Arc angle | Radius | Notes |
 |---|---|---|---|---|---|
 | 1 | 10 | 1.0 s | 120° | 250 cm | |
 | 2 | 13 | 1.0 s | 120° | 250 cm | |
 | 3 | 16 | 0.9 s | 180° | 275 cm | |
 | 4 | 20 | 0.9 s | 180° | 300 cm | |
-| 5 | 25 | 0.8 s | 360° | 300 cm | 环形斩 |
+| 5 | 25 | 0.8 s | 360° | 300 cm | Ring slash |
 
-**Arcane Bolt**(Must)— 索敌:`Nearest`;发射追踪法球。射程 1500 cm,速度 1500 cm/s。*
+**Arcane Bolt** (Must) — targeting: `Nearest`; fires homing orbs. Range 1500 cm, speed 1500 cm/s. *
 
-| 级 | 伤害 | 冷却 | 数量 | 穿透 |
+| Lv | Damage | Cooldown | Amount | Pierce |
 |---|---|---|---|---|
 | 1 | 8 | 0.9 s | 1 | 0 |
 | 2 | 10 | 0.9 s | 1 | 0 |
@@ -107,9 +107,9 @@ MagnetLevel 范围 0–5,半径 300–750 cm。
 | 4 | 15 | 0.8 s | 2 | 1 |
 | 5 | 18 | 0.8 s | 3 | 1 |
 
-**Fire Ring**(Must)— 索敌:`Around`;常驻火圈,每 0.5 s 对圈内敌人造成伤害。
+**Fire Ring** (Must) — targeting: `Around`; a permanent fire ring that damages enemies inside it every 0.5 s.
 
-| 级 | 每次伤害 | 半径 |
+| Lv | Damage per tick | Radius |
 |---|---|---|
 | 1 | 4 | 300 cm |
 | 2 | 5 | 330 cm |
@@ -117,9 +117,9 @@ MagnetLevel 范围 0–5,半径 300–750 cm。
 | 4 | 8 | 400 cm |
 | 5 | 10 | 450 cm |
 
-**Throwing Axes**(Should,剪辑室解锁)— 索敌:`Random`(800 cm 内);抛物线投掷,无限穿透。*
+**Throwing Axes** (Should, unlocked in the Editing Room) — targeting: `Random` (within 800 cm); thrown in an arc, infinite pierce. *
 
-| 级 | 伤害 | 冷却 | 数量 |
+| Lv | Damage | Cooldown | Amount |
 |---|---|---|---|
 | 1 | 20 | 1.6 s | 1 |
 | 2 | 25 | 1.6 s | 2 |
@@ -127,9 +127,9 @@ MagnetLevel 范围 0–5,半径 300–750 cm。
 | 4 | 38 | 1.5 s | 3 |
 | 5 | 46 | 1.4 s | 3 |
 
-**Lightning Rune**(Should,剪辑室解锁)— 索敌:`Random`(1200 cm 内);雷击落点,范围伤害半径 150 cm。*
+**Lightning Rune** (Should, unlocked in the Editing Room) — targeting: `Random` (within 1200 cm); lightning strikes at a landing point, area damage radius 150 cm. *
 
-| 级 | 伤害 | 冷却 | 落雷数 |
+| Lv | Damage | Cooldown | Strikes |
 |---|---|---|---|
 | 1 | 15 | 1.4 s | 2 |
 | 2 | 19 | 1.4 s | 2 |
@@ -137,74 +137,74 @@ MagnetLevel 范围 0–5,半径 300–750 cm。
 | 4 | 30 | 1.3 s | 3 |
 | 5 | 36 | 1.2 s | 4 |
 
-## 被动数据(Must,全部 5 级封顶)
+## Passive Data (Must, all capped at level 5)
 
-| 被动 | 每级效果 | 满级 |
+| Passive | Effect per level | At max |
 |---|---|---|
-| Might | 伤害 +10% | +50% |
-| Haste | 冷却 −8% | −40% |
-| Vitality | 生命上限 +20,并立即回复 20 | +100 |
-| Magnet | 经验拾取半径 +30% | +150% |
+| Might | Damage +10% | +50% |
+| Haste | Cooldown −8% | −40% |
+| Vitality | Max HP +20, and restore 20 immediately | +100 |
+| Magnet | XP pickup radius +30% | +150% |
 
 ## Edge Cases
 
-| 情况 | 处理 |
+| Situation | Handling |
 |---|---|
-| 一次吃到大量经验,连升 3 级 | 连续弹出 3 次选择,中间不恢复游戏 |
-| 升级时正在撤离读条 | LevelUp 暂停,读条也暂停;选完后继续 |
-| 所有武器和被动都满级 | 只出 Craft Services |
-| 宝石掉在玩家够不到的地方(墙内) | 经验宝石生成时投影到最近的可走点 |
-| Warlord's Sigil 在 LevelUp 状态里使用 | 不可能发生:LevelUp 状态下不能打开背包 |
+| A large XP gain causes 3 level-ups in a row | 3 choices pop up in a row, and the game does not resume in between |
+| Level-up happens during the extraction channel | LevelUp pauses, and the channel pauses too; it continues after the choice |
+| All weapons and passives are at max level | Only Craft Services appears |
+| A gem drops somewhere the player cannot reach (inside a wall) | When spawned, the XP gem is projected to the nearest walkable point |
+| Warlord's Sigil used while in the LevelUp state | Cannot happen: the bag cannot be opened in the LevelUp state |
 
 ## Dependencies
 
-- 上游:`enemies-spawning`(经验来源)、`camp-meta`(武器解锁)。
-- 下游:`player-combat`(用本系统的武器和被动)、`loot-inventory-heat`(Warlord's Sigil 调用本系统的升级接口)、`ui-hud`(升级界面)。
+- Upstream: `enemies-spawning` (XP source), `camp-meta` (weapon unlocks).
+- Downstream: `player-combat` (uses this system's weapons and passives), `loot-inventory-heat` (Warlord's Sigil calls this system's level-up interface), `ui-hud` (the level-up screen).
 
 ## Tuning Knobs
 
-| 参数 | 默认值 | 安全范围 | 影响 |
+| Parameter | Default | Safe range | Affects |
 |---|---|---|---|
-| 经验曲线基数 | 5 | 3–10 | 前几级来得多快 |
-| 经验曲线系数 | 6 | 4–10 | 整体升级频率 |
-| 经验曲线指数 | 1.35 | 1.2–1.6 | 后期升级减速的程度 |
-| 选项数量 | 3 | 3–4 | 选择的丰富度 |
-| 新武器权重 | 0.8 | 0.5–1.5 | build 成型的速度 |
-| Craft Services 回复量 | 30 | 20–50 | 满级后的安慰奖 |
-| 宝石存在时间 | 60 s | 30–120 s | 是否需要回头捡 |
+| XP curve base | 5 | 3-10 | How fast the first few levels come |
+| XP curve coefficient | 6 | 4-10 | Overall level-up frequency |
+| XP curve exponent | 1.35 | 1.2-1.6 | How much level-ups slow down late |
+| Option count | 3 | 3-4 | Richness of the choice |
+| New weapon weight | 0.8 | 0.5-1.5 | How fast the build takes shape |
+| Craft Services heal amount | 30 | 20-50 | The consolation prize after everything is maxed |
+| Gem lifetime | 60 s | 30-120 s | Whether the player needs to go back and pick them up |
 
-各武器数值表中的每一格都是可调参数,统一放在一张武器数据表里。
+Every cell in each weapon's data table is a tunable parameter, and all of them live in a single weapon data table.
 
 ## Visual/Audio Requirements
 
-- 升级:屏幕亮一下 + 上扬音效;选项卡依次翻出。
-- 宝石:小(1)、中(≥ 5)、大(≥ 25)三种外观;被吸附时有拖尾。
-- 每把武器有独立的命中音效和特效颜色,便于在混战中分辨。
+- Level-up: the screen flashes briefly + a rising sound effect; option cards flip out one after another.
+- Gems: three looks, small (1), medium (>= 5) and large (>= 25); a trail while being pulled in.
+- Each weapon has its own hit sound and effect color, so they can be told apart in a melee.
 
 ## Game Feel
 
-升级选项要一眼看懂:图标 + 名字 + 一行变化说明("Damage 13 → 16")。从弹出到能点击,延迟 ≤ 0.3 s。
+Upgrade options must be readable at a glance: icon + name + one line describing the change ("Damage 13 → 16"). The delay from popping up to being clickable is <= 0.3 s.
 
 ## UI Requirements
 
-升级选择界面、HUD 上的经验条和等级、武器和被动图标栏。见 `ui-hud.md`。
+The level-up choice screen, the XP bar and level on the HUD, and the weapon and passive icon bar. See `ui-hud.md`.
 
 ## Cross-References
 
-- `design/gdd/player-combat.md`(伤害、冷却公式)
-- `design/gdd/camp-meta.md`(剪辑室解锁武器)
-- `design/gdd/loot-inventory-heat.md`(Warlord's Sigil)
+- `design/gdd/player-combat.md` (damage and cooldown formulas)
+- `design/gdd/camp-meta.md` (Editing Room weapon unlocks)
+- `design/gdd/loot-inventory-heat.md` (Warlord's Sigil)
 
 ## Acceptance Criteria
 
-- **AC1(Must)**:从 1 级开始,击杀 5 只 1 经验的小怪后升到 2 级,并弹出 3 个选项。
-- **AC2(Must)**:选择新武器后,该武器立刻开始自动攻击。
-- **AC3(Must)**:同一武器升到 5 级后,不再出现在选项里。
-- **AC4(Must)**:持有 4 把武器后,不再出现"新武器"选项。
-- **AC5(Must)**:LevelUp 期间敌人不动,计时器不走。
-- **AC6(Should)**:剪辑室解锁 Throwing Axes 之前,它从不出现在选项里;解锁之后,它可以出现。
-- **AC7(Must)**:5 分钟的测试局里,升级间隔的中位数在 15–45 s 之间。
+- **AC1 (Must)**: Starting from level 1, killing 5 small monsters worth 1 XP each reaches level 2 and pops up 3 options.
+- **AC2 (Must)**: After choosing a new weapon, that weapon starts attacking automatically at once.
+- **AC3 (Must)**: Once a weapon reaches level 5, it no longer appears in the options.
+- **AC4 (Must)**: After holding 4 weapons, "new weapon" options no longer appear.
+- **AC5 (Must)**: During LevelUp, enemies do not move and the timer does not run.
+- **AC6 (Should)**: Before the Editing Room unlocks Throwing Axes, it never appears in the options; after unlocking, it can appear.
+- **AC7 (Must)**: In a 5-minute test run, the median level-up interval is between 15 and 45 s.
 
 ## Open Questions
 
-- 是否加入武器进化(满级武器 + 对应被动 → 进化形态)?已定为 Could 档,默认不做。
+- Should weapon evolution be added (max-level weapon + matching passive -> evolved form)? Decided as Could tier, not doing it by default.

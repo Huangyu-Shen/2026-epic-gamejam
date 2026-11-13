@@ -1,94 +1,94 @@
-# 数据与存储
+# Data and Storage
 
-路径省略前缀 `Game_01 5.8/`。
+Paths omit the prefix `Game_01 5.8/`.
 
-## 1. 存档
+## 1. Save Game
 
-单个存档槽，名字 `CampSave`，用户槽位 0。实现：[CampSaveSubsystem.cpp](../../Game_01%205.8/Source/Game_01/Private/Flow/CampSaveSubsystem.cpp)，数据类：[CampSaveGame.h](../../Game_01%205.8/Source/Game_01/Public/Flow/CampSaveGame.h)。
+A single save slot named `CampSave`, user slot 0. Implementation: [CampSaveSubsystem.cpp](../../Game_01%205.8/Source/Game_01/Private/Flow/CampSaveSubsystem.cpp). Data class: [CampSaveGame.h](../../Game_01%205.8/Source/Game_01/Public/Flow/CampSaveGame.h).
 
-文件位置：`Saved/SaveGames/CampSave.sav`（已确认存在，约 2.5 KB）。`Saved/` 在 [.gitignore](../../.gitignore) 里，存档不进仓库。
+File location: `Saved/SaveGames/CampSave.sav` (confirmed to exist, about 2.5 KB). `Saved/` is listed in [.gitignore](../../.gitignore), so the save does not go into the repository.
 
-### 1.1 内容
+### 1.1 Contents
 
-| 字段 | 类型 | 来源 | 恢复方式 |
+| Field | Type | Source | How it is restored |
 |---|---|---|---|
-| `SaveVersion` | `int32`，当前 1 | 常量 | **读取时不检查**，见 [known-issues.md](known-issues.md) |
-| `Iron` | `int32` | `UCampStockSubsystem::GetIron()` | `RestoreState`，负数夹到 0 |
+| `SaveVersion` | `int32`, currently 1 | Constant | **Not checked on load**, see [known-issues.md](known-issues.md) |
+| `Iron` | `int32` | `UCampStockSubsystem::GetIron()` | `RestoreState`, negative values clamped to 0 |
 | `WarehouseRelics` | `TArray<ERelicType>` | `GetWarehouseRelics()` | `RestoreState` |
-| `BuildingLevels` | `TMap<EBuildingType, int32>` | `UCampMetaSubsystem::GetLevels()` | `RestoreLevels`，每项夹到 0 到 `MaxLevel`，未知类型丢弃 |
+| `BuildingLevels` | `TMap<EBuildingType, int32>` | `UCampMetaSubsystem::GetLevels()` | `RestoreLevels`, each entry clamped to 0 through `MaxLevel`, unknown types discarded |
 
-**不存的**：局前选的胶片卡（`PendingFilmCards`，只在一次会话里跨关卡）、一局内的任何状态（背包、热度、XP、武器）。局内状态本来就按局清零，所以退出游戏等于放弃当前一局。
+**Not saved**: the film cards chosen before a run (`PendingFilmCards`, which only carry across levels within one session), and any in-run state (bag, heat, XP, weapons). In-run state is reset every run anyway, so quitting the game is the same as abandoning the current run.
 
-### 1.2 何时读写
+### 1.2 When It Is Read and Written
 
 ```mermaid
 sequenceDiagram
-  participant G as GameInstance 启动
+  participant G as GameInstance startup
   participant V as UCampSaveSubsystem
-  participant S as CampStock 与 CampMeta
+  participant S as CampStock and CampMeta
   G->>V: Initialize
-  V->>S: InitializeDependency 保证它们先建好
-  V->>V: DoesSaveGameExist 则 LoadGameFromSlot
-  V->>S: bApplyingLoad = true 后 RestoreState RestoreLevels
-  V->>S: 之后才绑定 OnStockChanged OnMetaChanged
-  Note over V,S: 先读后绑定 恢复不会触发一次存档
-  S-->>V: 库存或建筑变化
-  V->>V: HandleCampChanged 非恢复期间则 SaveNow
-  Note over V: URunOutcomeSubsystem::EndRun 也显式 SaveNow
+  V->>S: InitializeDependency ensures they are created first
+  V->>V: DoesSaveGameExist then LoadGameFromSlot
+  V->>S: bApplyingLoad = true then RestoreState RestoreLevels
+  V->>S: only afterwards bind OnStockChanged OnMetaChanged
+  Note over V,S: Load first and bind later so restoring does not trigger a save
+  S-->>V: stock or building changed
+  V->>V: HandleCampChanged then SaveNow if not restoring
+  Note over V: URunOutcomeSubsystem::EndRun also calls SaveNow explicitly
 ```
 
-- 触发存档的事件：Iron 变化、仓库变化（`OnStockChanged`）、建筑等级变化（`OnMetaChanged`）。升级会连续触发两次：`SpendIron` 先广播 `OnStockChanged`（此时 Iron 已扣、等级还没加），随后等级加一再广播 `OnMetaChanged`。所以升级一次写两次文件，第一次写下的是"已扣钱、没升级"的中间状态，第二次才是完整状态。两次写之间进程被杀，存档里会是少了 Iron 却没升级（见 [known-issues.md](known-issues.md)）。
-- 一局结束时 `EndRun` 再显式写一次，因为死亡且背包没有 Iron 时库存不变，不会有事件。
-- 存档损坏或读不出来：只打警告日志，从全新营地开始，不删除坏文件，下一次变化会覆盖它。
-- `DeleteSaveAndReset()`：删除槽并把库存和建筑清零，**目前没有任何界面或按键调用它**（"新游戏"按钮属于 Should 级，不在当前范围）。
+- Events that trigger a save: Iron changes, warehouse changes (`OnStockChanged`), building level changes (`OnMetaChanged`). An upgrade fires twice in a row: `SpendIron` broadcasts `OnStockChanged` first (Iron has been deducted but the level has not yet gone up), then the level is incremented and `OnMetaChanged` is broadcast. So one upgrade writes the file twice. The first write captures the intermediate state "paid but not upgraded", and only the second write is the complete state. If the process is killed between the two writes, the save will have less Iron but no upgrade (see [known-issues.md](known-issues.md)).
+- When a run ends, `EndRun` writes once more explicitly, because a death with no Iron in the bag leaves the stock unchanged and no event fires.
+- If the save is corrupt or cannot be read: only a warning is logged and the game starts from a fresh camp. The bad file is not deleted, and the next change overwrites it.
+- `DeleteSaveAndReset()`: deletes the slot and zeroes the stock and buildings. **Currently no UI or key calls it** (the "New Game" button is Should-tier and out of the current scope).
 
-### 1.3 版本兼容性
+### 1.3 Version Compatibility
 
-最近的发布标签是 `jam-start`（提交 `44589d2`，2026-11-12），它早于 UE 工程本身（该提交里没有 `Game_01` 的任何文件），所以没有"已发布版本"可以对比存档格式。当前仓库里只有一个存档格式，`SaveVersion = 1`，没有迁移代码。
+The most recent release tag is `jam-start` (commit `44589d2`, 2026-11-12). It predates the UE project itself (that commit contains no `Game_01` files), so there is no "released version" to compare save formats against. The repository currently has only one save format, `SaveVersion = 1`, and no migration code.
 
-| 数据 | 发布版本 | 当前代码 | 后果 |
+| Data | Released version | Current code | Consequence |
 |---|---|---|---|
-| 存档格式 | 无发布 | `SaveVersion = 1` | 以后改字段布局时必须自己加版本检查，目前读取不看这个字段 |
+| Save format | No release | `SaveVersion = 1` | When the field layout changes later, a version check has to be added by hand. Loading currently ignores this field |
 
-## 2. 调参数据表
+## 2. Tuning Data Tables
 
-所有数值表放在 `Content/Data/`（LFS），由项目设置"Director Tuning"引用。引用路径记在 [DefaultGame.ini](../../Game_01%205.8/Config/DefaultGame.ini) 的 `[/Script/Game_01.DirectorTuningSettings]`。表或行缺失时，C++ 里的成员初始值照常工作，不会报错。
+All value tables live in `Content/Data/` (LFS) and are referenced by the project setting "Director Tuning". The reference paths are recorded under `[/Script/Game_01.DirectorTuningSettings]` in [DefaultGame.ini](../../Game_01%205.8/Config/DefaultGame.ini). If a table or row is missing, the member initial values in C++ work as usual and no error is raised.
 
-| 设置项 | 表 | 行名 | 行结构 | 使用者 |
+| Setting | Table | Row names | Row struct | Used by |
 |---|---|---|---|---|
-| `EnemyTuningTable` | `DT_EnemyTuning` | `Grunt`、`Boss` | `FEnemyTuning` | `UEnemySpawnSubsystem` |
+| `EnemyTuningTable` | `DT_EnemyTuning` | `Grunt`, `Boss` | `FEnemyTuning` | `UEnemySpawnSubsystem` |
 | `SpawnTuningTable` | `DT_SpawnTuning` | `Spawn` | `FSpawnTuning` | `UEnemySpawnSubsystem` |
 | `SwarmTuningTable` | `DT_SwarmTuning` | `Swarm` | `FSwarmTuning` | `UEnemyManagerSubsystem` |
 | `HealthTuningTable` | `DT_HealthTuning` | `Hero` | `FHealthTuning` | `UHealthComponent` |
 | `ProgressionTable` | `DT_Progression` | `Progression` | `FXpCurveRow` | `URunProgressionSubsystem` |
-| `WeaponTable` | `DT_Weapons` | `Blade`、`Bolt`、`Nova` | `FWeaponRow` | `URunProgressionSubsystem` |
-| `PassiveTable` | `DT_Passives` | `Swiftness`、`Might`、`Vitality`、`Greed` | `FPassiveRow` | `URunProgressionSubsystem` |
-| `FilmCardTable` | `DT_FilmCards` | `HordeNight`、`CutKnight` | `FFilmCardRow` | `UFilmCardSubsystem`（行键就是卡的 id，所有行都可选） |
-| `BuildingTable` | `DT_Buildings` | `Smithy`、`Clinic` | `FBuildingRow` | `UCampMetaSubsystem` |
+| `WeaponTable` | `DT_Weapons` | `Blade`, `Bolt`, `Nova` | `FWeaponRow` | `URunProgressionSubsystem` |
+| `PassiveTable` | `DT_Passives` | `Swiftness`, `Might`, `Vitality`, `Greed` | `FPassiveRow` | `URunProgressionSubsystem` |
+| `FilmCardTable` | `DT_FilmCards` | `HordeNight`, `CutKnight` | `FFilmCardRow` | `UFilmCardSubsystem` (the row key is the card id, and all rows are optional) |
+| `BuildingTable` | `DT_Buildings` | `Smithy`, `Clinic` | `FBuildingRow` | `UCampMetaSubsystem` |
 
-注意：
+Notes:
 
-- 表里的 `Kind`、`BuildingType`、`WeaponType`、`PassiveType` 字段会被行名覆盖（行名是身份）。
-- 热度参数（背包容量、每格 Iron、热度增减、刷怪压力）和遗物、容器数值**不在**这 9 张表里，它们来自 `ULootConfig` 数据资产，没有资产时用 [LootConfig.cpp](../../Game_01%205.8/Source/Game_01/Private/Loot/LootConfig.cpp) 构造函数里的内联默认值。当前工程里没有 `ULootConfig` 资产，所以实际跑的是内联默认值。
-- 拆解一个遗物得到的 Iron（8）写死在 [`UCampMetaSubsystem`](../../Game_01%205.8/Source/Game_01/Public/Camp/CampMetaSubsystem.h)，不在任何表里。
-- 这些 `.uasset` 是二进制，本 wiki 只核对了行名和字段（来自代码），没有逐个读出表里的具体数值，数值以编辑器里的表为准。
+- The `Kind`, `BuildingType`, `WeaponType` and `PassiveType` fields in the tables are overwritten by the row name (the row name is the identity).
+- Heat parameters (bag capacity, Iron per slot, heat gain and loss, spawn pressure) and relic and container values are **not** in these 9 tables. They come from the `ULootConfig` data asset, and when there is no asset the inline defaults in the constructor of [LootConfig.cpp](../../Game_01%205.8/Source/Game_01/Private/Loot/LootConfig.cpp) are used. The current project has no `ULootConfig` asset, so the inline defaults are what actually runs.
+- The Iron gained from dismantling a relic (8) is hardcoded in [`UCampMetaSubsystem`](../../Game_01%205.8/Source/Game_01/Public/Camp/CampMetaSubsystem.h) and is not in any table.
+- These `.uasset` files are binary. This wiki only checked row names and fields (taken from the code) and did not read out the specific values in each table. The values in the editor's tables are authoritative.
 
-## 3. 配置文件
+## 3. Config Files
 
-| 文件 | 与本项目相关的内容 |
+| File | Project-relevant content |
 |---|---|
-| [DefaultEngine.ini](../../Game_01%205.8/Config/DefaultEngine.ini) | `GameDefaultMap` 和 `EditorStartupMap` 都是 `/Game/Maps/L_Camp.L_Camp`；渲染：Lumen（动态 GI 方法 1）、反射方法 1、Substrate 开、光追开、DX12 SM6 |
-| [DefaultGame.ini](../../Game_01%205.8/Config/DefaultGame.ini) | `Director Tuning` 的 9 条表引用 |
-| `DefaultEditorPerProjectUserSettings.ini` | 在 .gitignore 里，保存每个开发者本机的编辑器设置（如 MCP 端口） |
+| [DefaultEngine.ini](../../Game_01%205.8/Config/DefaultEngine.ini) | `GameDefaultMap` and `EditorStartupMap` are both `/Game/Maps/L_Camp.L_Camp`. Rendering: Lumen (dynamic GI method 1), reflection method 1, Substrate on, ray tracing on, DX12 SM6 |
+| [DefaultGame.ini](../../Game_01%205.8/Config/DefaultGame.ini) | The 9 table references of `Director Tuning` |
+| `DefaultEditorPerProjectUserSettings.ini` | Listed in .gitignore, stores each developer's local editor settings (such as the MCP port) |
 
-`EditorStartupMap` 是为了让编辑器每次直接打开营地：没设置时引擎默认值是 `/Engine/Maps/Templates/OpenWorld`，每次都开一个未命名的模板关卡。
+`EditorStartupMap` makes the editor open the camp directly every time. When it is unset, the engine default is `/Engine/Maps/Templates/OpenWorld`, which opens an unnamed template level every time.
 
-## 4. 跨模块的单位与约定
+## 4. Cross-Module Units and Conventions
 
-| 项 | 约定 |
+| Item | Convention |
 |---|---|
-| 长度 | 厘米；`ContactRange`、`RingMinRadius`、武器 `Range` 都是厘米 |
-| 平面运算 | 追击、推开、武器命中都在 XY 平面做，忽略 Z |
-| 时间 | 游戏逻辑用 `World->GetTimeSeconds()`；`UHudMessageSubsystem` 用真实时间 |
-| Iron 与槽位 | 背包里 Iron 每 `IronPerSlot`（10）占 1 槽，向上取整 |
-| 下标 | 遗物下标在背包和仓库里都是 0 起，界面显示 `[1]` 起 |
+| Length | Centimeters. `ContactRange`, `RingMinRadius` and weapon `Range` are all in centimeters |
+| Planar math | Chasing, pushing apart and weapon hits are all done in the XY plane, ignoring Z |
+| Time | Game logic uses `World->GetTimeSeconds()`. `UHudMessageSubsystem` uses real time |
+| Iron and slots | In the bag, every `IronPerSlot` (10) Iron takes 1 slot, rounded up |
+| Indexing | Relic indices are 0-based in both the bag and the warehouse, and the UI shows them starting from `[1]` |

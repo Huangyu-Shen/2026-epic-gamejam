@@ -1,41 +1,41 @@
 # Game Flow & Save
 
 > **Status**: Designed
-> **Author**: 开发者本人 + Claude
+> **Author**: The developer + Claude
 > **Last Updated**: 2026-11-12
 > **Last Verified**: 2026-11-12
 > **Implements Pillar**: P3 Short takes, visible growth
 
 ## Summary
 
-定义游戏从启动到退出的全部状态、状态之间如何切换,以及局外进度如何保存。它是其他所有系统的骨架:每个系统只在特定状态下生效。
+Defines all the states of the game from launch to quit, how states switch, and how meta progress is saved. It is the skeleton of every other system: each system is active only in specific states.
 
 > **Quick reference** — Layer: `Foundation` · Priority: `MVP` · Key deps: `None`
 
 ## Overview
 
-游戏只有两个"场景":营地(Camp)和局内地图(Run)。玩家在营地里升级、进剪辑室选卡、出发;在局内割草、搜刮、撤离或死亡;然后回到营地。全部局外进度存在一个自动保存的单存档里,玩家永远不需要手动存档。
+The game has only two "scenes": Camp and the in-run map (Run). In camp the player upgrades, goes to the editing room to pick cards, and departs; in a run they mow down enemies, loot, and extract or die; then they return to camp. All meta progress lives in a single auto-saved save slot, so the player never needs to save manually.
 
 ## Player Fantasy
 
-"我是这部电影的导演。"营地是片场后台,出发是一次开拍(Take),撤离是"Cut! 这条过",死亡是 NG。每一次回到营地,片场都比上一次更像样。
+"I am the director of this movie." Camp is backstage at the set, departing is starting a take (Take), extracting is "Cut! Print that one", and dying is an NG. Every time I return to camp, the set looks better than the last time.
 
 ## Detailed Design
 
 ### Core Rules
 
-1. 游戏有两个关卡(Level):`L_Camp`(营地)和 `L_Run`(局内地图)。标题画面叠加在营地上,不单独做关卡。
-2. 流程状态由一个全局的流程管理器统一持有,任何系统都通过它查询"当前处于哪个状态",不能自己判断。
-3. **一局 = 一个 Take**。Take 编号从 1 开始,每出发一次 +1,存进存档,显示在加载卡和结算画面("Take 7")。
-4. **出发**:只能在剪辑室面板点击 "Roll Camera!" 出发。出发时锁定本局的片段卡组合和收益倍率,局内不能再改。
-5. **回营地**:局内结束(撤离成功、死亡、超时)后,先显示结算画面,玩家点 "Back to Set" 后加载营地。
-6. **自动保存**的触发时机(只存局外数据):
-   - 回到营地、结算写入之后
-   - 每次建筑升级、分解、解锁之后
-   - 修改剪辑室的卡槽配置之后
-   - 退出游戏时
-7. **局内不存档**。局内强退或崩溃,视为本局作废:不扣东西,也不给东西。出发前的状态完整保留。
-8. **新游戏/重置**:标题画面提供 "New Production"(新存档)。已有存档时需要二次确认,确认后清空全部局外进度。
+1. The game has two levels: `L_Camp` (camp) and `L_Run` (in-run map). The title screen is overlaid on camp and is not a separate level.
+2. Flow state is held by a single global flow manager; every system queries it for "which state are we in" and must not decide this on its own.
+3. **One run = one Take**. Take numbers start at 1, increase by 1 on each departure, are stored in the save, and are shown on the loading card and the results screen ("Take 7").
+4. **Departure**: only possible by clicking "Roll Camera!" in the editing room panel. On departure, this run's footage card combination and payout multiplier are locked and cannot be changed during the run.
+5. **Returning to camp**: after the run ends (extraction success, death, timeout), the results screen is shown first, and camp loads after the player clicks "Back to Set".
+6. **Auto-save** triggers (meta data only):
+   - After returning to camp, once the settlement has been written
+   - After each building upgrade, salvage, or unlock
+   - After changing the editing room's card slot configuration
+   - When quitting the game
+7. **No saving during a run**. A forced quit or crash mid-run voids that run: nothing is deducted and nothing is granted. The pre-departure state is fully preserved.
+8. **New game/reset**: the title screen offers "New Production" (new save). When a save exists it requires a second confirmation, and after confirming all meta progress is cleared.
 
 ### States and Transitions
 
@@ -43,99 +43,99 @@
 stateDiagram-v2
   [*] --> Title
   Title --> Camp: Continue / New Production
-  Camp --> EditingRoom: 点击剪辑室
-  EditingRoom --> Camp: 关闭面板
+  Camp --> EditingRoom: Click the editing room
+  EditingRoom --> Camp: Close panel
   EditingRoom --> Loading: Roll Camera!
   Loading --> InRun
   InRun --> Paused: Esc
   Paused --> InRun: Resume
-  Paused --> RunResult: Abandon Take(视同死亡)
-  InRun --> LevelUp: 升级
-  LevelUp --> InRun: 选完
-  InRun --> RunResult: 撤离成功 / 死亡 / 超时
+  Paused --> RunResult: Abandon Take (counts as death)
+  InRun --> LevelUp: Level up
+  LevelUp --> InRun: Choice made
+  InRun --> RunResult: Extraction success / death / timeout
   RunResult --> Camp: Back to Set
-  Camp --> Title: Esc 菜单 → Main Menu
+  Camp --> Title: Esc menu → Main Menu
 ```
 
-| 状态 | 时间是否流动 | 输入 | 说明 |
+| State | Does time flow | Input | Description |
 |---|---|---|---|
 | Title | — | UI | Continue / New Production / Settings / Quit |
-| Camp | 是(环境动画) | 鼠标点选 | 营地场景,点建筑开面板 |
-| EditingRoom | 是 | UI | 剪辑室面板(营地的一个子面板) |
-| Loading | — | 无 | 显示场记板加载卡:"Take N — <卡组合名>" |
-| InRun | 是 | 战斗操作 | 正常游玩 |
-| LevelUp | **暂停** | UI | 升级三选一 |
-| Paused | **暂停** | UI | Resume / Settings / Abandon Take |
-| RunResult | 暂停 | UI | 成功显示 "That's a Wrap!",失败显示 "NG" |
+| Camp | Yes (ambient animation) | Mouse point-and-click | Camp scene, click a building to open its panel |
+| EditingRoom | Yes | UI | Editing room panel (a sub-panel of camp) |
+| Loading | — | None | Shows a clapperboard loading card: "Take N — <card combination name>" |
+| InRun | Yes | Combat controls | Normal play |
+| LevelUp | **Paused** | UI | Level-up pick one of three |
+| Paused | **Paused** | UI | Resume / Settings / Abandon Take |
+| RunResult | Paused | UI | Success shows "That's a Wrap!", failure shows "NG" |
 
-背包面板在 InRun 状态里打开,时间放慢而不暂停,详见 `loot-inventory-heat.md`。
+The bag panel opens within the InRun state and slows time rather than pausing it; see `loot-inventory-heat.md` for details.
 
 ### Interactions with Other Systems
 
-| 系统 | 流程对它的要求 |
+| System | What the flow requires of it |
 |---|---|
-| `directors-cut-editing.md` | 出发时把本局卡组合和收益倍率交给局内各系统 |
-| `extraction-death.md` | 局内结束由它判定,带着结果(成功/死亡/超时 + 物品清单)进入 RunResult |
-| `camp-meta.md` | RunResult → Camp 时,把带出的物品写进仓库,再自动保存 |
-| `run-progression.md` | 升级时请求进入 LevelUp 状态 |
-| `ui-hud.md` | 每个状态对应的界面 |
+| `directors-cut-editing.md` | On departure, hands this run's card combination and payout multiplier to the in-run systems |
+| `extraction-death.md` | It decides how a run ends, and enters RunResult carrying the result (success/death/timeout + item list) |
+| `camp-meta.md` | On RunResult → Camp, writes the carried-out items into the stash, then auto-saves |
+| `run-progression.md` | On level-up, requests entering the LevelUp state |
+| `ui-hud.md` | The screen for each state |
 
 ## Formulas
 
-无数值公式。Take 编号:`TakeNumber = 已出发次数 + 1`。
+No numeric formulas. Take number: `TakeNumber = departures so far + 1`.
 
 ## Edge Cases
 
-| 情况 | 处理 |
+| Situation | Handling |
 |---|---|
-| 局内崩溃或强退 | 本局作废,存档停留在出发前的状态 |
-| 存档文件损坏或版本不兼容 | 提示 "Save data could not be loaded",提供 "Start New Production";不自动删除旧文件,把它改名备份 |
-| 升级和撤离完成发生在同一帧 | 撤离优先,本次升级作废(局已经结束) |
-| 升级和死亡发生在同一帧 | 死亡优先 |
-| Paused 状态下选 Abandon Take | 按死亡结算(背包全丢,得 NG 胶片),防止玩家用退出来逃避损失 |
-| 结算画面强退 | 结算在进入 RunResult 时就已写入存档,强退不影响结果 |
+| Crash or forced quit mid-run | The run is void; the save stays at its pre-departure state |
+| Corrupted or version-incompatible save file | Shows "Save data could not be loaded" and offers "Start New Production"; the old file is not deleted automatically but renamed as a backup |
+| Level-up and extraction completion on the same frame | Extraction takes priority; this level-up is void (the run is over) |
+| Level-up and death on the same frame | Death takes priority |
+| Choosing Abandon Take while Paused | Settles as death (bag fully lost, NG Film granted), to stop players from using quitting to dodge losses |
+| Forced quit on the results screen | The settlement was already written to the save on entering RunResult, so a forced quit does not affect the result |
 
 ## Dependencies
 
-- 上游:无。
-- 下游:所有其他系统都依赖本系统提供的当前状态,其中直接交互的有 `directors-cut-editing`(出发)、`extraction-death`(结束一局)、`camp-meta`(保存局外数据)、`run-progression`(LevelUp 状态)、`ui-hud`(界面切换)。`player-combat`、`enemies-spawning`、`loot-inventory-heat` 只在 InRun 状态下运行。
+- Upstream: none.
+- Downstream: all other systems depend on the current state provided by this system, with direct interaction for `directors-cut-editing` (departure), `extraction-death` (ending a run), `camp-meta` (saving meta data), `run-progression` (LevelUp state), and `ui-hud` (screen switching). `player-combat`, `enemies-spawning`, and `loot-inventory-heat` run only in the InRun state.
 
 ## Tuning Knobs
 
-| 参数 | 默认值 | 范围 | 说明 |
+| Parameter | Default | Range | Description |
 |---|---|---|---|
-| 加载卡最短显示时间 | 1.5 s | 0–3 s | 太短看不清 Take 编号 |
-| 结算画面最短停留时间 | 1.0 s | 0–3 s | 防止误点跳过 |
+| Minimum loading card display time | 1.5 s | 0-3 s | Too short and the Take number can't be read |
+| Minimum results screen dwell time | 1.0 s | 0-3 s | Prevents accidental skipping by mis-click |
 
 ## Visual/Audio Requirements
 
-- 加载卡:场记板(clapperboard)样式,打板音效 + "Take N"。
-- 撤离成功:"Cut! That's a Wrap!",掌声或一声短促的号角。
-- 死亡:画面变黑白、出现胶片划痕,配 "NG" 印章音效。
+- Loading card: clapperboard style, clap sound effect + "Take N".
+- Extraction success: "Cut! That's a Wrap!", applause or a short fanfare.
+- Death: the screen turns black and white with film scratches, plus an "NG" stamp sound effect.
 
 ## Game Feel
 
-状态切换要快,营地到开局总时长 < 5 秒(不含玩家操作)。评委时间有限,任何等待都是在扣分。
+State switches should be fast, with total time from camp to run start under 5 seconds (excluding player actions). Judges have limited time, and any waiting costs points.
 
 ## UI Requirements
 
-见 `ui-hud.md`:Title、Loading、Pause、RunResult 四个界面。
+See `ui-hud.md`: the four screens Title, Loading, Pause, and RunResult.
 
 ## Cross-References
 
-- `design/prd/master-prd.md` 第 3 节(核心循环)
-- `design/gdd/extraction-death.md`(局内如何结束)
-- `design/gdd/camp-meta.md`(存档里有哪些局外数据)
+- `design/prd/master-prd.md` Section 3 (core loop)
+- `design/gdd/extraction-death.md` (how a run ends)
+- `design/gdd/camp-meta.md` (which meta data lives in the save)
 
 ## Acceptance Criteria
 
-- **AC1(Must)**:新存档启动后,能从营地 → 剪辑室 → 局内 → 撤离 → 结算 → 营地,连续跑完两圈,中途不需要重启。
-- **AC2(Must)**:撤离成功后退出游戏、重新启动,营地材料和建筑等级与退出前一致。
-- **AC3(Must)**:局内强退后重新启动,存档与出发前完全一致。
-- **AC4(Should)**:在 Paused 状态下选 Abandon Take,按死亡结算。
-- **AC5(Should)**:"New Production" 二次确认后,所有局外进度归零。
-- **AC6(Must)**:LevelUp 和 Paused 状态下,敌人、计时器、撤离读条全部停止。
+- **AC1 (Must)**: After launching with a new save, the player can play two consecutive loops of camp → editing room → run → extraction → results → camp without restarting.
+- **AC2 (Must)**: After a successful extraction, quitting and relaunching the game, camp materials and building levels match what they were before quitting.
+- **AC3 (Must)**: After a forced quit mid-run and relaunch, the save is identical to before departure.
+- **AC4 (Should)**: Choosing Abandon Take while Paused settles as death.
+- **AC5 (Should)**: After the "New Production" second confirmation, all meta progress is reset to zero.
+- **AC6 (Must)**: In the LevelUp and Paused states, enemies, timers, and the extraction bar all stop.
 
 ## Open Questions
 
-- 是否给评委一个"跳过教程"或"快速开始"的入口?(默认不做,第一局的提示文字已经足够)
+- Should judges get a "skip tutorial" or "quick start" entry point? (Default is no; the first run's hint text is enough.)

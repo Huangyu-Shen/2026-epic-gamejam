@@ -12,9 +12,9 @@ execution: code
 
 ## Goal Capsule
 
-- **Objective:** 评委在 10–20 分钟试玩里打完至少两局，体会到"每件物资都值得纠结"，也看到"导演剪辑版"是玩法机制，不只是包装。游戏是西方奇幻题材、3D 斜俯视、割草式搜打撤，带局外营地成长。
-- **Product authority:** 开发者本人(单人参赛)。时间线、硬性规则和提交流程以 `PLAN.md` 为准。
-- **Open blockers:** 无。
+- **Objective:** In a 10-20 minute playthrough, a judge finishes at least two runs, feels that "every piece of loot is worth agonizing over", and also sees that the "director's cut" is a gameplay mechanic, not just packaging. The game is a Western-fantasy, 3D top-down, mow-down loot-and-extract game with outside-the-run camp growth.
+- **Product authority:** The developer (solo entrant). Timeline, hard rules and submission process follow `PLAN.md`.
+- **Open blockers:** None.
 
 ---
 
@@ -22,158 +22,158 @@ execution: code
 
 ### Summary
 
-一款西方奇幻 3D 斜俯视割草搜打撤游戏。世界是一部被剪烂的电影。每局出发前，玩家把片段卡插进胶片槽，决定这局的精英怪、尸潮、Boss、撤离点和时长。局内一边自动攻击割草、一边做 build，在固定地图上搜刮通用材料和稀有物资：稀有物资可以当场用来逆转局势，但背包越值钱，怪就越多越强。成功撤离后，材料用于升级营地。营地里的剪辑室会"恢复被剪掉的片段"，变成新的卡和新的武器。
+A Western-fantasy 3D top-down mow-down loot-and-extract game. The world is a film that has been cut to ribbons. Before each run, the player slots clip cards into the film slots to decide this run's elites, horde, Boss, extraction points and duration. In the run, the player auto-attacks to mow down enemies and builds up their character while looting common materials and rare supplies on a fixed map: rare supplies can be used on the spot to turn the tide, but the more valuable the backpack, the more and stronger the monsters. After a successful extraction, materials are used to upgrade the camp. The Editing Room in the camp "restores cut clips", turning them into new cards and new weapons.
 
 ### Sticky Note
 
-> 奇幻斜俯视割草。出发前插卡定难度。搜到的宝物越多，怪越强——用掉保命，还是带出去建营地。
+> Fantasy top-down mower. Slot cards before departure to set the difficulty. The more treasure you find, the stronger the monsters get: use it to survive, or carry it out to build the camp.
 
-任何新想法如果写不进这张便利贴，就进 Scope Boundaries，不进本次开发。
+Any new idea that does not fit on this sticky note goes into Scope Boundaries, not into this development.
 
 ### Delivery Tiers
 
-需求按三档交付。下一档只在上一档完整可玩后开始；Day 3 晚冻结新功能，没做完的档位直接砍掉。
+Requirements are delivered in three tiers. The next tier starts only after the previous one is fully playable; features freeze on the evening of Day 3, and unfinished tiers are cut outright.
 
-| 档位 | 内容 | 截止 |
+| Tier | Content | Deadline |
 |---|---|---|
-| 必须 | 移动、自动攻击、1 种怪、升级三选一(R1, R3)；1 种材料、固定物资点(R2, R7)；稀有物资可当场使用(R8)；热度(R10)；背包上限(R9)；撤离与死亡(R4–R6, R11 的丢失部分)；2 个胶片槽、2 张卡:尸潮、Boss(R12–R14)；营地 2 栋建筑:铁匠铺、诊所，指数成本(R16, R18, R19) | Day 2 结束能完整跑一圈 |
-| 应该 | 材料增至 3 种(R7)；4 栋建筑，含剪辑室解锁新卡和新武器(R15, R17)；撤离类、时长类卡(R13)；NG 胶片进度(R11) | Day 3 白天 |
-| 可以 | 建筑外观随等级变化(R16)；运气、复活等次要属性(R17)；更多怪种、更多升级池内容 | 有余力时，Day 3 晚冻结 |
+| Must | Movement, auto-attack, 1 enemy type, pick one of three on level-up (R1, R3); 1 material, fixed supply points (R2, R7); rare supplies usable on the spot (R8); heat (R10); backpack limit (R9); extraction and death (R4-R6, the loss part of R11); 2 film slots, 2 cards: horde, Boss (R12-R14); 2 camp buildings: Blacksmith, Clinic, exponential costs (R16, R18, R19) | End of Day 2 can run one full loop |
+| Should | Materials increase to 3 (R7); 4 buildings, including the Editing Room unlocking new cards and new weapons (R15, R17); extraction and duration cards (R13); NG film progress (R11) | Day 3 daytime |
+| Could | Building appearance changes with level (R16); secondary stats such as luck and revival (R17); more enemy types, more upgrade pool content | If there is spare capacity, frozen on the evening of Day 3 |
 
 ### Reference Games
 
-| 游戏 | 借鉴什么 |
+| Game | What to borrow |
 |---|---|
-| Vampire Survivors | 自动攻击割草、局内三选一升级、局外属性升级清单 |
-| Halls of Torment | 3D(斜俯视)幸存者的镜头和可读性 |
-| 三角洲行动 / 逃离塔科夫 | 撤离点倒计时的紧张感、"带出去才算数" |
-| Hades | 回营地看到成长、营地作为局与局之间的停顿 |
+| Vampire Survivors | Auto-attack mowing, in-run pick-one-of-three level-ups, outside-the-run stat upgrade list |
+| Halls of Torment | Camera and readability of a 3D (top-down) survivors game |
+| Delta Force / Escape from Tarkov | The tension of the extraction countdown, "it only counts if you carry it out" |
+| Hades | Returning to camp to see growth, the camp as a pause between runs |
 
 ### Problem Frame
 
-现在的搜打撤游戏(《三角洲行动》《暗区突围》《逃离塔科夫》)，局内带出来的东西对局外几乎没有影响，局外成长又常被特定的随机掉落卡住。运气差就升不了级。被打破防之后，玩家看不到循序渐进的进步，也就没有动力再冒险，玩到一定程度就玩不下去了。
+In current extraction games (Delta Force, Arena Breakout, Escape from Tarkov), what you carry out of a run has almost no effect outside the run, and outside growth is often blocked by specific random drops. With bad luck you cannot level up. After being broken down, players see no steady progress, so they have no motivation to take risks again, and at some point they cannot keep playing.
 
-吸血鬼幸存者类游戏的局外成长稳定，但局内拾取物只是数值，没有"留还是用"的取舍。
+Vampire Survivors-style games have stable outside growth, but the in-run pickups are just numbers, with no "keep or use" trade-off.
 
-本次比赛只有 4 天(11/12–11/15)，开发者单人，使用 UE。评分七项各 5 分，其中"主题"一项看对 Director's Cut 的诠释是否新鲜。评委只玩很短时间，所以核心体验必须在头几局就出现。
+This contest lasts only 4 days (11/12-11/15), the developer works solo, and uses UE. The seven scoring categories are worth 5 points each, and the "Theme" score looks at how fresh the interpretation of Director's Cut is. Judges play only a short time, so the core experience must appear in the first few runs.
 
 ### Key Decisions
 
-- **品类:幸存者 × 搜打撤 × 营地建设。** 融合开发者"3D 吸血鬼幸存者"和"让搜打撤更有价值"两个想法。(session-settled: user-directed — 选它而非纯 3D 幸存者、单人奇幻冒险、本地派对游戏:4 天单人可行，而且"局内价值影响局外"是最有创新空间的点)
-- **用四种机制组合解决"运气差升不了级"。** 四种机制分别是:固定点位按需去拿、通用材料、带出还是当场用、失败保留进度。Governs R2, R7, R8, R11, R18。(session-settled: user-directed — 四个候选全部采纳，并由开发者改写了材料规则)
-- **2–3 种通用材料，不用 1 种万能材料。** 保留"想升哪栋就去哪类点位"的路线规划。Governs R7, R18。(session-settled: user-approved — 没选单一材料，因为单一材料会让固定点位失去规划意义)
-- **主题从两层切入:剪辑室恢复被剪内容，加上局前用卡槽剪辑。** 两层咬合:剪辑室解锁卡，局前把卡用掉。Governs R12–R15, R17。(session-settled: user-directed — 选它而非只做其中一层，或只做"片场 Take"的包装)
-- **局前剪辑做成卡槽式，不做可拖拽的时间线。** 把范围限制在 jam 可承受的量。Governs R12。(session-settled: user-approved — 时间线编辑器的 UI 成本太高)
-- **jam 版本的片段卡只做两组:怪物 + 高潮戏，撤离 + 时长。** Governs R13。(session-settled: user-directed — 区域/物资类和氛围类卡没选)
-- **题材选西方奇幻，以免费资产为主。** 按"可用免费素材最多"来选，也贴近开发者赛后想做的奇幻冒险方向。Governs R20。(session-settled: user-approved — 没选 B 级恐怖和老式科幻，因为它们的免费资产少、风格难统一)
-- **镜头为斜俯视，武器自动攻击。** 尸潮的可读性最好，也最好做。Governs R1。(session-settled: user-approved — 没选双摇杆瞄准和第三人称肩后视角)
-- **营地是 3D 场景，固定镜头，点选建筑。** 成长看得见，工作量中等。Governs R16。(session-settled: user-approved — 没选可行走营地和纯 UI 菜单)
-- **局外做"薄"，只做吸血鬼幸存者式的属性升级。** 局内是核心，局外只负责让"带出去"值得。Governs R17–R19。(session-settled: user-directed — 开发者以吸血鬼幸存者的局外升级清单为参照，否决了"不做局外、只算票房分"的方案)
-- **热度机制是开发者自己提出的:背包里的物资越值钱，怪越多越强。** 它让每次拾取都成为一个决定。Governs R10。
+- **Genre: survivors x extraction x camp building.** It merges the developer's two ideas, "3D Vampire Survivors" and "make extraction games more valuable". (session-settled: user-directed — chosen over pure 3D survivors, a solo fantasy adventure, and a local party game: feasible solo in 4 days, and "in-run value affects outside the run" is the point with the most room for innovation)
+- **Solve "bad luck means no level-ups" with a combination of four mechanics.** The four are: fixed points to fetch on demand, common materials, carry out or use on the spot, and keeping progress on failure. Governs R2, R7, R8, R11, R18. (session-settled: user-directed — all four candidates adopted, and the developer rewrote the material rules)
+- **2-3 common materials, not 1 universal material.** Keeps the route planning of "go to this kind of point for the building you want to upgrade". Governs R7, R18. (session-settled: user-approved — a single material was not chosen because it would strip fixed points of planning meaning)
+- **The theme enters from two layers: the Editing Room restores cut content, plus pre-run cutting with card slots.** The two layers interlock: the Editing Room unlocks cards, and the pre-run step spends them. Governs R12-R15, R17. (session-settled: user-directed — chosen over doing only one layer, or only a "film set Take" wrapper)
+- **Pre-run cutting is card slots, not a draggable timeline.** Limits the scope to what a jam can bear. Governs R12. (session-settled: user-approved — the UI cost of a timeline editor is too high)
+- **The jam version's clip cards cover only two groups: monster + climax scene, and extraction + duration.** Governs R13. (session-settled: user-directed — zone/loot cards and atmosphere cards were not chosen)
+- **Setting is Western fantasy, mainly with free assets.** Chosen by "most available free material", and it also fits the fantasy adventure direction the developer wants to make after the jam. Governs R20. (session-settled: user-approved — B-movie horror and retro sci-fi were not chosen because they have few free assets and a style that is hard to unify)
+- **The camera is top-down, and weapons auto-attack.** Best readability for hordes and the easiest to build. Governs R1. (session-settled: user-approved — twin-stick aiming and a third-person over-the-shoulder camera were not chosen)
+- **The camp is a 3D scene with a fixed camera and click-to-select buildings.** Growth is visible, with moderate workload. Governs R16. (session-settled: user-approved — a walkable camp and a pure UI menu were not chosen)
+- **Keep the outside layer "thin": only Vampire Survivors-style stat upgrades.** The run is the core; the outside layer only makes "carrying it out" worthwhile. Governs R17-R19. (session-settled: user-directed — the developer took Vampire Survivors' outside upgrade list as the reference and rejected the plan of "no outside layer, only a box-office score")
+- **The heat mechanic is the developer's own proposal: the more valuable the loot in the backpack, the more and stronger the monsters.** It makes every pickup a decision. Governs R10.
 
 ### Requirements
 
-**局内:地图与战斗**
+**In-run: map and combat**
 
-- R1. 斜俯视 3D 镜头。WASD 移动，武器自动攻击；另有闪避，以及一个用于搜索和撤离的交互键。
-- R2. 只有一张手工搭建的固定地图。每个物资点产出的材料类别是固定且可知的，另有少量高级物资点；随机的只是数量和稀有加成。
-- R3. 局内成长采用吸血鬼幸存者式:击杀获得经验，升级时从升级池里选择新武器、技能或强化。
-- R4. 全图有多个撤离点，随时间陆续开放。玩家在撤离点停留满规定时长即可撤离(默认 30 秒，可调)。
-- R5. 什么时候撤离由玩家决定，一局的时长目标是 3–10 分钟。
-- R6. 成功撤离时，背包里的全部物品进入营地仓库。
+- R1. Top-down 3D camera. WASD to move, weapons auto-attack; there is also a dodge, and an interact key for searching and extraction.
+- R2. Only one hand-built fixed map. The material category produced by each supply point is fixed and knowable, with a few high-grade supply points; only the quantity and rarity bonus are random.
+- R3. In-run growth follows Vampire Survivors: kills give XP, and on level-up the player picks a new weapon, skill or enhancement from the upgrade pool.
+- R4. The map has multiple extraction points, which open one after another over time. The player extracts by standing in an extraction point for the required time (default 30 seconds, adjustable).
+- R5. The player decides when to extract; a run targets 3-10 minutes.
+- R6. On successful extraction, all items in the backpack go into the camp storage.
 
-**物资、背包与热度**
+**Loot, backpack and heat**
 
-- R7. 通用材料有 2–3 种，局内可以直接搜到。
-- R8. 稀有物资可以在局内消耗，换取强力、能逆转局势的成长。
-- R9. 背包容量有限，局内满包时必须做取舍。
-- R10. 热度:背包里物品的总价值越高，刷怪数量越多、怪越强。热度实时生效，物品被消耗或丢弃后热度随之下降。
-- R11. 死亡时背包内物品全部丢失，但这一局会作为"NG 胶片"给剪辑室一定恢复进度。
+- R7. There are 2-3 common materials, which can be found directly in the run.
+- R8. Rare supplies can be consumed in the run in exchange for powerful growth that can turn the tide.
+- R9. Backpack capacity is limited; when the pack is full in the run, the player must make trade-offs.
+- R10. Heat: the higher the total value of the items in the backpack, the more monsters spawn and the stronger they are. Heat takes effect in real time and falls after items are consumed or dropped.
+- R11. On death all items in the backpack are lost, but the run counts as an "NG film" that gives the Editing Room some restore progress.
 
-**局前剪辑(Director's Cut)**
+**Pre-run editing (Director's Cut)**
 
-- R12. 每局出发前，玩家把片段卡插进胶片槽(3–5 个；初始较少，剪辑室升级后增加)，确认后即开局。
-- R13. jam 版本的片段卡分为四类:
-  - 怪物:精英波次、尸潮、更换怪物种类
-  - 高潮戏:插入 Boss 场景
-  - 撤离:删掉撤离点，或推迟撤离窗口
-  - 时长:短剪版或加长版
-- R14. 每张卡有风险值。已插卡的风险总和决定本局材料的收益倍率，出发前在界面上显示。
-- R15. 新的片段卡要靠剪辑室"恢复被剪片段"来解锁。
+- R12. Before each run, the player slots clip cards into film slots (3-5; fewer at first, more after the Editing Room is upgraded), and the run starts once confirmed.
+- R13. The jam version's clip cards fall into four categories:
+  - Monster: elite waves, horde, swap monster type
+  - Climax scene: insert a Boss scene
+  - Extraction: delete an extraction point, or delay the extraction window
+  - Duration: short cut or extended cut
+- R14. Each card has a risk value. The sum of the slotted cards' risk determines this run's material payout multiplier, shown in the UI before departure.
+- R15. New clip cards are unlocked by the Editing Room "restoring cut clips".
 
-**局外:营地**
+**Outside the run: camp**
 
-- R16. 营地是一个固定镜头的 3D 场景。点击建筑会弹出升级面板；建筑升级后，外观有可见的变化。
-- R17. 营地有四栋建筑，各自负责的升级见下表。
+- R16. The camp is a 3D scene with a fixed camera. Clicking a building opens an upgrade panel; after a building is upgraded, its appearance visibly changes.
+- R17. The camp has four buildings; the upgrades each handles are in the table below.
 
-| 建筑 | 升级内容 |
+| Building | Upgrades |
 |---|---|
-| 剪辑室 | 胶片槽数量、解锁新片段卡、把新武器/技能加入局内升级池、运气 |
-| 铁匠铺 | 攻击力、攻击范围、发射数量 |
-| 诊所/神殿 | 生命上限、生命恢复、复活次数 |
-| 仓库/行囊匠 | 背包容量、贪欲(材料获取量) |
+| Editing Room | Film slot count, unlock new clip cards, add new weapons/skills to the in-run upgrade pool, luck |
+| Blacksmith | Attack power, attack range, projectile count |
+| Clinic/Shrine | Max health, health regeneration, revival count |
+| Storage/Packer | Backpack capacity, greed (material gain) |
 
-- R18. 建筑升级只消耗通用材料，每级需求按指数增长。稀有物资可以分解成更多通用材料，也可以不分解、放在仓库里囤着。
-- R19. 前 2–3 次升级要能在前 2–3 局内达成。
+- R18. Building upgrades cost only common materials, with each level's requirement growing exponentially. Rare supplies can be salvaged into more common materials, or left unsalvaged and hoarded in storage.
+- R19. The first 2-3 upgrades must be reachable within the first 2-3 runs.
 
-**表现**
+**Presentation**
 
-- R20. 美术以免费外部资产为主，整体风格统一；所有外部资产在提交时列出。
-- R21. 世界观包装:世界是一部被剪烂的奇幻电影，剪辑室是营地里的一栋建筑。游戏内所有文字为英文。
+- R20. Art is mainly free external assets, with a unified overall style; all external assets are listed at submission.
+- R21. World framing: the world is a fantasy film cut to ribbons, and the Editing Room is a building in the camp. All in-game text is in English.
 
 ### Key Flows
 
-- F1. 一次完整循环
-  - **Trigger:** 玩家在营地点"出发"。
-  - **Steps:** 在剪辑室插卡，看到风险倍率 → 进入固定地图，割草升级 → 按需前往物资点搜刮，热度上升 → 纠结稀有物资是留还是用 → 前往已开放的撤离点并站满时间 → 回到营地，分解或囤积，升级建筑。
-  - **Outcome:** 营地变强，可能解锁新卡或新武器，下一局的剪辑选项变多。
-  - **Covered by:** R2–R18
+- F1. One full loop
+  - **Trigger:** The player clicks "Depart" in the camp.
+  - **Steps:** Slot cards in the Editing Room and see the risk multiplier -> enter the fixed map, mow and level up -> go to supply points as needed to loot, heat rises -> agonize over whether to keep or use rare supplies -> go to an open extraction point and stand the full time -> return to camp, salvage or hoard, upgrade buildings.
+  - **Outcome:** The camp gets stronger, may unlock new cards or weapons, and the next run has more editing options.
+  - **Covered by:** R2-R18
 
 ### Acceptance Examples
 
-- AE1. **Covers R4, R6.** 给定一个已开放的撤离点，玩家在点内站满 30 秒，则撤离成功，背包物品全部进入营地仓库。
-- AE2. **Covers R11.** 玩家背包里有稀有物资时死亡，则物资全部丢失，剪辑室恢复进度增加一份 NG 胶片的量。
-- AE3. **Covers R8, R10.** 玩家捡起一件高价值稀有物资，热度上升，刷怪变多变强；玩家当场使用它，获得强力成长，热度回落。
-- AE4. **Covers R14.** 玩家插入"尸潮"卡和"Boss"卡，出发前界面显示风险总和与收益倍率；本局撤离时，带出的材料数量按该倍率计算。
-- AE5. **Covers R19.** 新存档玩家只插基础卡，前两局都成功撤离，则至少能升级两次建筑。
+- AE1. **Covers R4, R6.** Given an open extraction point, if the player stands in the point for the full 30 seconds, extraction succeeds and all backpack items go into the camp storage.
+- AE2. **Covers R11.** If the player dies with rare supplies in the backpack, all the supplies are lost, and the Editing Room restore progress increases by one NG film's worth.
+- AE3. **Covers R8, R10.** The player picks up a high-value rare supply, heat rises, and monsters spawn in greater numbers and strength; the player uses it on the spot, gains powerful growth, and heat falls back.
+- AE4. **Covers R14.** The player slots the "Horde" card and the "Boss" card; before departure the UI shows the total risk and the payout multiplier; on extraction in this run, the materials carried out are computed with that multiplier.
+- AE5. **Covers R19.** A new-save player slots only basic cards and extracts successfully in both of the first two runs, so can upgrade buildings at least twice.
 
 ### Success Criteria
 
-- 一位没玩过的评委在 10–20 分钟内能完成至少两局，并且做到以下几点:
-  - 至少一次局前剪辑改变了 Boss、精英或尸潮
-  - 至少面对一次"留着还是用掉"的决定
-  - 至少看到一次营地建筑变化
-- 打包后的 Windows 构建可在干净环境运行，体积小于 1 GB。
+- A judge who has never played can complete at least two runs in 10-20 minutes, and do the following:
+  - At least once, a pre-run cut changes the Boss, elites or horde
+  - Face a "keep it or use it" decision at least once
+  - See a camp building change at least once
+- The packaged Windows build runs in a clean environment and is under 1 GB.
 
 ### Scope Boundaries
 
-**以后再做:**
+**Later:**
 
-- 区域/场景类、物资类、氛围类(夜景/暴雨)片段卡
-- 随机地图、多张地图
-- 联机合作、本地派对模式
-- 收藏展示柜。jam 版本的囤积只体现为"仓库里可以不分解"。
-- 安全箱这类保底格子
-- 可拖拽的时间线剪辑器
-- 可在营地里行走的角色
+- Zone/scene, loot and atmosphere (night/storm) clip cards
+- Random maps, multiple maps
+- Online co-op, local party mode
+- Collection showcase. In the jam version, hoarding shows up only as "storage can leave things unsalvaged".
+- Safe boxes and similar guaranteed slots
+- A draggable timeline editor
+- A character that can walk around the camp
 
-**不属于本游戏定位:**
+**Not part of this game's identity:**
 
-- 抽卡、氪金、强制联网
+- Gacha, microtransactions, forced online play
 
 ### Dependencies / Assumptions
 
-- 免费资产按以下假设准备:Infinity Blade 系列、Megascans、Paragon 角色等在 Fab 上仍可免费用于 UE 项目，但 2026 年的可用性未核实。
-- 官方规则允许使用有授权的外部资产，提交时需列出；`PLAN.md` 记录外部素材不计分，画面分要靠整合与风格统一来拿。
-- UE 项目 `Game_Jam_01/` 目前是空项目，没有游戏内容。
+- Free assets are prepared on these assumptions: the Infinity Blade series, Megascans, Paragon characters and so on are still free to use in UE projects on Fab, but their 2026 availability is unverified.
+- The official rules allow licensed external assets, to be listed at submission; `PLAN.md` records that external material is not scored, so the visuals score has to come from integration and a unified style.
+- The UE project `Game_Jam_01/` is currently an empty project with no game content.
 
 ### Outstanding Questions
 
 **Deferred to Planning**
 
-- 撤离时中途离开撤离区或受到攻击，计时如何处理。
-- 数值:撤离时长、撤离点开放时间、热度曲线、风险值与倍率的对应关系、升级成本曲线的起点和底数。
-- 当场使用稀有物资既有增益又降低热度，"用"会天然占优；需要靠数值让"留着"同样值钱。
-- 2–3 种材料具体叫什么、各自对应奇幻世界里的什么东西(如金属、布料、魔法零件)。
-- 哪些资产包实际可用，以及角色、怪物、Boss、营地建筑分别用哪个包。
-- 哪些系统用 C++、哪些用 Blueprint。
+- How the timer is handled if the player leaves the extraction zone or takes attacks midway.
+- Values: extraction duration, extraction point opening times, heat curve, mapping between risk value and multiplier, starting point and base of the upgrade cost curve.
+- Using a rare supply on the spot both grants a boost and lowers heat, so "using" naturally dominates; values must make "keeping" worth just as much.
+- What the 2-3 materials are called, and what each corresponds to in the fantasy world (such as metal, cloth, magic parts).
+- Which asset packs are actually usable, and which pack is used for characters, monsters, Boss and camp buildings.
+- Which systems use C++ and which use Blueprint.

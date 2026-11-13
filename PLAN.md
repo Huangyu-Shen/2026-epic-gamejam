@@ -1,165 +1,165 @@
-# Epic AI MegaJam 2026 — 单人 UE 赛道计划
+# Epic AI MegaJam 2026 — Solo UE Track Plan
 
-- **AI 工具**:Claude Code(通过官方 Unreal MCP 连接编辑器)
-- **开发机**:Windows 电脑(Mac 仅用于初始化项目),通过 GitHub 同步
-- **当前阶段**:**Phase 0**(今天 11/3;开赛 11/12 英国时间 05:00)
+- **AI tool**: Claude Code (connected to the editor through the official Unreal MCP)
+- **Dev machine**: Windows PC (the Mac is only used to initialize the project), synced through GitHub
+- **Current phase**: **Phase 0** (today is 11/3; the jam starts 11/12 05:00 UK time)
 
-**目录**:[关键时间点](#关键时间点) · [阶段总览](#阶段总览) · [硬性规则速查](#硬性规则速查) · [Phase 0](#phase-0--赛前准备113--1111) · [Phase 1](#phase-1--day-1--1112周四) · [Phase 2](#phase-2--day-2--1113) · [Phase 3](#phase-3--day-3--1114) · [Phase 4](#phase-4--day-4--1115) · [Phase 5](#phase-5--提交--1115-晚--1116-0159) · [风险](#风险)
+**Contents**: [Key Dates](#key-dates) · [Phase Overview](#phase-overview) · [Quick Rules Reference](#quick-rules-reference) · [Phase 0](#phase-0--pre-contest-preparation-113---1111) · [Phase 1](#phase-1--day-1--1112-thursday) · [Phase 2](#phase-2--day-2--1113) · [Phase 3](#phase-3--day-3--1114) · [Phase 4](#phase-4--day-4--1115) · [Phase 5](#phase-5--submission--1115-evening---1116-0159) · [Risks](#risks)
 
-## 关键时间点
+## Key Dates
 
-所有时间均为英国时间。
+All times are UK time.
 
-| 时间 | 事件 |
+| Time | Event |
 |---|---|
-| 11/11 19:00 | 开幕直播,公布主题 |
-| 11/12(周四)05:00 | 开赛;在本仓库打标签 `jam-start`,在仓库根目录新建 UE 项目 |
-| 11/14 晚 | 冻结新功能 |
-| 11/15 | 打包、视频、日志、上传 itch.io |
-| 11/16 01:59 | **提交截止**,逾期取消资格 |
+| 11/11 19:00 | Opening livestream, theme announced |
+| 11/12 (Thursday) 05:00 | Jam starts; tag this repo `jam-start` and create the UE project in the repo root |
+| 11/14 evening | Feature freeze |
+| 11/15 | Package, video, log, upload to itch.io |
+| 11/16 01:59 | **Submission deadline**; late entries are disqualified |
 
-## 阶段总览
+## Phase Overview
 
-| Phase | 时间 | 目标 | 完成标准 |
+| Phase | Time | Goal | Completion criteria |
 |---|---|---|---|
-| 0 | 11/3 – 11/11 | 只准备工具链 | 整条链路跑通,含打包 |
-| 1 | 11/12 05:00 – 11/12 夜 | 定玩法 + 灰盒原型 | 核心循环可玩 |
-| 2 | 11/13 | 玩法扩展 + 关卡 + 资产 | 关卡可通关 |
-| 3 | 11/14 | 美术/音频/UI 打磨,晚上冻结功能 | 内容完整 |
-| 4 | 11/15 | 修 bug、打包、视频、日志、上传 | 构建与材料齐备 |
-| 5 | 11/15 晚 – 11/16 01:59 | 本人提交 | 提交成功(目标留出数小时余量) |
+| 0 | 11/3 - 11/11 | Prepare the toolchain only | Whole pipeline works, including packaging |
+| 1 | 11/12 05:00 - night of 11/12 | Settle the gameplay + greybox prototype | Core loop is playable |
+| 2 | 11/13 | Gameplay expansion + level + assets | Level can be completed |
+| 3 | 11/14 | Art/audio/UI polish, freeze features in the evening | Content complete |
+| 4 | 11/15 | Fix bugs, package, video, log, upload | Build and materials ready |
+| 5 | Evening of 11/15 - 11/16 01:59 | Developer submits in person | Submission succeeds (aim to leave several hours of margin) |
 
-## 硬性规则速查
+## Quick Rules Reference
 
-来自官方规则,以原文为准。
+From the official rules; the original text is authoritative.
 
-**时间与范围**
-- 比赛期 11/12 05:00 → 11/16 01:59,逾期取消资格。
-- 赛前只能准备 AI 工具、agent 配置、MCP 设置、提示词库、脚本。**不能**预做玩法、关卡、美术、模板;旧 Unity/Godot 代码不能搬。
-- 必须自定义玩法,不能是官方教程延伸;必须体现主题(11/11 19:00 公布)。
+**Time and scope**
+- Contest period 11/12 05:00 -> 11/16 01:59; late entries are disqualified.
+- Before the jam you may only prepare AI tools, agent config, MCP setup, prompt libraries and scripts. You may **not** pre-build gameplay, levels, art or templates; old Unity/Godot code cannot be carried over.
+- Gameplay must be custom, not an extension of an official tutorial; it must reflect the theme (announced 11/11 19:00).
 
-**内容与材料**
-- 全英文(游戏内文字、音频、视频、报名信息);13+ 内容;无商标/logo。
-- 视频 30–60 秒,不低于 1920×1080。
-- 外部素材(Fab 等)提交时列明且不计分;AI 生成内容不算外部素材,但需保证不侵权。
-- 构建体积限制 1 GB。
+**Content and materials**
+- All English (in-game text, audio, video, sign-up info); 13+ content; no trademarks/logos.
+- Video 30-60 seconds, at least 1920x1080.
+- External assets (Fab, etc.) are listed at submission and are not scored; AI-generated content does not count as external assets, but must not infringe.
+- Build size limit 1 GB.
 
-**提交**
-- 提交必须本人操作,不能让 agent 代提交。
+**Submission**
+- The submission must be made by the developer in person; an agent cannot submit on their behalf.
 
-**评分与目标**
-- 七项各 5 分:创新野心、主题、乐趣、玩法、画面、关卡设计、音频(平分乐趣加倍)。
-- 目标奖项:Best Student Project 或 Best Overall (UE) 二选一 + Solo Driver。
-
----
-
-## Phase 0 — 赛前准备(11/3 – 11/11)
-
-原则:只准备工具,不做任何游戏内容。热身项目是一次性的,不带入比赛。
-
-### 账号与资料
-- [ ] Epic 账号为 18+ 完整账号(非 Cabined),邮箱用个人邮箱
-- [ ] 存好在读证明截图
-- [ ] 注册/登录 itch.io
-- [ ] 读完官方规则要点,查 AI 工具额度领取方式(稍后公布)
-- [ ] (可选)问学校国际学生服务:奖金对签证有无影响
-
-### Windows 环境
-- [ ] 确认 Windows 机器配置能流畅跑 UE
-- [ ] 读 jam 页面 "Get ready",确认 UE 版本要求(第三方称 5.8+,**未核实**)并安装
-- [ ] 装 Git + Git LFS、Visual Studio(C++ 工作负载)、Claude Code
-- [ ] 本仓库推到 GitHub(私有),Windows 上 clone 下来
-
-### MCP 链路
-- [ ] 启用 Unreal MCP + All Toolsets 插件,重启编辑器
-- [ ] 打开 Auto Start Server,Claude Code 通过本地 HTTP 连上
-- [ ] 热身项目:放物体、改材质、写 C++/Blueprint 小逻辑并编译
-- [ ] 完整打包一次并在干净环境运行
-- [ ] 测试视口截图(base64 过大会撑爆上下文),定"少截图"规则
-- [ ] 测试 MCP 卡死/崩溃时的恢复方式(频繁存档)
-
-### 提示词与脚本(放本仓库)
-- [ ] CLAUDE.md 模板:UE 约定、C++ 优先、少改 Blueprint 节点图
-- [ ] 提示词库:灰盒原型、玩法迭代、资产导入、打包排错
-- [ ] 脚本:构建、打包、Git 提交/存档
-
-### Claude Code Game Studios(CCGS)
-本仓库就是比赛项目仓库。CCGS 的配置已从 `D:\project\Claude-Code-Game-Studios`(来源 `Donchitos/Claude-Code-Game-Studios`,框架 1.2.0)复制进来:`.claude/`(agents、skills、hooks)、`CLAUDE.md`、`project.yaml`、`docs/`(含 UE 5.8 参考)、`.gitattributes`、`.worktreeinclude`。**没有**复制 `design/`、`src/`、`production/`、`studio-tests/` 目录骨架。
-- [x] 复制 CCGS 配置进本仓库
-- [ ] 在本仓库里开 Claude Code 跑 `/start`,确认 hooks 在 Windows 上能运行(依赖 Git Bash、Python、jq)
-- [ ] `/setup-engine` 选 Unreal,确认能识别已安装的 UE 版本(参考文档写的是 5.8)
-- [ ] 确认它和 Unreal MCP 能同时使用(CCGS 文档里没有 MCP 相关内容,需自己验证)
-- [ ] `modes.rigor` 定为 `minimal`(README 称是 jam 速度档),试走 `/brainstorm` → `/create-stories` → `/dev-story` ↔ `/story-done`
-- [ ] 从 80 多个 skill 里挑出比赛要用的少数几个,写进 CLAUDE.md
-- [ ] 对照官方规则原文确认:赛前仓库里只有工具、agent 配置、脚本,没有玩法、关卡、美术、模板
-- [ ] 热身项目放在仓库外,不要提交进本仓库
-
-### 产出材料流程
-- [ ] 试录 1080p+ 屏幕视频并剪辑成 30–60 秒
-- [ ] 试传一个测试构建到 itch.io
-- [ ] 准备开发日志模板(争 Glass Box 用)
-
-### 开赛前一天
-- [ ] 11/11 19:00 看开幕直播听主题
-- [ ] 早睡;准备好 11/12 05:00 起床
+**Scoring and goals**
+- Seven categories, 5 points each: Innovation Ambition, Theme, Fun, Gameplay, Visuals, Level Design, Audio (the Fun score is doubled when tied).
+- Target awards: Best Student Project or Best Overall (UE), pick one, plus Solo Driver.
 
 ---
 
-## Phase 1 — Day 1 · 11/12(周四)
+## Phase 0 — Pre-Contest Preparation (11/3 - 11/11)
 
-目标:核心循环可玩
+Principle: prepare tools only, make no game content at all. The warm-up project is throwaway and does not carry into the contest.
 
-- [ ] 05:00 前后在本仓库打标签 `jam-start`(版本历史证据:此前只有工具类提交,此后才是游戏内容)
-- [x] 新建 UE 项目,启用 MCP → 项目在 `Game_01/`(仓库子目录,C++ 工程,`Game_01.uproject`);Unreal MCP + All Toolsets 已启用,自动启动已勾选,端口 8000(11/12 已验证服务响应)
-- [x] 读主题,头 3 小时内定 1 个核心玩法,写一页纸范围(宁小勿大)→ 主题 Director's Cut;需求见 `docs/plans/2026-11-12-1143-feat-directors-cut-extraction-survivors-plan.md`(含便利贴与必须/应该/可以三档)
-- [ ] 灰盒原型(只用方块/胶囊,不碰美术):玩家控制 + 自动攻击 + 物资点 + 热度 + 当场使用稀有物资 + 撤离
-- [ ] 验证唯一未经检验的问题:"热度 + 留着还是用掉"好不好玩?找 1–2 人(朋友或 jam Discord/论坛)各玩 5 分钟,记下反馈;不好玩就当晚改机制
-- [ ] 开发日志记第 1 天:主题切入、反运气机制的来历、原型反馈(争 Glass Box)
-- [ ] 当晚:核心循环能玩;推送到 GitHub
+### Accounts and documents
+- [ ] Epic account is a full 18+ account (not Cabined), with a personal email
+- [ ] Save a screenshot of the proof of enrollment
+- [ ] Sign up/log in to itch.io
+- [ ] Read the key points of the official rules, find out how to claim the AI tool credits (announced later)
+- [ ] (Optional) Ask the school's international student services whether prize money affects the visa
+
+### Windows environment
+- [ ] Confirm the Windows machine runs UE smoothly
+- [ ] Read the jam page "Get ready", confirm the UE version requirement (a third party says 5.8+, **unverified**) and install it
+- [ ] Install Git + Git LFS, Visual Studio (C++ workload), Claude Code
+- [ ] Push this repo to GitHub (private) and clone it on Windows
+
+### MCP pipeline
+- [ ] Enable the Unreal MCP + All Toolsets plugins, restart the editor
+- [ ] Turn on Auto Start Server; Claude Code connects over local HTTP
+- [ ] Warm-up project: place objects, change materials, write small C++/Blueprint logic and compile it
+- [ ] Package fully once and run it in a clean environment
+- [ ] Test viewport screenshots (oversized base64 blows up the context) and set a "few screenshots" rule
+- [ ] Test how to recover when MCP hangs/crashes (save often)
+
+### Prompts and scripts (kept in this repo)
+- [ ] CLAUDE.md template: UE conventions, C++ first, minimal Blueprint graph edits
+- [ ] Prompt library: greybox prototype, gameplay iteration, asset import, packaging troubleshooting
+- [ ] Scripts: build, package, Git commit/save
+
+### Claude Code Game Studios (CCGS)
+This repo is the contest project repo. The CCGS config has been copied in from `D:\project\Claude-Code-Game-Studios` (source `Donchitos/Claude-Code-Game-Studios`, framework 1.2.0): `.claude/` (agents, skills, hooks), `CLAUDE.md`, `project.yaml`, `docs/` (including the UE 5.8 reference), `.gitattributes`, `.worktreeinclude`. The `design/`, `src/`, `production/`, `studio-tests/` directory skeletons were **not** copied.
+- [x] Copy the CCGS config into this repo
+- [ ] Open Claude Code in this repo and run `/start`, confirm the hooks work on Windows (depends on Git Bash, Python, jq)
+- [ ] `/setup-engine`: choose Unreal, confirm it recognizes the installed UE version (the reference docs say 5.8)
+- [ ] Confirm it can be used together with Unreal MCP (the CCGS docs have nothing on MCP, so verify it yourself)
+- [ ] Set `modes.rigor` to `minimal` (the README calls it the jam-speed tier), try the `/brainstorm` -> `/create-stories` -> `/dev-story` <-> `/story-done` flow
+- [ ] Pick the few skills to use in the contest out of 80-plus, and write them into CLAUDE.md
+- [ ] Check against the official rules text: before the jam the repo holds only tools, agent config and scripts, with no gameplay, levels, art or templates
+- [ ] Keep the warm-up project outside the repo; do not commit it into this repo
+
+### Deliverables workflow
+- [ ] Trial-record 1080p+ screen video and edit it into 30-60 seconds
+- [ ] Trial-upload a test build to itch.io
+- [ ] Prepare a devlog template (to compete for Glass Box)
+
+### The day before the jam
+- [ ] 11/11 19:00 watch the opening livestream to hear the theme
+- [ ] Sleep early; be ready to get up at 05:00 on 11/12
+
+---
+
+## Phase 1 — Day 1 · 11/12 (Thursday)
+
+Goal: core loop is playable
+
+- [ ] Around 05:00 tag this repo `jam-start` (version history evidence: only tooling commits before this, game content after)
+- [x] Create the UE project, enable MCP -> the project is in `Game_01/` (a repo subdirectory, C++ project, `Game_01.uproject`); Unreal MCP + All Toolsets enabled, auto start ticked, port 8000 (service response verified on 11/12)
+- [x] Read the theme, settle 1 core gameplay within the first 3 hours, write a one-page scope (small over big) -> theme is Director's Cut; requirements in `docs/plans/2026-11-12-1143-feat-directors-cut-extraction-survivors-plan.md` (including the sticky note and the must/should/could tiers)
+- [ ] Greybox prototype (cubes/capsules only, no art): player control + auto-attack + supply points + heat + using rare supplies on the spot + extraction
+- [ ] Validate the one unproven question: is "heat + keep it or use it" fun? Find 1-2 people (friends or the jam Discord/forum) to play 5 minutes each and note their feedback; if it is not fun, change the mechanic that night
+- [ ] Devlog for day 1: how the theme was approached, where the anti-luck mechanic came from, prototype feedback (to compete for Glass Box)
+- [ ] That night: the core loop is playable; push to GitHub
 
 ## Phase 2 — Day 2 · 11/13
 
-目标:关卡可通关
+Goal: level can be completed
 
-- [ ] 扩展玩法:2–3 个变化/难度递进
-- [ ] 关卡灰盒到可从头玩到尾
-- [ ] 开始 AI 生成/整理美术与音频资产(记录外部素材清单)
-- [ ] 写开发日志第 1–2 天
+- [ ] Expand gameplay: 2-3 variations/difficulty steps
+- [ ] Greybox the level until it can be played start to finish
+- [ ] Start AI-generating/organizing art and audio assets (record the external asset list)
+- [ ] Write devlog for days 1-2
 
 ## Phase 3 — Day 3 · 11/14
 
-目标:内容完整,晚上冻结新功能
+Goal: content complete, freeze new features in the evening
 
-- [ ] 关卡完成度、统一美术风格
-- [ ] 音效/音乐
-- [ ] UI(全英文)
-- [ ] 晚上冻结新功能;每次大改前提交
+- [ ] Level completeness, unified art style
+- [ ] Sound effects/music
+- [ ] UI (all English)
+- [ ] Freeze new features in the evening; commit before every big change
 
 ## Phase 4 — Day 4 · 11/15
 
-目标:构建与材料齐备
+Goal: build and materials ready
 
-- [ ] 白天修 bug、手感调优、找人试玩
-- [ ] 下午打包 Windows 构建,干净环境测试
-- [ ] 录 30–60 秒视频(1080p+,全英文)
-- [ ] 写完开发日志,整理外部素材清单
-- [ ] 上传构建到 itch.io
+- [ ] Daytime: fix bugs, tune the feel, find people to playtest
+- [ ] Afternoon: package the Windows build, test in a clean environment
+- [ ] Record a 30-60 second video (1080p+, all English)
+- [ ] Finish the devlog, organize the external asset list
+- [ ] Upload the build to itch.io
 
-## Phase 5 — 提交 · 11/15 晚 – 11/16 01:59
+## Phase 5 — Submission · 11/15 evening - 11/16 01:59
 
-- [ ] 填团队名、Epic 邮箱、游戏名、视频链接、日志链接、素材清单
-- [ ] **本人**点击提交,留出数小时余量
-- [ ] 保存提交确认
+- [ ] Fill in team name, Epic email, game name, video link, log link, asset list
+- [ ] **The developer** clicks submit, leaving several hours of margin
+- [ ] Save the submission confirmation
 
 ---
 
-## 风险
+## Risks
 
-| # | 风险 | 应对 |
+| # | Risk | Response |
 |---|---|---|
-| 1 | Windows 机器性能与环境 | Phase 0 必须跑通完整打包 |
-| 2 | MCP 调用可能卡死/崩溃编辑器 | 频繁存档、用 Git |
-| 3 | Blueprint 节点图 AI 改不稳 | 玩法尽量走 C++ |
-| 4 | AI 3D 资产要清理,构建体积限制 1 GB | 控制资产规模,打包后检查体积 |
-| 5 | 单人容易忽视关卡设计和音频(各占 5 分) | 在 Phase 2、3 里留出专门时间 |
-| 6 | 赛前误把玩法、关卡、美术放进本仓库 | 11/12 05:00 前本仓库只放工具、配置、脚本;热身项目放在仓库外;打 `jam-start` 标签区分 |
+| 1 | Windows machine performance and environment | Phase 0 must run a full package |
+| 2 | MCP calls may hang/crash the editor | Save often, use Git |
+| 3 | AI cannot edit Blueprint graphs reliably | Keep gameplay in C++ where possible |
+| 4 | AI 3D assets need cleanup, build size limit is 1 GB | Control asset scale, check size after packaging |
+| 5 | A solo developer easily neglects level design and audio (5 points each) | Reserve dedicated time in Phases 2 and 3 |
+| 6 | Mistakenly putting gameplay, levels or art into this repo before the jam | Before 11/12 05:00 this repo holds only tools, config and scripts; keep the warm-up project outside the repo; the `jam-start` tag marks the boundary |

@@ -1,176 +1,176 @@
 # Art & Audio Direction
 
 > **Status**: Designed
-> **Author**: 开发者本人 + Claude
+> **Author**: The developer + Claude
 > **Last Updated**: 2026-11-12
 > **Last Verified**: 2026-11-12
-> **Implements Pillar**: 主题 Director's Cut 的视听包装;评分项"画面"和"音频"
+> **Implements Pillar**: The Director's Cut theme's look and sound; the "visuals" and "audio" judging criteria
 
 ## Summary
 
-视觉方向是"片场里的黑暗奇幻":奇幻小城和怪物,但到处露出电影片场的痕迹。美术以免费外部资产为主,先灰盒、后替换,靠统一的调色、光照和后期把不同来源的资产拼成一个风格。音频同样以免费资源为主,重点保证打击反馈和关键事件的音效。
+The visual direction is "dark fantasy on a film set": a fantasy town and monsters, with traces of a movie set showing everywhere. Art relies mainly on free external assets, graybox first and replacement later, and uses a unified color grade, lighting and post-processing to merge assets from different sources into one style. Audio likewise relies mainly on free resources, with the focus on hit feedback and sound effects for key events.
 
-> **Quick reference** — Layer: `Presentation` · Priority: `Vertical Slice`(灰盒可读性规范为 MVP) · Key deps: `map-level`, `ui-hud`, `enemies-spawning`
+> **Quick reference** - Layer: `Presentation` · Priority: `Vertical Slice` (the graybox readability spec is MVP) · Key deps: `map-level`, `ui-hud`, `enemies-spawning`
 
 ## Overview
 
-两个阶段:
-1. **灰盒阶段(Day 1–2,Must)**:全部用基础形状和纯色材质,只要求"可读":玩家、敌人、物资点、撤离点一眼能分清。
-2. **替换阶段(Day 3,Should)**:接入免费资产,统一风格,加入音效和音乐。
+Two phases:
+1. **Graybox phase (Day 1-2, Must)**: everything uses basic shapes and flat-color materials, and only needs to be "readable": the player, enemies, supply points and extraction points can be told apart at a glance.
+2. **Replacement phase (Day 3, Should)**: bring in free assets, unify the style, and add sound effects and music.
 
 ## Player Fantasy
 
-"一部被剪坏的老奇幻电影,而我正在把它重拍完。"画面阴郁但有暖光,怪物像骷髅群演,片场灯和胶片元素提醒玩家:这是一场戏。
+"An old fantasy movie that was badly cut, and I am the one reshooting it." The picture is gloomy but has warm light, the monsters look like skeleton extras, and the set lights and film elements remind the player: this is a scene being shot.
 
 ## Detailed Design
 
 ### Core Rules
 
-**视觉风格**
+**Visual style**
 
-1. 基调:夜晚、冷蓝色环境光 + 暖橙色片场灯(点光源)。冷暖对比是全游戏统一的"签名"。
-2. 风格偏写实与风格化之间:允许混用资产,但必须经过统一的后期处理(色调映射、颜色分级、胶片颗粒、轻微暗角)。
-3. 片场元素作为点缀:片场灯、脚手架、胶片卷、场记板、摄影机轨道。它们出现在地图边缘、区域过渡和营地,不干扰战斗区域的可读性。
-4. 可读性优先于细节:斜俯视镜头下,角色和敌人必须有清晰的轮廓;地面纹理对比度要低于角色。
+1. Tone: night, cold blue ambient light + warm orange set lights (point lights). The cold/warm contrast is the game's unified "signature".
+2. The style sits between realistic and stylized: mixing assets is allowed, but they must all go through the same post-processing (tone mapping, color grading, film grain, a slight vignette).
+3. Set elements are used as accents: set lights, scaffolding, film reels, clapperboards, camera tracks. They appear at map edges, area transitions and the camp, and do not interfere with the readability of the combat area.
+4. Readability takes priority over detail: under the angled top-down camera, characters and enemies must have a clear silhouette; ground texture contrast must be lower than that of characters.
 
-**灰盒可读性规范(Must)**
+**Graybox readability spec (Must)**
 
-| 对象 | 灰盒表示 | 颜色 |
+| Object | Graybox representation | Color |
 |---|---|---|
-| 玩家 | 胶囊体 + 朝向箭头 | 白色 |
-| Skeleton Grunt | 小方块 | 骨白 |
-| Ghoul Runner | 窄长方块 | 惨绿 |
-| Bone Archer | 三棱柱 | 深紫 |
-| 精英 | 原形状 ×1.5 + 金色描边 | — |
-| Boss | 大号胶囊体 | 暗红 |
-| 补给箱 / 贮藏箱 / 宝库 | 小 / 中 / 大立方体 | 按材料:灰蓝 / 绿 / 紫 |
-| 撤离点 | 地面圆环 + 光柱 | 关闭灰色,开放亮白 |
-| 墙和建筑 | 灰色方块 | 中灰 |
-| 地面 | 平面 | 深灰 |
+| Player | Capsule + facing arrow | White |
+| Skeleton Grunt | Small cube | Bone white |
+| Ghoul Runner | Narrow, long box | Sickly green |
+| Bone Archer | Triangular prism | Dark purple |
+| Elite | Original shape ×1.5 + gold outline | - |
+| Boss | Large capsule | Dark red |
+| Supply Crate / Stash / Vault | Small / medium / large cube | By material: gray-blue / green / purple |
+| Extraction point | Ground ring + light pillar | Gray when closed, bright white when open |
+| Walls and buildings | Gray boxes | Mid gray |
+| Ground | Plane | Dark gray |
 
-**各区域视觉主题(Should)**
+**Visual theme per area (Should)**
 
-| 区域 | 主色 | 地标 | 氛围 |
+| Area | Main color | Landmark | Atmosphere |
 |---|---|---|---|
-| Central Plaza | 暖橙 | 喷泉 | 片场灯最集中的地方 |
-| Armory Quarter | 铁灰 + 火光 | 大烟囱 | 铁匠炉、武器架 |
-| Herb Gardens | 墨绿 | 风车 | 菜地、篱笆、萤火 |
-| Mage Tower | 紫 | 高塔 | 漂浮的符文、奥术光 |
-| Graveyard | 冷蓝 + 雾 | 尖塔 | 墓碑、枯树、薄雾 |
+| Central Plaza | Warm orange | Fountain | Where the set lights are most concentrated |
+| Armory Quarter | Iron gray + firelight | Big chimney | Forges, weapon racks |
+| Herb Gardens | Dark green | Windmill | Vegetable plots, fences, fireflies |
+| Mage Tower | Purple | Tall tower | Floating runes, arcane light |
+| Graveyard | Cold blue + fog | Spire | Gravestones, dead trees, thin mist |
 
-**免费资产候选(Should,需在 Day 2 验证可用性)**
+**Free asset candidates (Should, availability must be verified on Day 2)**
 
-| 用途 | 首选 | 备选 |
+| Use | First choice | Fallback |
 |---|---|---|
-| 场景(城镇、废墟) | Megascans 中世纪/废墟类资产 | Fab 上的免费风格化中世纪包 |
-| 怪物(骷髅、食尸鬼) | Infinity Blade: Adversaries / Enemies | Fab 免费骷髅包 |
-| 玩家角色 | Paragon 系列角色(选一个近战英雄) | Infinity Blade: Warriors |
-| 武器和特效 | Infinity Blade: Weapons / Effects | UE 自带 Niagara 示例 |
-| 营地 | Megascans 帐篷、木屋、篝火 | 风格化中世纪包 |
+| Scenery (town, ruins) | Megascans medieval/ruins assets | Free stylized medieval packs on Fab |
+| Monsters (skeletons, ghouls) | Infinity Blade: Adversaries / Enemies | Free skeleton packs on Fab |
+| Player character | Paragon series characters (pick one melee hero) | Infinity Blade: Warriors |
+| Weapons and effects | Infinity Blade: Weapons / Effects | Niagara samples that ship with UE |
+| Camp | Megascans tents, wooden huts, campfires | Stylized medieval packs |
 
-规则:
-- 以上资产在 2026 年 Fab 上是否仍然免费、授权是否允许用于参赛作品,**均未核实**。Day 2 先下载并确认授权,不可用就换备选。
-- 每使用一个外部资产包,立即记入外部资产清单(包名、来源链接、授权、用在哪里)。提交时必须附上。
-- 不使用任何带商标或 logo 的资产。
+Rules:
+- Whether the assets above are still free on Fab in 2026, and whether their licenses allow use in a competition entry, are **both unverified**. On Day 2, download them and confirm the license first; if one is unusable, switch to the fallback.
+- Every time an external asset pack is used, record it in the external asset list immediately (pack name, source link, license, where it is used). The list must be attached at submission.
+- Do not use any asset that carries a trademark or logo.
 
-**音频**
+**Audio**
 
-| 类别 | 内容 | 档位 |
+| Category | Content | Tier |
 |---|---|---|
-| 打击 | 武器命中、敌人死亡、玩家受击 | Should |
-| 拾取 | 经验宝石、材料、遗物(独特) | Should |
-| 事件 | 升级、热度升档、尸潮警告、Boss 登场、撤离开放、撤离倒数、撤离成功、死亡 NG | Should |
-| UI | 按钮悬停/点击、插卡、打板 | Should |
-| 音乐 | 营地 1 首(平静)、局内 1 首(紧张) | Should |
-| 动态音乐 | 局内音乐随热度档位加层 | Could |
-| 环境音 | 每个区域一段循环环境音 | Could |
+| Combat | Weapon hits, enemy deaths, player getting hit | Should |
+| Pickups | XP gems, materials, relics (distinct) | Should |
+| Events | Level up, heat tier-up, horde warning, Boss entrance, extraction opens, extraction countdown, extraction success, death NG | Should |
+| UI | Button hover/click, card insert, clapperboard clap | Should |
+| Music | 1 track for camp (calm), 1 track in-run (tense) | Should |
+| Dynamic music | In-run music adds layers with the heat tier | Could |
+| Ambience | One looping ambient track per area | Could |
 
-- 免费音频来源:WeLoveIndies(参赛者免费,**仅限非商业用途**,赛后商业化需要另买授权)、Fab 免费音频、UE 自带音效。
-- 所有外部音频同样记入外部资产清单。
-- 所有语音和文字为英文(场记员倒数 "Five, four..." 可以用 TTS 或不做语音)。
+- Free audio sources: WeLoveIndies (free for participants, **non-commercial use only**; commercializing after the jam requires buying a license), free audio on Fab, UE's built-in sound effects.
+- All external audio is likewise recorded in the external asset list.
+- All voice and text is in English (the clapper loader's countdown "Five, four..." can use TTS or have no voice).
 
 ### States and Transitions
 
-不适用。
+Not applicable.
 
 ### Interactions with Other Systems
 
-| 系统 | 交互 |
+| System | Interaction |
 |---|---|
-| `map-level.md` | 区域主题和地标 |
-| `enemies-spawning.md` | 敌人外观可区分性要求 |
-| `ui-hud.md` | 字体、配色、字幕条 |
-| `player-combat.md` | 受击、闪避、低生命的视听反馈 |
-| `loot-inventory-heat.md` | 物资点、遗物、热度档位的视听反馈 |
+| `map-level.md` | Area themes and landmarks |
+| `enemies-spawning.md` | Requirements for telling enemy looks apart |
+| `ui-hud.md` | Fonts, color scheme, subtitle bar |
+| `player-combat.md` | Audio-visual feedback for getting hit, dodging and low health |
+| `loot-inventory-heat.md` | Audio-visual feedback for supply points, relics and heat tiers |
 
 ## Formulas
 
-**构建体积预算**
+**Build size budget**
 
 ```
-BuildSize = 引擎运行时(约 300–450 MB) + 烘焙后内容 ≤ 1 GB
+BuildSize = engine runtime (about 300-450 MB) + cooked content <= 1 GB
 ```
 
-烘焙后内容预算 ≤ 450 MB:场景 ≤ 250 MB,角色和怪物 ≤ 100 MB,音频 ≤ 60 MB,UI 和其他 ≤ 40 MB。每接入一个资产包,只迁移实际用到的资产(用 Migrate),不整包导入。
+Cooked content budget <= 450 MB: scenery <= 250 MB, characters and monsters <= 100 MB, audio <= 60 MB, UI and other <= 40 MB. For each asset pack brought in, migrate only the assets actually used (use Migrate); never import a whole pack.
 
-**同屏渲染预算**
+**On-screen rendering budget**
 
 ```
-150 只敌人 × 单只三角面数 ≤ 1.5 M 三角面
+150 enemies × triangles per enemy <= 1.5 M triangles
 ```
 
-即每只普通敌人 ≤ 10 k 三角面(Nanite 可用于静态场景,骨骼网格体敌人按此预算)。
+That is, each regular enemy <= 10 k triangles (Nanite may be used for static scenery; skeletal mesh enemies follow this budget).
 
 ## Edge Cases
 
-| 情况 | 处理 |
+| Situation | Handling |
 |---|---|
-| 首选资产包不可用或授权不允许 | 立刻换备选;都不行就保留灰盒形状,只换材质和颜色 |
-| 混用资产后风格明显不一致 | 优先用后期处理和统一的材质参数拉齐,其次替换最突兀的那一个 |
-| 构建体积超过 1 GB | 依次:压缩纹理到 1K、删除未用资产、降低音频码率 |
-| 敌人模型太精细导致掉帧 | 换低模或使用 LOD 强制最低级 |
+| The first-choice asset pack is unavailable or its license does not allow use | Switch to the fallback right away; if neither works, keep the graybox shapes and change only materials and colors |
+| Styles are clearly inconsistent after mixing assets | First use post-processing and unified material parameters to bring them in line, then replace the most jarring one |
+| Build size exceeds 1 GB | In order: compress textures to 1K, delete unused assets, lower the audio bitrate |
+| Enemy models are too detailed and cause frame drops | Switch to a low-poly model or force the lowest LOD |
 
 ## Dependencies
 
-- 上游:`map-level`(区域划分)、`enemies-spawning`(敌人种类)、`ui-hud`(界面)。
-- 下游:无。
+- Upstream: `map-level` (area layout), `enemies-spawning` (enemy types), `ui-hud` (interface).
+- Downstream: none.
 
 ## Tuning Knobs
 
-| 参数 | 默认值 | 安全范围 | 影响 |
+| Parameter | Default | Safe range | Affects |
 |---|---|---|---|
-| 胶片颗粒强度 | 0.2 | 0–0.5 | 电影感与清晰度 |
-| 暗角强度 | 0.3 | 0–0.6 | 聚焦中心 |
-| 环境光强度 | 低 | — | 夜晚感与可读性 |
-| 音乐 / 音效默认音量 | 0.6 / 0.8 | 0–1 | 混音平衡 |
+| Film grain intensity | 0.2 | 0-0.5 | Cinematic feel vs. clarity |
+| Vignette intensity | 0.3 | 0-0.6 | Focus on the center |
+| Ambient light intensity | Low | - | Night feel and readability |
+| Default music / SFX volume | 0.6 / 0.8 | 0-1 | Mix balance |
 
 ## Visual/Audio Requirements
 
-即本文件。
+This document itself.
 
 ## Game Feel
 
-画面的"电影感"来自光和后期,不来自模型精度。玩法可读性永远优先:任何美术替换如果让玩家看不清敌人或物资点,就退回。
+The "cinematic feel" of the picture comes from light and post-processing, not from model detail. Gameplay readability always comes first: any art replacement that makes it hard for the player to see enemies or supply points is rolled back.
 
 ## UI Requirements
 
-见 `ui-hud.md` 的字体和配色规则。
+See the font and color rules in `ui-hud.md`.
 
 ## Cross-References
 
-- `design/prd/master-prd.md`(全局约束:1 GB、无商标、外部资产列明)
-- `design/gdd/map-level.md`(区域)
-- `design/gdd/ui-hud.md`(字体、配色)
+- `design/prd/master-prd.md` (global constraints: 1 GB, no trademarks, external assets listed)
+- `design/gdd/map-level.md` (areas)
+- `design/gdd/ui-hud.md` (fonts, color scheme)
 
 ## Acceptance Criteria
 
-- **AC1(Must)**:灰盒阶段,一张截图里能分辨出玩家、敌人、物资点(含类型)、撤离点(含开放状态)。
-- **AC2(Should)**:替换后,5 个区域各有一张截图证明主色和地标可辨,截图保存在 `production/qa/evidence/`。
-- **AC3(Should)**:外部资产清单列出了每一个用到的外部包,包括名称、来源、授权和用途。
-- **AC4(Should)**:打包后构建体积 < 1 GB。
-- **AC5(Should)**:上表中 Should 档的音效全部接入,每种事件都能听到对应音效。
-- **AC6(Must)**:150 只敌人同屏时帧率 ≥ 60 FPS(美术替换后再测一次)。
+- **AC1 (Must)**: In the graybox phase, one screenshot lets you tell apart the player, enemies, supply points (including type) and extraction points (including open state).
+- **AC2 (Should)**: After replacement, each of the 5 areas has a screenshot proving its main color and landmark are recognizable, saved in `production/qa/evidence/`.
+- **AC3 (Should)**: The external asset list names every external pack used, including name, source, license and use.
+- **AC4 (Should)**: Packaged build size < 1 GB.
+- **AC5 (Should)**: All Should-tier sound effects in the table above are hooked up, and each event plays its sound.
+- **AC6 (Must)**: With 150 enemies on screen, frame rate >= 60 FPS (test again after the art replacement).
 
 ## Open Questions
 
-- 玩家角色用 Paragon 英雄还是 Infinity Blade 战士,取决于 Day 2 的可用性验证和动画是否齐全(需要跑、闪避、受击、死亡)。
+- Whether the player character is a Paragon hero or an Infinity Blade warrior depends on the Day 2 availability check and on whether the animations are complete (run, dodge, hit reaction and death are needed).

@@ -31,7 +31,7 @@
 - [x] Player takes damage and dies at 0 HP (death is handled by story 002).
 - [x] 1 small enemy type chases the player and deals contact damage.
 - [x] A spawn scheduler sends waves that ramp over time and respond to heat from story 001.
-- [x] A horde (尸潮) event and a Boss can be spawned by the scheduler (the editing cards in story 005 will call them).
+- [x] A horde event and a Boss can be spawned by the scheduler (the editing cards in story 005 will call them).
 - [x] 1 fixed greybox map with search points and 2 extraction-point locations.
 - [x] 150 enemies on screen hold ≥ 60 FPS at 1080p on the dev machine (cap on-screen count, simple meshes, no per-enemy complex AI).
 - [x] All numbers (HP, damage, wave rates, caps) come from data tables.

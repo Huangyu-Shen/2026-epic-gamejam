@@ -28,7 +28,7 @@ and the data-driven source of all gameplay numbers.
 | AC-3 | Player takes damage and dies at 0 HP (death is handled by story 002). | PASS | `HandleDied` binds `OnDied` (fixed a missing `UFUNCTION()` this session) and reports death to `URunOutcomeSubsystem`. No player-facing death feedback yet — that is story 007. |
 | AC-4 | 1 small enemy type chases the player and deals contact damage. | PASS | Confirmed in PIE by the user. |
 | AC-5 | A spawn scheduler sends waves that ramp over time and respond to heat from story 001. | PASS | Confirmed in PIE by the user. |
-| AC-6 | A horde (尸潮) event and a Boss can be spawned by the scheduler. | PASS | Confirmed in PIE by the user. |
+| AC-6 | A horde event and a Boss can be spawned by the scheduler. | PASS | Confirmed in PIE by the user. |
 | AC-7 | 1 fixed greybox map with search points and 2 extraction-point locations. | PASS | `L_Greybox.umap` binary scan: `ExtractionZone` x8, `LootContainer` x14, `PlayerStart` x5, `DirectorGameMode` x1. |
 | AC-8 | 150 enemies on screen hold ≥ 60 FPS at 1080p. | PASS (advisory) | `enemies=152 avgFPS=132.3 minFPS=50.0 samples=1324`. Average clears 60; single worst frame below. Accepted by the user. |
 | AC-9 | All numbers (HP, damage, wave rates, caps) come from data tables. | PASS | Four `DT_*Tuning` tables under `/Game/Data` wired through `UDirectorTuningSettings` in `Config/DefaultGame.ini`. |

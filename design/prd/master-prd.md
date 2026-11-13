@@ -1,145 +1,145 @@
 # Director's Cut — Master PRD
 
 > **Status**: Approved (scope baseline)
-> **Author**: 开发者本人 + Claude
-> **Last Updated**: 2026-11-13(v2:主题搬进升级环节,见 `design/game-brief.md`)
-> **Source**: `docs/plans/2026-11-12-1143-feat-directors-cut-extraction-survivors-plan.md`(需求计划,R1–R21)
-> **Working title**: *Director's Cut*(游戏内显示名,可改)
+> **Author**: The developer + Claude
+> **Last Updated**: 2026-11-13 (v2: the theme moves into the level-up step, see `design/game-brief.md`)
+> **Source**: `docs/plans/2026-11-12-1143-feat-directors-cut-extraction-survivors-plan.md` (requirements plan, R1-R21)
+> **Working title**: *Director's Cut* (in-game display name, can change)
 
-本文件是**规模的唯一闸门**。所有分 PRD(`design/gdd/*.md`)的细节都必须落在这里定义的档位和约束之内;任何新增功能先改本文件,再改分 PRD。
+This file is the **single gate on scope**. The details of every sub-PRD (`design/gdd/*.md`) must fit inside the tiers and constraints defined here. Any new feature changes this file first, then the sub-PRD.
 
 ---
 
-## 1. 便利贴
+## 1. Sticky Note
 
-> 奇幻斜俯视割草。升级时三张里剪掉一张、另外两张都拿,三份相同的合成升星。把失落的胶片活着带出去,升级池就永久多一样。
+> Fantasy top-down mower. On level-up, cut one of three cards and take the other two; three identical copies merge into a star upgrade. Carry a lost film out alive and the upgrade pool permanently gains one item.
 
-写不进这张便利贴的想法,一律进第 9 节"以后再做"。
+Any idea that does not fit on this sticky note goes into Section 9, "Later".
 
-## 2. 设计支柱
+## 2. Design Pillars
 
-| # | 支柱 | 含义 | 用来否决什么 |
+| # | Pillar | Meaning | What it vetoes |
 |---|---|---|---|
-| P1 | **Every level-up is a cut** 每次升级都是一次剪辑 | 升级时剪一留二;被剪的永久出池,剩下的更容易凑齐三份升星 | 不需要取舍的升级、和构筑无关的拾取物 |
-| P2 | **You direct the cut** 你来剪这一局 | 难度和变化来自玩家出发前的剪辑选择,不是随机 | 纯随机事件、玩家无法预见的难度跳变 |
-| P3 | **Short takes, visible growth** 短局、看得见的成长 | 一局 3–10 分钟,每次成功撤离都让营地肉眼可见地变强 | 长局、需要很多局才有感觉的成长 |
+| P1 | **Every level-up is a cut** | On level-up, cut one and keep two; the cut card leaves the pool permanently, which makes it easier to gather three copies for a star upgrade | Upgrades with no trade-off, pickups unrelated to the build |
+| P2 | **You direct the cut** | Difficulty and variation come from the player's cut choices before departure, not from randomness | Pure random events, difficulty jumps the player cannot foresee |
+| P3 | **Short takes, visible growth** | A run lasts 3-10 minutes, and every successful extraction makes the camp visibly stronger | Long runs, growth that takes many runs to feel |
 
-## 3. 核心循环
+## 3. Core Loop
 
 ```mermaid
 flowchart TB
-  A[营地 Camp:分解/囤积,升级建筑] --> B[剪辑室 Editing Room:插片段卡,看收益倍率]
-  B --> C[局内 Run:割草升级,搜物资点,热度上升]
-  C --> D{升级:剪掉哪一张?}
-  D -->|剪一留二,三份升星| C
-  C -->|背着失落的胶片| E[前往已开放的撤离点,站满时间]
-  E -->|成功| F[结算:材料 × 收益倍率;胶片解锁新升级项]
-  C -->|死亡/超时| G[NG:背包全丢,得 NG 胶片]
+  A[Camp: salvage/hoard, upgrade buildings] --> B[Editing Room: slot clip cards, see the payout multiplier]
+  B --> C[In-run: mow and level up, search supply points, heat rises]
+  C --> D{Level-up: which card to cut?}
+  D -->|cut one keep two, three-into-one star| C
+  C -->|carrying a lost film| E[Go to an open extraction point, stand for the full time]
+  E -->|success| F[Settlement: materials x payout multiplier; film unlocks a new upgrade item]
+  C -->|death/timeout| G[NG: backpack lost, gain NG film]
   F --> A
   G --> A
 ```
 
-一次完整循环(从营地出发到回到营地)目标 4–11 分钟,局内 3–10 分钟。
+One full loop (from leaving camp to returning to camp) targets 4-11 minutes, with 3-10 minutes in-run.
 
-## 4. 目标玩家与评审场景
+## 4. Target Players and Judging Scenario
 
-- **主要受众是评委**:一个人、键鼠、没玩过,大约试玩 10–20 分钟,同时还要看 30–60 秒视频和开发日志。
-- **评审场景的必经体验**(成功标准,见第 10 节):
-  1. 至少完成 2 局。
-  2. 至少一次局前剪辑改变了 Boss / 精英 / 尸潮。
-  3. 至少一次升星,至少一次永久剪掉;带出一卷胶片后,在下一局看到新升级项。
-  4. 至少看到一次营地建筑变化。
-- 评分七项中,本设计重点打:**主题**(两层剪辑)、**创新野心**(剪一留二 + 三合一升星 + 胶片解锁)、**乐趣/玩法**(割草爽感)。画面、关卡、音频靠统一风格的免费资产 + 专门预留的打磨时间。
+- **The main audience is the judges**: one person, keyboard and mouse, has not played the game, plays for about 10-20 minutes, and also watches a 30-60 second video and the devlog.
+- **Experiences the judging scenario must include** (success criteria, see Section 10):
+  1. Complete at least 2 runs.
+  2. At least once, a pre-run cut changes the Boss / elite / horde.
+  3. At least one star upgrade and at least one permanent cut; after carrying out a film, see the new upgrade item in the next run.
+  4. See at least one camp building change.
+- Of the seven scoring categories, this design aims hardest at **Theme** (two layers of cutting), **Innovation Ambition** (cut one keep two + three-into-one star upgrade + film unlocks), and **Fun/Gameplay** (the mowing feel). Visuals, level design and audio rely on free assets in a unified style plus dedicated polish time.
 
-## 5. 全局约束
+## 5. Global Constraints
 
-| 约束 | 值 | 来源 |
+| Constraint | Value | Source |
 |---|---|---|
-| 人员 | 单人 + AI agent | PLAN.md |
-| 工期 | 11/12 05:00 – 11/16 01:59(英国时间);Day 3 晚冻结功能 | PLAN.md |
-| 引擎 | Unreal Engine 5.8,玩法以 C++ 为主,Blueprint 做数据配置和表现 | PLAN.md 风险 #3 |
-| 平台 | Windows 64 位,键鼠 | 本文件 |
-| 构建体积 | < 1 GB | 官方规则 |
-| 语言 | 游戏内所有文字、音频、视频英文 | 官方规则 |
-| 内容 | 13+;无商标/logo;外部资产全部列明 | 官方规则 |
-| 性能 | 开发机上 150 只同屏敌人时 ≥ 60 FPS(1080p) | 本文件 |
-| 数据驱动 | 所有数值放数据表/配置,不写死在代码里 | `.claude/docs/coding-standards.md` |
-| 美术 | 先方块灰盒,核心循环成型后才接资产 | PLAN.md、需求计划 |
+| Staffing | One person + AI agents | PLAN.md |
+| Schedule | 11/12 05:00 - 11/16 01:59 (UK time); features freeze on the evening of Day 3 | PLAN.md |
+| Engine | Unreal Engine 5.8, gameplay mainly in C++, Blueprint for data setup and presentation | PLAN.md risk #3 |
+| Platform | Windows 64-bit, keyboard and mouse | This file |
+| Build size | < 1 GB | Official rules |
+| Language | All in-game text, audio and video in English | Official rules |
+| Content | 13+; no trademarks/logos; all external assets listed | Official rules |
+| Performance | >= 60 FPS (1080p) with 150 enemies on screen on the dev machine | This file |
+| Data-driven | All values live in data tables/config, not hardcoded | `.claude/docs/coding-standards.md` |
+| Art | Block-out greybox first; assets are hooked up only after the core loop takes shape | PLAN.md, requirements plan |
 
-## 6. 系统清单与分档
+## 6. System List and Tiers
 
-档位定义:
-- **Must(MVP)**:Day 2 结束前必须完整可玩的一圈。缺任何一项,游戏不成立。
-- **Should(Alpha)**:Day 3 白天。让游戏"完整"的内容。
-- **Could(Full Vision)**:有余力才做,Day 3 晚冻结时没做完就砍。
+Tier definitions:
+- **Must (MVP)**: a fully playable loop before the end of Day 2. Missing any item means the game does not hold up.
+- **Should (Alpha)**: Day 3 daytime. Content that makes the game "complete".
+- **Could (Full Vision)**: only if there is spare capacity; cut anything unfinished at the Day 3 evening freeze.
 
-| # | 系统 | 分 PRD | Must | Should | Could |
+| # | System | Sub-PRD | Must | Should | Could |
 |---|---|---|---|---|---|
-| 1 | 游戏流程与存档 | `design/gdd/game-flow.md` | 营地 → 剪辑 → 局内 → 结算 → 营地;单存档自动保存 | 标题画面、新游戏/重置存档、暂停菜单 | 开场"片头"字幕 |
-| 2 | 角色操控与战斗 | `design/gdd/player-combat.md` | WASD、闪避、交互键、1 把起始武器、受伤与死亡 | 武器总数 5 | 手柄 |
-| 3 | 局内成长 | `design/gdd/run-progression.md` | 经验、升级**剪一留二**(可永久剪次数 = 池子 − 4)、**三合一升星**(3 份二星、9 份三星)、3 把武器 + 4 个被动 | 胶片解锁的 3 个升级项(2 被动 + 1 武器) | 剪辑骑士使用本局被剪掉的东西 |
-| 4 | 敌人与刷怪 | `design/gdd/enemies-spawning.md` | 1 种小怪、刷怪调度、热度影响、尸潮、Boss | 共 3 种小怪、精英 | Boss 第二阶段 |
-| 5 | 物资、背包与热度 | `design/gdd/loot-inventory-heat.md` | 1 种材料(Iron)、补给箱和宝库、背包上限、热度;遗物改为**失落的胶片**(局内无用途,带出即永久解锁一个升级项,不能使用或分解) | — | 背包整理 |
-| 6 | 撤离与死亡 | `design/gdd/extraction-death.md` | 2 个撤离点、站点读条、成功结算、死亡全丢 | 3 个撤离点、NG 胶片、超时 | 撤离时的 Boss 追击 |
-| 7 | 局前剪辑 | `design/gdd/directors-cut-editing.md` | 2 个胶片槽、2 张卡(Horde Night、The Cut Knight)、收益倍率 | 共 7 张卡、槽位升到 5 | 卡牌组合彩蛋 |
-| 8 | 营地与局外成长 | `design/gdd/camp-meta.md` | 3D 营地、点选建筑、铁匠铺和诊所、指数成本、仓库面板(查看材料和已解锁项) | 仓库和剪辑室两栋建筑及其属性、剪辑室解锁、Amount 和 Revival | 建筑外观分阶段变化 |
-| 9 | 地图与关卡 | `design/gdd/map-level.md` | 1 张固定灰盒地图,带点位和 2 个撤离点 | 5 个区域,完整点位,美术替换 | 片场主题装饰 |
-| 10 | UI 与 HUD | `design/gdd/ui-hud.md` | HUD、升级选择、背包、搜索/撤离读条、结算、营地面板、剪辑面板 | 标题、暂停、设置、教程提示 | 动效打磨 |
-| 11 | 美术与音频方向 | `design/gdd/art-audio-direction.md` | 灰盒可读性规范 | 免费资产替换、核心音效、2 首音乐 | 随热度分层的音乐 |
+| 1 | Game flow and save | `design/gdd/game-flow.md` | Camp -> Editing -> In-run -> Settlement -> Camp; single save slot with autosave | Title screen, new game/reset save, pause menu | Opening "title card" subtitles |
+| 2 | Character control and combat | `design/gdd/player-combat.md` | WASD, dodge, interact key, 1 starting weapon, taking damage and death | 5 weapons total | Gamepad |
+| 3 | In-run progression | `design/gdd/run-progression.md` | XP, level-up **cut one keep two** (permanent cuts available = pool size - 4), **three-into-one star upgrade** (3 copies for two stars, 9 for three stars), 3 weapons + 4 passives | 3 film-unlocked upgrade items (2 passives + 1 weapon) | Cutting Knight uses what was cut this run |
+| 4 | Enemies and spawning | `design/gdd/enemies-spawning.md` | 1 grunt type, spawn scheduling, heat influence, horde, Boss | 3 grunt types total, elite | Boss second phase |
+| 5 | Loot, backpack and heat | `design/gdd/loot-inventory-heat.md` | 1 material (Iron), supply crates and vault, backpack limit, heat; relics become **lost film** (no use in-run; carrying it out permanently unlocks one upgrade item; cannot be used or salvaged) | — | Backpack organizing |
+| 6 | Extraction and death | `design/gdd/extraction-death.md` | 2 extraction points, point channeling, settlement on success, lose everything on death | 3 extraction points, NG film, timeout | Boss chases during extraction |
+| 7 | Pre-run editing | `design/gdd/directors-cut-editing.md` | 2 film slots, 2 cards (Horde Night, The Cut Knight), payout multiplier | 7 cards total, slots raised to 5 | Card combo easter eggs |
+| 8 | Camp and meta progression | `design/gdd/camp-meta.md` | 3D camp, click-to-select buildings, Blacksmith and Clinic, exponential costs, storage panel (view materials and unlocked items) | Storage and Editing Room buildings and their stats, Editing Room unlocks, Amount and Revival | Staged building appearance changes |
+| 9 | Map and level | `design/gdd/map-level.md` | 1 fixed greybox map with points and 2 extraction points | 5 zones, full points, art replacement | Film-set themed decoration |
+| 10 | UI and HUD | `design/gdd/ui-hud.md` | HUD, level-up choice, backpack, search/extraction progress bars, settlement, camp panel, editing panel | Title, pause, settings, tutorial hints | Motion polish |
+| 11 | Art and audio direction | `design/gdd/art-audio-direction.md` | Greybox readability spec | Free asset replacement, core sound effects, 2 music tracks | Music that layers with heat |
 
-## 7. 时间线
+## 7. Timeline
 
-| 时间 | 目标 | 退出标准 |
+| Time | Goal | Exit criteria |
 |---|---|---|
-| Day 1(11/12) | 灰盒:操控、自动攻击、1 种怪、物资点、热度、遗物使用、撤离 | "留着还是用掉"能被试玩;拿到 1–2 人反馈 |
-| Day 2(11/13) | 补齐全部 **Must**:局内升级、营地 2 栋建筑、剪辑 2 张卡、Boss、存档、全部 Must UI | 新存档能从营地出发,完整跑两圈并升级 |
-| Day 3(11/14) | **Should**:美术和音频替换、3 种材料、4 栋建筑、更多卡和怪;**晚上冻结功能** | 内容完整,无阻断性 bug |
-| Day 4(11/15) | 修 bug、调数值、打包、录视频、写日志、上传 | 构建在干净环境能运行,材料齐备 |
-| 11/15 晚 – 11/16 01:59 | 本人提交 | 提交成功 |
+| Day 1 (11/12) | Greybox: control, auto-attack, 1 enemy type, supply points, heat, relic use, extraction | "Keep it or use it" is playable; feedback from 1-2 people |
+| Day 2 (11/13) | Fill in all **Must** items: in-run level-up, 2 camp buildings, 2 editing cards, Boss, save, all Must UI | A new save can leave camp and complete two full loops with level-ups |
+| Day 3 (11/14) | **Should**: art and audio replacement, 3 materials, 4 buildings, more cards and enemies; **freeze features in the evening** | Content complete, no blocking bugs |
+| Day 4 (11/15) | Fix bugs, tune values, package, record video, write the log, upload | Build runs in a clean environment, materials ready |
+| Evening of 11/15 - 11/16 01:59 | Developer submits in person | Submission succeeds |
 
-## 8. 砍功能规则
+## 8. Cut Rules
 
-按顺序检查,触发即执行,不要讨价还价:
+Check in order; execute when triggered, no haggling:
 
-1. **Day 1 晚**:(已过期。v1 的"留着还是用掉"在 Day 2 被 v2 的剪一留二取代。)
-2. **Day 2 晚**:如果 Must 还跑不完一整圈,砍掉整个 Should 档里的"新内容"(卡、怪、材料、建筑),Day 3 只做补齐 Must 和美术。
-3. **Day 3 18:00**:还没开始的 Should 项全部砍掉;Could 项不再开工。
-4. **Day 3 晚 23:00**:功能冻结。之后只修 bug、调数值、替换资产。
-5. **任何时候**:单个功能比预估多花 2 倍时间,降到下一档或砍掉。
+1. **Evening of Day 1**: (Expired. v1's "keep it or use it" was replaced on Day 2 by v2's cut one keep two.)
+2. **Evening of Day 2**: if Must still cannot run a whole loop, cut all "new content" in the Should tier (cards, enemies, materials, buildings); Day 3 only completes Must and art.
+3. **Day 3 18:00**: cut every Should item that has not started; Could items no longer begin.
+4. **Day 3 23:00**: feature freeze. After that, only fix bugs, tune values and replace assets.
+5. **At any time**: if a single feature takes 2x the estimated time, drop it to the next tier or cut it.
 
-## 9. 范围之外
+## 9. Out of Scope
 
-**以后再做(赛后/续作)**:区域类、物资类、氛围类片段卡;随机地图或多张地图;联机合作;本地派对模式;收藏展示柜;安全箱;可拖拽的时间线剪辑器;可行走的营地;手柄之外的平台;多语言。
+**Later (post-jam/sequel)**: zone, loot and atmosphere clip cards; random maps or multiple maps; online co-op; local party mode; collection showcase; safe box; draggable timeline editor; walkable camp; platforms beyond gamepad; multiple languages.
 
-**不属于本游戏定位**:抽卡、氪金、强制联网。
+**Not part of this game's identity**: gacha, microtransactions, forced online play.
 
-## 10. 成功标准
+## 10. Success Criteria
 
-- 评审场景的 4 个必经体验(第 4 节)在一次 15 分钟的冷启动试玩中全部出现。
-- 新存档前 2 局(只用起始卡、都成功撤离)至少能完成 2 次建筑升级。
-- 打包的 Windows 构建在干净环境能运行,体积 < 1 GB,150 只敌人同屏时 ≥ 60 FPS。
-- 每个分 PRD 的 Must 验收标准全部通过,截图证据保存在 `production/qa/evidence/`。
+- The 4 required experiences of the judging scenario (Section 4) all appear in one 15-minute cold-start playthrough.
+- In the first 2 runs of a new save (starting cards only, both extracted successfully), at least 2 building upgrades can be completed.
+- The packaged Windows build runs in a clean environment, is < 1 GB, and holds >= 60 FPS with 150 enemies on screen.
+- Every sub-PRD's Must acceptance criteria all pass, with screenshot evidence saved in `production/qa/evidence/`.
 
-## 11. 全局风险
+## 11. Global Risks
 
-| 风险 | 应对 |
+| Risk | Response |
 |---|---|
-| 剪一留二让成长速度翻倍,升星再乘一层,数值容易失控 | 经验曲线、怪物血量和热度一起重调;星级倍率放在 Director Tuning 的 StarTuning 里,不写死 |
-| 升级池只有 7 样,永久剪太多会没得选 | 可永久剪次数 = 池子大小 − 4;胶片每解锁一样,池子和可剪次数各加 1 |
-| 刷怪数量撑爆性能 | 同屏上限 + 简单网格体 + 不做逐个复杂 AI(见 `enemies-spawning.md`) |
-| 免费资产不可用或风格不统一 | Day 2 先验证可用性;备选包写在 `art-audio-direction.md` |
-| 单人忽视关卡和音频(各占 5 分) | Day 3 专门预留时间 |
-| MCP 卡死或编辑器崩溃 | 频繁保存、小步提交 |
+| Cut one keep two doubles growth speed and star upgrades multiply it again, so values can easily run away | Retune the XP curve, monster health and heat together; star multipliers live in Director Tuning's StarTuning, not hardcoded |
+| The upgrade pool has only 7 items, so cutting too much permanently leaves nothing to choose | Permanent cuts available = pool size - 4; each film unlocked adds 1 to both the pool and the permanent cuts available |
+| Spawn counts blow the performance budget | On-screen cap + simple meshes + no complex per-enemy AI (see `enemies-spawning.md`) |
+| Free assets are unavailable or inconsistent in style | Verify availability on Day 2; backup packs are listed in `art-audio-direction.md` |
+| A solo developer neglects level design and audio (5 points each) | Dedicated time reserved on Day 3 |
+| MCP hangs or the editor crashes | Save often, commit in small steps |
 
-## 12. 变更规则
+## 12. Change Rules
 
-- 新增或扩大任何功能:先在本文件第 6 节给它定档,再写进分 PRD。
-- 分 PRD 里的数值都是**默认值**,可以随意调,不需要改本文件;改分档、加系统、改支柱,必须改本文件。
-- 分 PRD 与本文件冲突时,以本文件为准。
+- To add or expand any feature: first assign it a tier in Section 6 of this file, then write it into the sub-PRD.
+- Values in sub-PRDs are **defaults** and can be tuned freely without changing this file; changing tiers, adding systems or changing pillars requires changing this file.
+- When a sub-PRD conflicts with this file, this file wins.
 
 ## 13. Open Questions
 
-- v2 之后,`design/gdd/run-progression.md`、`loot-inventory-heat.md` 和 `camp-meta.md` 的细节还是 v1 的写法;与本文件冲突处以本文件为准,改到对应系统时再更新。
-- 讨论过但不做的方向(分场 + 金币商店、CUT 清屏、灰到彩恢复项、连场倍率)记录在 `docs/devlog/day-2-2026-11-13.md`。
-- `project.yaml` 里 `engine.language` 写的是 "Blueprint",而本项目决定 C++ 为主。新建 UE 项目时,需要一起更新这一项和 `commands` 里的项目路径。
-- 游戏的正式名称待定;*Director's Cut* 是工作名。
+- After v2, the details in `design/gdd/run-progression.md`, `loot-inventory-heat.md` and `camp-meta.md` are still written the v1 way; where they conflict with this file, this file wins, and they will be updated when work reaches the corresponding system.
+- Directions that were discussed but not taken (split scenes + gold shop, CUT screen clear, gray-to-color restore item, scene-chain multiplier) are recorded in `docs/devlog/day-2-2026-11-13.md`.
+- `engine.language` in `project.yaml` says "Blueprint", but this project has decided on C++ as primary. When the UE project is created, update this item and the project path in `commands` together.
+- The game's official name is undecided; *Director's Cut* is the working title.

@@ -1,131 +1,131 @@
 ---
 name: ccgs
-description: Claude Code Game Studios 工作流的 TRAE 入口，索引 .claude/skills 下 74 个游戏开发流程并按步骤执行。当用户提到 story、epic、sprint、GDD、ADR、QA、代码评审、里程碑、发布检查，或要按工作室流程开发/评审游戏时使用。不用于与工作室流程无关的临时编码任务。
+description: TRAE entry point for the Claude Code Game Studios workflow. Indexes the 74 game-development workflows under .claude/skills and runs them step by step. Use when the user mentions story, epic, sprint, GDD, ADR, QA, code review, milestone, or release checks, or wants to develop or review a game following the studio workflow. Not for ad-hoc coding tasks unrelated to the studio workflow.
 ---
 
-# CCGS — Claude Code Game Studios 工作流入口
+# CCGS - Claude Code Game Studios Workflow Entry
 
-本仓库把 CCGS 整套工具链以「项目模板」形式内置在 `.claude/` 下，**不需要安装**。
-这个技能是 TRAE 侧的入口：把「用户想做哪一步」映射到具体流程文件，并按文件里的步骤执行。
+This repo ships the whole CCGS toolchain as a "project template" under `.claude/`, so **nothing needs to be installed**.
+This skill is the TRAE-side entry point: it maps "which step the user wants to do" to a specific workflow file, then follows the steps in that file.
 
-## 目录职责
+## What each location holds
 
-| 位置 | 内容 |
+| Location | Contents |
 |---|---|
-| `.claude/skills/<name>/SKILL.md` | 74 个流程定义，**真正要读的东西** |
-| `.claude/agents/` | 49 个角色定义（编码前先读对应角色的约束） |
-| `.claude/rules/` | 编码/文档规则 |
-| `.claude/hooks/` | 预处理脚本（`yaml-helper.sh` 等） |
-| `.claude/scripts/` | 状态查询脚本（`story-status.sh`、`artifact-check.sh` 等） |
-| `.claude/docs/` | 模板与参考（`workflow-catalog.yaml` 是阶段权威表） |
-| `CLAUDE.md` | 主配置，已被 TRAE 规则自动导入 |
-| `project.yaml` | 机器可读配置（唯一事实源） |
+| `.claude/skills/<name>/SKILL.md` | 74 workflow definitions, **the thing you actually need to read** |
+| `.claude/agents/` | 49 role definitions (read the matching role's constraints before coding) |
+| `.claude/rules/` | Coding and documentation rules |
+| `.claude/hooks/` | Pre-processing scripts (`yaml-helper.sh`, etc.) |
+| `.claude/scripts/` | Status query scripts (`story-status.sh`, `artifact-check.sh`, etc.) |
+| `.claude/docs/` | Templates and references (`workflow-catalog.yaml` is the authoritative stage table) |
+| `CLAUDE.md` | Main config, automatically imported by TRAE rules |
+| `project.yaml` | Machine-readable config (single source of truth) |
 
-## 执行协议
+## Execution protocol
 
-1. **先定位**：从下表找到对应流程，`Read .claude/skills/<name>/SKILL.md`。
-2. **照做**：该文件就是操作手册，按它的 Step 顺序执行，不要凭印象简化。
-3. **补执行预取命令**：`SKILL.md` 里的 `` !`bash ...` `` 是 Claude Code 的预执行语法，TRAE 不会自动跑。
-   看到它就用 Git Bash 手工执行同样的命令，再把结果当作「已解析的值」使用。
-4. **忽略 Claude Code 专属 frontmatter**：`allowed-tools`、`model`、`argument-hint`、`user-invocable` 不生效，也无需模拟。
+1. **Locate first**: find the matching workflow in the table below, then `Read .claude/skills/<name>/SKILL.md`.
+2. **Follow it**: that file is the operating manual. Run its steps in order and do not simplify from memory.
+3. **Run the prefetch commands yourself**: `` !`bash ...` `` in a `SKILL.md` is Claude Code's pre-execution syntax, and TRAE does not run it automatically.
+   When you see it, run the same command by hand in Git Bash, then use the result as the "resolved value".
+4. **Ignore Claude Code-specific frontmatter**: `allowed-tools`, `model`, `argument-hint` and `user-invocable` have no effect and need no simulation.
 
-### 命令执行方式
+### How to run commands
 
-`bash` 不在 PATH，必须用 Git Bash 的绝对路径：
+`bash` is not on PATH, so you must use Git Bash by absolute path:
 
 ```powershell
 & "D:\Git\Git\bin\bash.exe" -lc 'cd "/d/project/2026-epic-ai-megajam" && bash .claude/hooks/yaml-helper.sh resolve_config --keys project.stage,workflow'
 ```
 
-已验证可用，输出示例：
+Verified working. Example output:
 
 ```
 workflow: minimal (rigor:minimal)
 project.stage: Systems Design (project.yaml)
 ```
 
-## 流程索引
+## Workflow index
 
-| 流程 | 用途 |
+| Workflow | Purpose |
 |---|---|
-| `start` | 首次上手，挑选起步工作流 |
-| `help` | 卡住了 / 不知道下一步做什么 |
-| `project-stage-detect` | 判定项目所处阶段，找缺口 |
-| `onboard` | 给新加入的 agent/人生成上手指南 |
-| `brainstorm` | 从零找游戏概念、换方向 |
-| `prototype` | GDD 之前的可丢弃原型，产出 PROCEED/PIVOT/KILL |
-| `setup-engine` | 配置并锁定引擎版本 |
-| `settings` | 查看/修改项目配置 |
-| `map-systems` | 概念拆成系统，排依赖与设计顺序 |
-| `art-bible` | 视觉识别基线（在 map-systems 之前） |
-| `design-system` | 逐节撰写某个系统的 GDD |
-| `quick-design` | 小改动轻量规格，直接嵌进 story |
-| `review-all-gdds` | 跨 GDD 一致性总审 |
-| `design-review` | 单份设计文档完备性/可实现性评审 |
-| `ux-design` | 逐节撰写界面/流程/HUD 的 UX 规格 |
-| `ux-review` | UX 规格与实现评审 |
-| `consistency-check` | GDD 与实体注册表的跨文档冲突扫描 |
-| `content-audit` | GDD 规划量 vs 已实现量 |
-| `create-architecture` | 写代码前的架构蓝图 |
-| `architecture-decision` | 产出 ADR（上下文/备选/后果） |
-| `architecture-review` | GDD 需求 → ADR 追溯矩阵 |
-| `create-control-manifest` | 从已接受 ADR 提炼「必须做/禁止做」速查表 |
-| `create-epics` | GDD + 架构 → epic（按模块划分） |
-| `create-stories` | 一个 epic → 可实现的 story + 验收标准 |
-| `story-readiness` | story 是否具备开工条件 |
-| `dev-story` | **实现一个 story**（带测试，遵循其 ADR） |
-| `story-done` | 关闭 story：逐条核验验收标准 |
-| `estimate` | 任务工作量估算 |
-| `sprint-plan` | 排/更新 sprint |
-| `sprint-status` | sprint 快照与风险 |
-| `vertical-slice` | 投产前的端到端验证切片 |
-| `gate-check` | 阶段推进闸门 PASS/CONCERNS/FAIL |
-| `milestone-review` | 里程碑评审，go/no-go |
-| `retrospective` | sprint/里程碑复盘 |
-| `scope-check` | 范围蔓延检查 |
-| `balance-check` | 数值/经济/成长曲线失衡检查 |
-| `perf-profile` | 性能剖析与优化建议排序 |
-| `playtest-report` | 试玩报告（模板或结构化现有记录） |
-| `qa-plan` | 一个 sprint 的测试计划 |
-| `smoke-check` | QA 交接前的冒烟闸门 |
-| `soak-test` | 长时间运行稳定性协议 |
-| `regression-suite` | 测试覆盖 ↔ 关键路径映射 |
-| `test-setup` | 搭测试框架与 CI（首个 sprint 前一次） |
-| `test-helpers` | 生成引擎相关的测试辅助库 |
-| `test-evidence-review` | 测试证据质量评审 |
-| `test-flakiness` | 从 CI 日志找不稳定测试 |
-| `code-review` | 架构级代码评审 |
-| `tech-debt` | 技术债登记与排序 |
-| `bug-report` | 结构化缺陷报告 / 代码隐患分析 |
-| `bug-triage` | 存量缺陷重排优先级 |
-| `hotfix` | 紧急修复通道 |
-| `day-one-patch` | 首发补丁 |
-| `release-checklist` | 发布前检查清单 |
-| `launch-checklist` | 全部门上线就绪评审 |
-| `changelog` | 从提交历史生成变更日志 |
-| `patch-notes` | 面向玩家的补丁说明 |
-| `security-audit` | 存档篡改/作弊/网络/数据暴露审计 |
-| `localize` | 本地化流程 |
-| `asset-spec` | 逐资产视觉规格 + AI 生成提示词 |
-| `asset-audit` | 资产命名/体积/格式审计 |
-| `adopt` | 存量项目合规审计与迁移计划 |
-| `reverse-document` | 从既有实现倒推设计/架构文档 |
-| `propagate-design-change` | GDD 改动后找出失效的 ADR |
-| `team-combat` | 战斗组编排（设计→实现→验证） |
-| `team-level` | 关卡组编排（完整区域制作） |
-| `team-narrative` | 叙事组编排 |
-| `team-ui` | UI 组编排（走 UX 管线） |
-| `team-audio` | 音频组编排 |
-| `team-live-ops` | 长线运营组编排 |
-| `team-polish` | 打磨组编排（性能/表现/手感） |
-| `team-qa` | QA 组完整测试周期 |
-| `team-release` | 发布组执行发版 |
-| `skill-test` | 校验技能文件结构 |
-| `skill-improve` | 技能测试-修复-复测循环 |
+| `start` | First-time onboarding, pick a starting workflow |
+| `help` | Stuck / not sure what to do next |
+| `project-stage-detect` | Determine the project's stage and find gaps |
+| `onboard` | Generate an onboarding guide for a new agent or person |
+| `brainstorm` | Find a game concept from scratch or change direction |
+| `prototype` | Throwaway prototype before the GDD, ending in PROCEED/PIVOT/KILL |
+| `setup-engine` | Configure and pin the engine version |
+| `settings` | View or change project config |
+| `map-systems` | Break the concept into systems, order dependencies and design sequence |
+| `art-bible` | Visual identity baseline (before map-systems) |
+| `design-system` | Write one system's GDD section by section |
+| `quick-design` | Lightweight spec for small changes, embedded straight into a story |
+| `review-all-gdds` | Overall cross-GDD consistency review |
+| `design-review` | Completeness and implementability review of a single design doc |
+| `ux-design` | Write the UX spec for a screen, flow or HUD section by section |
+| `ux-review` | Review of a UX spec and its implementation |
+| `consistency-check` | Cross-document conflict scan between GDDs and the entity registry |
+| `content-audit` | GDD planned amounts vs implemented amounts |
+| `create-architecture` | Architecture blueprint before writing code |
+| `architecture-decision` | Produce an ADR (context / alternatives / consequences) |
+| `architecture-review` | GDD requirement -> ADR traceability matrix |
+| `create-control-manifest` | Distill accepted ADRs into a "must do / must not do" cheat sheet |
+| `create-epics` | GDD + architecture -> epics (split by module) |
+| `create-stories` | One epic -> implementable stories + acceptance criteria |
+| `story-readiness` | Whether a story is ready to start |
+| `dev-story` | **Implement one story** (with tests, following its ADRs) |
+| `story-done` | Close a story: verify acceptance criteria one by one |
+| `estimate` | Task effort estimation |
+| `sprint-plan` | Plan or update a sprint |
+| `sprint-status` | Sprint snapshot and risks |
+| `vertical-slice` | End-to-end validation slice before going into production |
+| `gate-check` | Phase advancement gate: PASS/CONCERNS/FAIL |
+| `milestone-review` | Milestone review, go/no-go |
+| `retrospective` | Sprint/milestone retrospective |
+| `scope-check` | Scope creep check |
+| `balance-check` | Imbalance check for numbers, economy and progression curves |
+| `perf-profile` | Performance profiling and ranked optimization suggestions |
+| `playtest-report` | Playtest report (template, or structure existing notes) |
+| `qa-plan` | Test plan for one sprint |
+| `smoke-check` | Smoke gate before QA handoff |
+| `soak-test` | Long-run stability protocol |
+| `regression-suite` | Mapping of test coverage to critical paths |
+| `test-setup` | Set up the test framework and CI (once, before the first sprint) |
+| `test-helpers` | Generate engine-specific test helper libraries |
+| `test-evidence-review` | Quality review of test evidence |
+| `test-flakiness` | Find flaky tests from CI logs |
+| `code-review` | Architecture-level code review |
+| `tech-debt` | Tech debt register and prioritization |
+| `bug-report` | Structured bug report / code risk analysis |
+| `bug-triage` | Re-prioritize existing bugs |
+| `hotfix` | Emergency fix lane |
+| `day-one-patch` | Launch-day patch |
+| `release-checklist` | Pre-release checklist |
+| `launch-checklist` | All-department launch readiness review |
+| `changelog` | Generate a changelog from commit history |
+| `patch-notes` | Player-facing patch notes |
+| `security-audit` | Audit of save tampering, cheating, network and data exposure |
+| `localize` | Localization workflow |
+| `asset-spec` | Per-asset visual specs + AI generation prompts |
+| `asset-audit` | Audit of asset naming, size and format |
+| `adopt` | Compliance audit and migration plan for an existing project |
+| `reverse-document` | Work backwards from an existing implementation to design/architecture docs |
+| `propagate-design-change` | Find ADRs invalidated after a GDD change |
+| `team-combat` | Combat team orchestration (design -> implement -> validate) |
+| `team-level` | Level team orchestration (full area production) |
+| `team-narrative` | Narrative team orchestration |
+| `team-ui` | UI team orchestration (through the UX pipeline) |
+| `team-audio` | Audio team orchestration |
+| `team-live-ops` | Live-ops team orchestration |
+| `team-polish` | Polish team orchestration (performance / presentation / feel) |
+| `team-qa` | QA team, full test cycle |
+| `team-release` | Release team executes a release |
+| `skill-test` | Validate skill file structure |
+| `skill-improve` | Skill test-fix-retest loop |
 
-## 与 TRAE 的衔接
+## Integration with TRAE
 
-- `CLAUDE.md` 已由 TRAE 规则导入（`AI.rules.importClaudeMd`），协作协议与编码规范自动生效。
-- Unreal 侧能力走 MCP `unreal-mcp`（`list_toolsets` / `describe_toolset` / `call_tool`），可直接读写编辑器。
-- 本仓库当前阶段：`Systems Design`，工作流档位 `minimal`。
-- 活跃 epic 在 `production/epics/`，会话检查点在 `production/session-state/active.md`。
+- `CLAUDE.md` is imported by TRAE rules (`AI.rules.importClaudeMd`), so the collaboration protocol and coding standards take effect automatically.
+- Unreal-side capabilities go through the MCP `unreal-mcp` (`list_toolsets` / `describe_toolset` / `call_tool`), which can read and write the editor directly.
+- Current stage of this repo: `Systems Design`, workflow level `minimal`.
+- Active epics are in `production/epics/`, and the session checkpoint is in `production/session-state/active.md`.

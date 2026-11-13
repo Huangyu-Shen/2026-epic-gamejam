@@ -1,202 +1,202 @@
 # Player Control & Combat
 
 > **Status**: Designed
-> **Author**: 开发者本人 + Claude
+> **Author**: The developer + Claude
 > **Last Updated**: 2026-11-12
 > **Last Verified**: 2026-11-12
-> **Implements Pillar**: P1 Every pickup is a choice(提供压力),P3 Short takes
+> **Implements Pillar**: P1 Every pickup is a choice (provides the pressure), P3 Short takes
 
 ## Summary
 
-玩家在斜俯视镜头下用 WASD 移动,武器自动攻击,另有闪避和一个交互键(搜索、撤离提示)。本文件定义角色基础属性、移动、闪避、武器开火规则、伤害计算、受击与死亡判定。武器的具体清单和升级在 `run-progression.md`。
+The player moves with WASD under an angled top-down camera, weapons attack automatically, and there is a dodge plus one interact key (search, extraction prompts). This file defines the character's base stats, movement, dodge, weapon firing rules, damage calculation, and hit and death handling. The specific weapon list and upgrades are in `run-progression.md`.
 
 > **Quick reference** — Layer: `Core` · Priority: `MVP` · Key deps: `game-flow`, `run-progression`, `camp-meta`
 
 ## Overview
 
-操作只有走位和时机:玩家决定站在哪里、什么时候闪避、什么时候停下来搜刮。所有攻击都自动进行,所以玩家的注意力可以放在路线、热度和背包取舍上。
+The controls are only positioning and timing: the player decides where to stand, when to dodge, and when to stop and loot. All attacks happen automatically, so the player's attention can go to routes, Heat and bag trade-offs.
 
 ## Player Fantasy
 
-"一个人站在尸潮中间,刀光一圈圈扫开。"前期偶尔会被逼到墙角,后期一路平推。闪避是唯一的主动救命手段,用对时机会很爽。
+"Standing alone in the middle of the horde, blade arcs sweeping outward in rings." Early on the player is occasionally pushed into a corner; later, they plow through everything. Dodge is the only active lifesaver, and it feels great when timed right.
 
 ## Detailed Design
 
 ### Core Rules
 
-**输入(键鼠,Must)**
+**Input (keyboard and mouse, Must)**
 
-| 键 | 动作 |
+| Key | Action |
 |---|---|
-| W A S D | 八方向移动(相对屏幕) |
-| Space | 闪避 |
-| E(按住) | 交互:搜索物资点 |
-| Tab | 打开/关闭背包(时间放慢,见 `loot-inventory-heat.md`) |
-| 1 / 2 / 3 | 快捷使用背包里的第 1/2/3 件遗物 |
-| Esc | 暂停 |
-| 鼠标 | 只用于 UI,局内不瞄准 |
+| W A S D | Eight-direction movement (relative to the screen) |
+| Space | Dodge |
+| E (hold) | Interact: search a supply point |
+| Tab | Open/close the bag (time slows, see `loot-inventory-heat.md`) |
+| 1 / 2 / 3 | Quick-use the 1st/2nd/3rd relic in the bag |
+| Esc | Pause |
+| Mouse | UI only; no aiming during a run |
 
-手柄为 Could 档:左摇杆移动,A 闪避,X 按住交互,Y 背包,方向键快捷使用遗物。
+Gamepad is Could tier: left stick to move, A to dodge, X to hold-interact, Y for the bag, D-pad for quick-using relics.
 
-**镜头**
+**Camera**
 
-- 斜俯视,俯角 55°,镜头距离 1800 cm,跟随玩家,带轻微平滑(0.1 s)。
-- 不能旋转,不能缩放(Must)。不允许墙体遮挡角色:遮挡物淡化为半透明(Should)。
+- Angled top-down, 55° pitch, 1800 cm camera distance, follows the player with slight smoothing (0.1 s).
+- Cannot be rotated or zoomed (Must). Walls must not occlude the character: occluders fade to semi-transparent (Should).
 
-**移动**
+**Movement**
 
-- 基础移速 600 cm/s,即时加速,无惯性(割草类要求操作跟手)。
-- 角色朝向移动方向;停下后保持最后朝向。
-- 与敌人有碰撞,但玩家可以把小怪推开一点(敌人质量更小),防止被一只小怪卡死。
+- Base move speed 600 cm/s, instant acceleration, no inertia (mow-down games require responsive controls).
+- The character faces the move direction; after stopping, it keeps its last facing.
+- Collides with enemies, but the player can push small enemies aside a little (enemies have less mass), to prevent being stuck by a single small monster.
 
-**闪避**
+**Dodge**
 
-- 向当前移动方向冲刺 400 cm,用时 0.2 s;静止时向朝向方向冲刺。
-- 冲刺期间无敌(0.2 s),可以穿过敌人,不能穿墙。
-- 冷却 2.0 s,HUD 显示冷却。
-- 闪避不打断武器开火。
+- Dashes 400 cm in the current move direction over 0.2 s; when standing still, dashes in the facing direction.
+- Invulnerable during the dash (0.2 s); can pass through enemies, cannot pass through walls.
+- Cooldown 2.0 s; the HUD shows the cooldown.
+- Dodging does not interrupt weapon firing.
 
-**武器开火(通用规则)**
+**Weapon firing (general rules)**
 
-- 最多同时持有 4 把武器,所有武器各自独立冷却、自动开火。
-- 每把武器有一种**索敌方式**:
-  - `Facing`:朝角色朝向
-  - `Nearest`:最近的敌人
-  - `Random`:范围内随机敌人
-  - `Around`:以角色为中心
-- 射程内没有敌人时,`Nearest` 和 `Random` 类武器不开火(不浪费冷却);`Facing` 和 `Around` 照常开火。
-- 武器数值:伤害、冷却、范围、发射数量、持续时间、穿透。具体值见 `run-progression.md`。
+- Up to 4 weapons held at once; each weapon has its own independent cooldown and fires automatically.
+- Each weapon has a **targeting mode**:
+  - `Facing`: toward the character's facing
+  - `Nearest`: the nearest enemy
+  - `Random`: a random enemy in range
+  - `Around`: centered on the character
+- When no enemy is in range, `Nearest` and `Random` weapons do not fire (no cooldown is wasted); `Facing` and `Around` fire as usual.
+- Weapon stats: damage, cooldown, area, projectile count, duration, pierce. Specific values are in `run-progression.md`.
 
-**伤害与受击**
+**Damage and getting hit**
 
-- 玩家基础生命 100,无护甲(Must)。
-- 敌人对玩家造成接触伤害或投射物伤害;受击后玩家有 0.5 s 无敌帧,期间不再受伤。
-- 生命回复:基础 0;来源是营地诊所的 Recovery 属性和遗物。
-- 生命降到 0:如果有复活次数(营地诊所的 Revival),立刻复活;否则本局死亡,交给 `extraction-death.md`。
-- 复活效果:恢复 50% 生命,2 s 无敌,同时以自身为中心发出一圈击退冲击波(半径 600 cm,不造成伤害)。
+- Player base HP is 100, with no armor (Must).
+- Enemies deal contact damage or projectile damage to the player; after being hit, the player has 0.5 s of invulnerability frames, during which no further damage is taken.
+- HP regeneration: base 0; sources are the camp Clinic's Recovery stat and relics.
+- When HP drops to 0: if the player has a revive charge (the camp Clinic's Revival), they revive immediately; otherwise the run ends in death, handed to `extraction-death.md`.
+- Revive effect: restores 50% HP, 2 s of invulnerability, and emits a knockback shockwave centered on the player (radius 600 cm, deals no damage).
 
 ### States and Transitions
 
-| 角色状态 | 可移动 | 可闪避 | 武器开火 | 可受伤 |
+| Character State | Can Move | Can Dodge | Weapons Fire | Can Be Damaged |
 |---|---|---|---|---|
-| Normal | 是 | 是 | 是 | 是 |
-| Dodging(0.2 s) | 自动冲刺 | 否 | 是 | 否 |
-| HitInvuln(0.5 s) | 是 | 是 | 是 | 否 |
-| Searching(按住 E) | 是(移出范围则中断) | 是(中断搜索) | 是 | 是 |
-| Reviving(2 s) | 是 | 是 | 是 | 否 |
-| Dead | 否 | 否 | 否 | 否 |
+| Normal | Yes | Yes | Yes | Yes |
+| Dodging (0.2 s) | Auto-dash | No | Yes | No |
+| HitInvuln (0.5 s) | Yes | Yes | Yes | No |
+| Searching (holding E) | Yes (interrupted if moving out of range) | Yes (interrupts the search) | Yes | Yes |
+| Reviving (2 s) | Yes | Yes | Yes | No |
+| Dead | No | No | No | No |
 
 ### Interactions with Other Systems
 
-| 系统 | 交互 |
+| System | Interaction |
 |---|---|
-| `run-progression.md` | 提供武器和被动属性;局内升级修改本系统的属性 |
-| `camp-meta.md` | 局外属性在开局时一次性叠加:Might、Area、Amount、Max HP、Recovery、Revival |
-| `enemies-spawning.md` | 敌人造成伤害,接收武器伤害 |
-| `loot-inventory-heat.md` | 交互键搜索物资点;快捷键使用遗物 |
-| `extraction-death.md` | 生命归零且没有复活次数时,通知它本局死亡 |
+| `run-progression.md` | Provides weapons and passive stats; in-run upgrades modify this system's stats |
+| `camp-meta.md` | Meta stats are applied once at the start of a run: Might, Area, Amount, Max HP, Recovery, Revival |
+| `enemies-spawning.md` | Enemies deal damage and receive weapon damage |
+| `loot-inventory-heat.md` | The interact key searches supply points; quick keys use relics |
+| `extraction-death.md` | When HP reaches zero with no revive charges, notifies it that the run ended in death |
 
 ## Formulas
 
-**最终伤害**
+**Final damage**
 
 ```
 Damage = WeaponBase × (1 + MightBonus) × (1 + ItemDamageBonus)
 ```
 
-| 变量 | 含义 | 范围 |
+| Variable | Meaning | Range |
 |---|---|---|
-| WeaponBase | 武器当前等级的基础伤害 | 5–60 |
-| MightBonus | 营地 Might(每级 +0.05)+ 局内被动 Might(每级 +0.10)之和 | 0–0.75 |
-| ItemDamageBonus | 遗物的临时加成(如 Arcane Core +0.5) | 0–0.5 |
+| WeaponBase | Base damage of the weapon at its current level | 5–60 |
+| MightBonus | Sum of camp Might (+0.05 per level) and in-run passive Might (+0.10 per level) | 0–0.75 |
+| ItemDamageBonus | Temporary bonus from relics (e.g. Arcane Core +0.5) | 0–0.5 |
 
-例:Sword Arc 3 级,基础 16;营地 Might 2 级 = +0.10,局内 Might 1 级 = +0.10 → `16 × 1.2 × 1.0 = 19.2`,向下取整为 19。
+Example: Sword Arc level 3, base 16; camp Might level 2 = +0.10, in-run Might level 1 = +0.10 → `16 × 1.2 × 1.0 = 19.2`, rounded down to 19.
 
-**最终冷却**
+**Final cooldown**
 
 ```
-Cooldown = WeaponBaseCooldown × (1 − HasteBonus),最低 0.15 s
+Cooldown = WeaponBaseCooldown × (1 − HasteBonus), minimum 0.15 s
 ```
 
-HasteBonus = 局内被动 Haste(每级 +0.08)+ 遗物临时加成(Arcane Core +0.30),范围 0–0.7,结果受 0.15 s 下限约束。例:基础冷却 1.0 s,Haste 2 级(+0.16)→ 0.84 s。
+HasteBonus = in-run passive Haste (+0.08 per level) + temporary relic bonus (Arcane Core +0.30), range 0–0.7, and the result is bound by the 0.15 s floor. Example: base cooldown 1.0 s, Haste level 2 (+0.16) → 0.84 s.
 
-**最终范围**
+**Final area**
 
 ```
 Area = WeaponBaseArea × (1 + AreaBonus)
 ```
 
-AreaBonus 只来自营地铁匠铺的 Area(每级 +0.10,3 级封顶),范围 0–0.3。
+AreaBonus comes only from the camp Smithy's Area (+0.10 per level, capped at 3 levels), range 0–0.3.
 
-**生命上限**
+**Max HP**
 
 ```
 MaxHP = 100 + 10 × CampMaxHPLevel + 20 × RunVitalityLevel
 ```
 
-例:营地 2 级、局内 1 级 → `100 + 20 + 20 = 140`。
+Example: camp level 2, in-run level 1 → `100 + 20 + 20 = 140`.
 
 ## Edge Cases
 
-| 情况 | 处理 |
+| Situation | Handling |
 |---|---|
-| 闪避方向是墙 | 冲刺在墙前停下,冷却照常计算 |
-| 同一帧受到多次伤害 | 只结算第一次,然后进入 0.5 s 无敌 |
-| 复活后立刻再次被围 | 2 s 无敌 + 击退冲击波保证有逃生窗口 |
-| 搜索中被打 | 不中断搜索(否则尸潮里永远搜不完);闪避或移出范围才中断 |
-| 武器满 4 把后升级池又出现新武器 | 新武器不再进入升级池(见 `run-progression.md`) |
-| 冷却被压到下限以下 | 按 0.15 s 下限取值 |
+| The dodge direction is a wall | The dash stops in front of the wall, and the cooldown is still counted |
+| Multiple hits in the same frame | Only the first is resolved, then the 0.5 s invulnerability starts |
+| Surrounded again right after reviving | 2 s of invulnerability + the knockback shockwave guarantee an escape window |
+| Hit during a search | The search is not interrupted (otherwise it could never finish in a horde); only dodging or moving out of range interrupts it |
+| A new weapon appears in the upgrade pool when the player already has 4 weapons | New weapons no longer enter the upgrade pool (see `run-progression.md`) |
+| Cooldown pushed below the floor | Taken as the 0.15 s floor |
 
 ## Dependencies
 
-- 上游:`game-flow`(只在 InRun 状态响应输入)、`run-progression`(武器数据)、`camp-meta`(开局属性)。
-- 下游:`enemies-spawning`、`loot-inventory-heat`、`extraction-death`、`ui-hud` 依赖本系统提供的生命、位置、交互事件。
+- Upstream: `game-flow` (responds to input only in the InRun state), `run-progression` (weapon data), `camp-meta` (starting stats).
+- Downstream: `enemies-spawning`, `loot-inventory-heat`, `extraction-death`, `ui-hud` depend on the HP, position and interact events this system provides.
 
 ## Tuning Knobs
 
-| 参数 | 默认值 | 安全范围 | 影响 |
+| Parameter | Default | Safe Range | Affects |
 |---|---|---|---|
-| 基础移速 | 600 cm/s | 450–750 | 太慢被围死,太快无压力 |
-| 基础生命 | 100 | 60–150 | 前期容错 |
-| 闪避距离 | 400 cm | 250–600 | 逃生能力 |
-| 闪避冷却 | 2.0 s | 1.0–4.0 | 闪避的价值 |
-| 受击无敌 | 0.5 s | 0.3–1.0 | 被围时的容错 |
-| 复活恢复比例 | 50% | 30–100% | 复活的价值 |
-| 冷却下限 | 0.15 s | 0.1–0.3 | 性能和特效密度 |
-| 镜头距离 | 1800 cm | 1400–2400 | 视野与可读性的平衡 |
+| Base move speed | 600 cm/s | 450–750 | Too slow and the player gets surrounded; too fast and there is no pressure |
+| Base HP | 100 | 60–150 | Early-game forgiveness |
+| Dodge distance | 400 cm | 250–600 | Escape ability |
+| Dodge cooldown | 2.0 s | 1.0–4.0 | Value of the dodge |
+| Hit invulnerability | 0.5 s | 0.3–1.0 | Forgiveness when surrounded |
+| Revive recovery ratio | 50% | 30–100% | Value of the revive |
+| Cooldown floor | 0.15 s | 0.1–0.3 | Performance and effect density |
+| Camera distance | 1800 cm | 1400–2400 | Balance between field of view and readability |
 
 ## Visual/Audio Requirements
 
-- 受击:角色闪白 0.1 s + 轻微镜头抖动 + 受击音效。
-- 闪避:残影或拖尾 + 风声。
-- 低生命(< 30%):屏幕边缘红色暗角 + 心跳声。
+- Getting hit: character flashes white for 0.1 s + slight camera shake + hit sound effect.
+- Dodge: afterimage or trail + wind sound.
+- Low HP (< 30%): red vignette at the screen edges + heartbeat sound.
 
 ## Game Feel
 
-- 移动必须"跟手":按下就走、松开就停。
-- 武器打中要有反馈:敌人受击闪白、击退一点点,死亡时碎裂或倒下。
-- Hit-stop:只在击杀精英或 Boss 时用(0.05 s),小怪不用,否则割草会一卡一卡的。
+- Movement must be responsive: it starts the moment a key is pressed and stops the moment it is released.
+- Weapon hits need feedback: enemies flash white when hit, get knocked back slightly, and shatter or fall on death.
+- Hit-stop: used only when killing an elite or the Boss (0.05 s), not for small monsters, otherwise mowing down enemies will stutter.
 
 ## UI Requirements
 
-HUD 上显示生命条、闪避冷却、武器图标及冷却。详见 `ui-hud.md`。
+The HUD shows the HP bar, the dodge cooldown, and weapon icons with their cooldowns. See `ui-hud.md` for details.
 
 ## Cross-References
 
-- `design/gdd/run-progression.md`(武器清单)
-- `design/gdd/camp-meta.md`(局外属性)
-- `design/gdd/extraction-death.md`(死亡结算)
+- `design/gdd/run-progression.md` (weapon list)
+- `design/gdd/camp-meta.md` (meta stats)
+- `design/gdd/extraction-death.md` (death settlement)
 
 ## Acceptance Criteria
 
-- **AC1(Must)**:WASD 八方向移动,松开立刻停下;移速 600 cm/s,误差 ±5%。
-- **AC2(Must)**:闪避 0.2 s 内移动约 400 cm,期间被敌人碰到不掉血;冷却 2 s 内再按无效。
-- **AC3(Must)**:起始武器在没有任何输入的情况下自动攻击并击杀小怪。
-- **AC4(Must)**:受击后 0.5 s 内再次被碰,不掉血。
-- **AC5(Must)**:生命归零且没有复活次数时,本局进入死亡结算。
-- **AC6(Should)**:有 1 次复活时,生命归零后以 50% 生命复活,周围敌人被推开,复活次数变为 0。
-- **AC7(Must)**:150 只敌人同屏时,输入延迟没有可察觉的增加,帧率 ≥ 60 FPS。
+- **AC1 (Must)**: WASD moves in eight directions and stops immediately on release; move speed is 600 cm/s, with ±5% tolerance.
+- **AC2 (Must)**: A dodge moves about 400 cm within 0.2 s, and touching an enemy during it costs no HP; pressing again within the 2 s cooldown has no effect.
+- **AC3 (Must)**: The starting weapon attacks automatically and kills small monsters with no input at all.
+- **AC4 (Must)**: Being touched again within 0.5 s of being hit costs no HP.
+- **AC5 (Must)**: When HP reaches zero with no revive charges, the run enters death settlement.
+- **AC6 (Should)**: With 1 revive charge, when HP reaches zero the player revives at 50% HP, surrounding enemies are pushed away, and the revive count becomes 0.
+- **AC7 (Should)**: With 150 enemies on screen, there is no perceptible increase in input latency, and the frame rate is ≥ 60 FPS.
 
 ## Open Questions
 
-- 是否允许鼠标朝向(角色面朝鼠标)?默认不做;需要时只影响 `Facing` 类武器。
+- Should mouse aiming be allowed (the character faces the mouse)? Not done by default; if needed, it affects only `Facing` weapons.
