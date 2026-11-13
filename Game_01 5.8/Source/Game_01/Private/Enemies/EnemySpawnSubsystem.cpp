@@ -5,6 +5,7 @@
 #include "Game/DirectorTuningSettings.h"
 #include "Loot/LootHeatSubsystem.h"
 #include "Player/HeroCharacter.h"
+#include "Progression/RunProgressionSubsystem.h"
 #include "Components/CapsuleComponent.h"
 #include "Engine/DataTable.h"
 #include "Engine/World.h"
@@ -70,6 +71,15 @@ void UEnemySpawnSubsystem::ResetRun()
 void UEnemySpawnSubsystem::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	// Soft-pause while the level-up offer is showing (story 004).
+	if (const URunProgressionSubsystem* Progression = GetWorld()->GetSubsystem<URunProgressionSubsystem>())
+	{
+		if (Progression->IsOfferPending())
+		{
+			return;
+		}
+	}
 
 	const URunOutcomeSubsystem* Run = GetWorld()->GetSubsystem<URunOutcomeSubsystem>();
 	const AHeroCharacter* Hero = Cast<AHeroCharacter>(UGameplayStatics::GetPlayerPawn(this, 0));

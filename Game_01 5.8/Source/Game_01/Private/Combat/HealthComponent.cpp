@@ -22,6 +22,7 @@ void UHealthComponent::BeginPlay()
 		}
 	}
 
+	BaseMaxHealth = Tuning.MaxHealth;
 	ResetHealth();
 }
 
@@ -66,6 +67,23 @@ void UHealthComponent::Kill()
 
 void UHealthComponent::ResetHealth()
 {
+	Health = Tuning.MaxHealth;
+	InvulnerableUntil = 0.0;
+}
+
+void UHealthComponent::IncreaseMaxHealth(float Amount)
+{
+	if (Amount <= 0.0f)
+	{
+		return;
+	}
+	Tuning.MaxHealth += Amount;
+	Health = FMath::Min(Health + Amount, Tuning.MaxHealth);
+}
+
+void UHealthComponent::SetMaxHealth(float NewMax)
+{
+	Tuning.MaxHealth = FMath::Max(NewMax, 1.0f);
 	Health = Tuning.MaxHealth;
 	InvulnerableUntil = 0.0;
 }

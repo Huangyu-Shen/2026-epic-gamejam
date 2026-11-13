@@ -1,12 +1,12 @@
 # Story 005: Pre-run editing (film cards, multiplier)
 
 > **Epic**: Director's Cut (MVP)
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: N/A (minimal)
 > **Type**: Integration
 > **Estimate**: M
 > **Manifest Version**: N/A (minimal — no control manifest)
-> **Last Updated**:
+> **Last Updated**: 2026-11-13
 
 ## Context
 
@@ -52,8 +52,16 @@
 
 ## Files
 
-- `Game_01/Source/Game_01/Public/Editing/*.h`, `Private/Editing/*.cpp`
-- `Game_01/Content/Data/` film card table
+- `Game_01/Source/Game_01/Public/Editing/FilmCardTypes.h` (new) — `EFilmCardEffect` enum + `FFilmCardRow` struct
+- `Game_01/Source/Game_01/Public/Editing/FilmCardSubsystem.h` (new) — `UWorldSubsystem`, slots/cards/multiplier
+- `Game_01/Source/Game_01/Private/Editing/FilmCardSubsystem.cpp` (new) — data-table load, `ApplyActiveCards`, `ResetCards` on run end
+- `Game_01/Source/Game_01/Public/Game/DirectorTuningSettings.h` (mod) — `FilmCardTable` soft ptr
+- `Game_01/Config/DefaultGame.ini` (mod) — `FilmCardTable=/Game/Data/DT_FilmCards.DT_FilmCards`
+- `Game_01/Source/Game_01/Public/Player/HeroCharacter.h` (mod) — `[`/`]` card keys; removed H/B debug keys
+- `Game_01/Source/Game_01/Private/Player/HeroCharacter.cpp` (mod) — card slot/apply logic + HUD `CARDS` line
+- `Game_01/Content/Data/DT_FilmCards.uasset` (new) — rows `HordeNight` (ForceHorde/40/1.5), `CutKnight` (ForceBoss/0/2.0)
+
+**Build**: `Game_01Editor Win64 Development` — EXIT=0 (UHT + compile + link clean).
 
 ---
 
@@ -78,3 +86,11 @@
 
 - Depends on: `production/epics/directors-cut/story-002-extraction-death.md`, `production/epics/directors-cut/story-003-combat-enemies-map.md`
 - Unlocks: None
+
+## Completion Notes
+
+**Completed**: 2026-11-13
+**Criteria**: 7/7 passing
+**Deviations**: None (one advisory — AC-3: the debug HUD shows card names and the aggregate earnings multiplier, not a per-card effect string or per-card multiplier; the polished editing-room panel is story-007)
+**Test Evidence**: waived at `qa.level: minimal` (Integration)
+**Reviewed by**: self, no independent review (solo mode)

@@ -66,6 +66,18 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Health")
 	void ResetHealth();
 
+	/** Raises max health and heals by the same amount (story 004 Vitality passive). */
+	UFUNCTION(BlueprintCallable, Category = "Health")
+	void IncreaseMaxHealth(float Amount);
+
+	/** Sets max health to NewMax and refills health, clearing invulnerability (story 006 Clinic bonus at run start). */
+	UFUNCTION(BlueprintCallable, Category = "Health")
+	void SetMaxHealth(float NewMax);
+
+	/** Max health captured from the tuning table at BeginPlay, before any run bonuses. */
+	UFUNCTION(BlueprintPure, Category = "Health")
+	float GetBaseMaxHealth() const { return BaseMaxHealth; }
+
 	/** Makes the owner immune for Seconds (the longer of this and any window already running wins). */
 	UFUNCTION(BlueprintCallable, Category = "Health")
 	void GrantInvulnerability(float Seconds);
@@ -87,6 +99,10 @@ public:
 private:
 	UPROPERTY(VisibleInstanceOnly, Transient, Category = "Health", meta = (AllowPrivateAccess = "true"))
 	float Health = 0.0f;
+
+	/** Tuning-table max health, captured once at BeginPlay. */
+	UPROPERTY(VisibleInstanceOnly, Transient, Category = "Health", meta = (AllowPrivateAccess = "true"))
+	float BaseMaxHealth = 100.0f;
 
 	/** World time (seconds) until which damage is ignored. */
 	double InvulnerableUntil = 0.0;
