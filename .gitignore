@@ -1,6 +1,7 @@
 # ===== Unreal Engine (official template) =====
-# Patterns with a "/" are anchored to the repo root, so the UE project
-# (.uproject) is expected to live at the repo root.
+# Patterns with a "/" are anchored to the repo root. The UE project lives in
+# "Game_01 5.8/" (see the subfolder section below), so generated folders are
+# ignored at any depth there.
 
 # Visual Studio 2015 user specific files
 .vs/
@@ -84,7 +85,7 @@ DerivedDataCache/*
 
 # ===== UE project in a subfolder =====
 # The template patterns above are anchored to the repo root. The jam project lives
-# in Game_01/, so ignore its generated folders at any depth (Intermediate alone
+# in "Game_01 5.8/", so ignore its generated folders at any depth (Intermediate alone
 # was 2.7 GB).
 **/Binaries/
 **/Intermediate/
@@ -94,7 +95,7 @@ DerivedDataCache/*
 # ===== Project-specific =====
 
 # Pre-jam warm-up UE project (made 11/6-11/7, before the jam start).
-# Must not enter this repo; the jam project is created fresh at the repo root.
+# Must not enter this repo; the jam project is "Game_01 5.8/".
 Game_Jam_01/
 
 # macOS
@@ -109,3 +110,7 @@ production/session-logs/
 
 # Obsidian per-user workspace layout
 .obsidian/workspace*.json
+
+# Scratch files from local build/MCP/PR helper scripts
+.tmp/
+.screenshots/
