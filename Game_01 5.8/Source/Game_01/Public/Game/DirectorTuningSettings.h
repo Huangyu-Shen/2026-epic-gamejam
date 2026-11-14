@@ -55,6 +55,18 @@ public:
 	UPROPERTY(EditAnywhere, Config, Category = "Tuning")
 	FStarTuning StarTuning;
 
+	/** Table of FLootTuning. Row "Default" sets bag size, heat per reel and the heat/spawn-pressure curve. */
+	UPROPERTY(EditAnywhere, Config, Category = "Tuning", meta = (RequiredAssetDataTags = "RowStructure=/Script/Game_01.LootTuning"))
+	TSoftObjectPtr<UDataTable> LootTuningTable;
+
+	/** Table of FLootContainerRow. One row each for the Supply Crate and the Vault (Iron range and reel chance). */
+	UPROPERTY(EditAnywhere, Config, Category = "Tuning", meta = (RequiredAssetDataTags = "RowStructure=/Script/Game_01.LootContainerRow"))
+	TSoftObjectPtr<UDataTable> LootContainerTable;
+
+	/** Table of FRelicRow: the lost film reels, which upgrade option each unlocks and how often it drops. */
+	UPROPERTY(EditAnywhere, Config, Category = "Tuning", meta = (RequiredAssetDataTags = "RowStructure=/Script/Game_01.RelicRow"))
+	TSoftObjectPtr<UDataTable> ReelTable;
+
 	/** Table of FBuildingRow. Rows "Smithy" and "Clinic" define the camp buildings. */
 	UPROPERTY(EditAnywhere, Config, Category = "Tuning", meta = (RequiredAssetDataTags = "RowStructure=/Script/Game_01.BuildingRow"))
 	TSoftObjectPtr<UDataTable> BuildingTable;

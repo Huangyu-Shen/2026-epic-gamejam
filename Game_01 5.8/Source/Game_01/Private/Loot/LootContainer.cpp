@@ -1,6 +1,7 @@
 #include "Loot/LootContainer.h"
 #include "Loot/LootBagComponent.h"
 #include "Loot/LootConfig.h"
+#include "Extraction/CampStockSubsystem.h"
 #include "UI/HudMessageSubsystem.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
@@ -73,11 +74,32 @@ bool ALootContainer::Interact(AActor* InInstigator)
 		}
 		const int32 IronLo = FMath::Max(0, Row.IronMin);
 		RolledIron = FMath::RandRange(IronLo, FMath::Max(IronLo, Row.IronMax));
-		bRolledRelic = FMath::FRand() < Row.RelicChance && UseConfig->PickRandomRelic(RolledRelicType);
+		// A lost film reel only drops if it would unlock something new and the bag does not already hold one.
+		TArray<FName> Unlocked;
+		if (const UWorld* World = GetWorld())
+		{
+			if (const UCampStockSubsystem* Stock = World->GetGameInstance()->GetSubsystem<UCampStockSubsystem>())
+			{
+				Unlocked = Stock->GetUnlockedOptions();
+			}
+		}
+		bRolledRelic = FMath::FRand() < Row.RelicChance && UseConfig->PickRandomRelic(Unlocked, Bag->GetRelics(), RolledRelicType);
 		bRolled = true;
 		if (!bRolledRelic && RolledIron == 0)
 		{
 			bSearched = true; // empty container
+			ShowOpened();
+			return true;
+		}
+	}
+
+	// The roll is kept while the bag is full, so another container may have filled the same reel slot meanwhile.
+	if (bRolledRelic && Bag->GetRelics().Contains(RolledRelicType))
+	{
+		bRolledRelic = false;
+		if (RolledIron == 0)
+		{
+			bSearched = true;
 			ShowOpened();
 			return true;
 		}
@@ -91,7 +113,7 @@ bool ALootContainer::Interact(AActor* InInstigator)
 	bSearched = true;
 	ShowOpened();
 	const FString RelicText = bRolledRelic
-		? FString::Printf(TEXT(" + relic %s"), *StaticEnum<ERelicType>()->GetDisplayNameTextByValue(static_cast<int64>(RolledRelicType)).ToString())
+		? FString::Printf(TEXT(" + lost reel %s"), *StaticEnum<ERelicType>()->GetDisplayNameTextByValue(static_cast<int64>(RolledRelicType)).ToString())
 		: FString();
 	UHudMessageSubsystem::Post(this, FString::Printf(TEXT("Searched: +%d Iron%s"), RolledIron, *RelicText),
 		FLinearColor(1.0f, 0.85f, 0.3f), 3.0f);

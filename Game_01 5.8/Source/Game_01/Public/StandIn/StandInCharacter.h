@@ -12,8 +12,8 @@ class UStaticMeshComponent;
 /**
  * THROWAWAY stand-in pawn for story 001 (loot, bag, heat). Story 003 replaces it with the real player.
  *
- * Controls (raw keys, no input assets): WASD move, E search the nearest container,
- * 1-6 use the relic in that bag position. Bag, heat and buff state is printed on screen every frame.
+ * Controls (raw keys, no input assets): WASD move, E search the nearest container.
+ * Bag and heat state is printed on screen every frame.
  */
 UCLASS()
 class GAME_01_API AStandInCharacter : public ACharacter
@@ -27,7 +27,7 @@ public:
 	UPROPERTY(EditAnywhere, Category = "StandIn")
 	float InteractRange = 250.0f;
 
-	/** Walk speed (cm/s) before relic buffs. */
+	/** Walk speed (cm/s). */
 	UPROPERTY(EditAnywhere, Category = "StandIn")
 	float BaseWalkSpeed = 600.0f;
 
@@ -48,7 +48,6 @@ public:
 
 private:
 	void SearchNearestContainerKey();
-	void UseRelicSlot(int32 Index);
 	void DebugDieKey();
 	void DebugNewRunKey();
 	void DrawDebugState() const;

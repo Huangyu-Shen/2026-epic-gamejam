@@ -1,0 +1,8 @@
+## packaged build (Development, Saved/Packages/story-008), fresh slot PkgReelA
+LogLoot: LOOTCFG source=table capacity=6 ironPerSlot=10 heatPerReel=15.0 maxHeat=100.0 pressure=1.00..3.00 reelRows=3
+LogEnemies: Display: REELPROBE reel-in-bag reelsInBag=1 heat=15.0 unlocked=[] anotherReelCanDrop=0 outcome=0
+LogExtraction: Upgrade option unlocked: Haste (1 unlocked)
+LogExtraction: EXTRACTED: bag Iron 25 x 1.00 = +25 to camp, 1 lost reels carried out, 1 options unlocked
+LogEnemies: Display: REELPROBE after-extraction reelsInBag=0 heat=0.0 unlocked=[Haste ] anotherReelCanDrop=0 outcome=1
+LogCampSave: Loaded camp save: Iron 25, 1 unlocked options, 0 building entries
+LogTemp: Display: CAMPSHOT iron=25 unlocked=[Haste ]

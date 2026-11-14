@@ -15,9 +15,9 @@ Corresponds to commit `cd44b7f` on the `main` branch (2026-11-13), with stories 
 | Two maps | `L_Camp` (camp, the default startup map), `L_Greybox` (the run map) |
 | Core loop | Upgrade at camp and pick cards -> loot, fight and level up on the run map -> extract or die -> settle back at camp |
 | State storage | Camp state lives in a GameInstance subsystem (persists across levels); per-run state lives in World subsystems (cleared on map change) |
-| Data | 9 DataTables (referenced by `Director Tuning`); when a table is missing, defaults in code are used |
-| Save | Single slot `CampSave`, storing Iron, stored relics and building levels; located at `Game_01 5.8/Saved/SaveGames/` |
-| Automated tests | **None** (exempt under `qa.level: minimal`); evidence is screenshots |
+| Data | 12 DataTables (referenced by `Director Tuning`, including the three loot tables added in story 008); when a table is missing, defaults in code are used |
+| Save | Single slot `CampSave`, storing Iron, unlocked upgrade options and building levels (save version 2; a version 1 save is migrated on load); located at `Game_01 5.8/Saved/SaveGames/` |
+| Automated tests | 9 UE automation tests under `Source/Game_01/Private/Tests/` (4 star-tuning tests, 5 lost-reel tests); evidence for player-visible changes is screenshots |
 | Build status | `Game_01Editor Win64 Development` builds successfully (2026-11-13) |
 
 ## Contents
@@ -28,7 +28,7 @@ Corresponds to commit `cd44b7f` on the `main` branch (2026-11-13), with stories 
 | [modules.md](modules.md) | Responsibilities and boundaries of the 11 source directories |
 | [classes.md](classes.md) | Key classes and functions: signatures, behavior, edge cases, default values, formulas |
 | [ui.md](ui.md) | HUD, camp panel, on-screen messages, shared widget building blocks |
-| [data-and-storage.md](data-and-storage.md) | Save file, the 9 tuning tables, config files, unit conventions, version compatibility |
+| [data-and-storage.md](data-and-storage.md) | Save file, the 12 tuning tables, config files, unit conventions, version compatibility |
 | [dependencies.md](dependencies.md) | Dependencies between directories, UE modules and plugins, third-party dependencies, Unity build pitfalls |
 | [build-and-run.md](build-and-run.md) | Environment, building, running, controls, performance probe, testing status, pre-release checks, FAQ |
 | [known-issues.md](known-issues.md) | Problems confirmed by reading the code: save, data, visuals, legacy code, robustness |
@@ -47,14 +47,14 @@ Corresponds to commit `cd44b7f` on the `main` branch (2026-11-13), with stories 
 | Term | Meaning | Where |
 |---|---|---|
 | Iron | The only general-purpose material; found by looting, moved into camp after extraction, used to upgrade buildings | `ULootBagComponent`, `UCampStockSubsystem` |
-| Relic | Swiftstep, Warbrand and Aegis; can be kept and brought back to camp to dismantle, or used on the spot for a buff | `ERelicType` |
-| Heat | Rises when relics are carried in the bag, falls when relics are used; determines spawn pressure | `ULootHeatSubsystem` |
+| Lost film reel (code name: relic) | Fast Cut, Wide Shot and Chain Scene. A reel cannot be used in a run; carry it out alive and the upgrade option it names is unlocked for every later run. Dying loses the reels | `ERelicType`, `FRelicRow` |
+| Heat | Rises each time a lost film reel is picked up and is reset only when the run ends; determines spawn pressure | `ULootHeatSubsystem` |
 | Extraction | Stand in the extraction zone until the progress bar fills; the bag is settled into camp | `AExtractionZone` |
 | Film card | A difficulty card picked before a run; forces a horde or a Boss in exchange for a higher earnings multiplier | `UFilmCardSubsystem` |
 | Editing room | The camp area for picking film cards (the Should tier also has "restore a cut segment", not built) | [CampWidget](ui.md#4-camp-ui-ucampwidget) |
 | Smithy / Clinic | Two buildings: add weapon damage / add max health | `UCampMetaSubsystem` |
 | Soft pause | While the level-up panel is shown, enemies, spawning and weapons stop; engine time keeps running | [architecture.md](architecture.md#4-runtime-structure) |
-| Stories 001 to 007 | Implementation task numbers | [production/epics/directors-cut/](../../production/epics/directors-cut/) |
+| Stories 001 to 008 | Implementation task numbers | [production/epics/directors-cut/](../../production/epics/directors-cut/) |
 | MVP feature N | Feature numbers in the game brief | [design/game-brief.md](../../design/game-brief.md) |
 
 ## Maintenance conventions

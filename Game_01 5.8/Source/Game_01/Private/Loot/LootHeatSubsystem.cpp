@@ -34,11 +34,6 @@ void ULootHeatSubsystem::AddRarePickupHeat()
 	AddHeat(Tuning.HeatPerRarePickup);
 }
 
-void ULootHeatSubsystem::ReduceHeatForRelicUse()
-{
-	AddHeat(-Tuning.HeatReductionOnRelicUse);
-}
-
 void ULootHeatSubsystem::ResetHeat()
 {
 	AddHeat(-Heat);

@@ -25,7 +25,7 @@
 
 Design and status: [design/game-brief.md](design/game-brief.md) (v2 brief), [design/prd/master-prd.md](design/prd/master-prd.md) (scope gate). Requirements plan: [docs/plans/2026-11-12-1143-feat-directors-cut-extraction-survivors-plan.md](docs/plans/2026-11-12-1143-feat-directors-cut-extraction-survivors-plan.md). Jam schedule: [PLAN.md](PLAN.md). Code overview: [docs/wiki/README.md](docs/wiki/README.md).
 
-**Dev log:** [docs/devlog/README.md](docs/devlog/README.md)
+**Dev log (public):** <https://github.com/Huangyu-Shen/2026-epic-gamejam/blob/main/docs/devlog/README.md>, one folder per day under [docs/devlog/](docs/devlog/README.md).
 
 > Some per-system design documents in `design/gdd/` still describe the first version of the design (keep-or-use-it relics, four camp buildings). The brief and the master PRD are current.
 

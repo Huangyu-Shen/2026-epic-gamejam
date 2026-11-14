@@ -1,4 +1,5 @@
 #include "Extraction/RunOutcomeSubsystem.h"
+#include "Loot/LootConfig.h"
 #include "Extraction/CampStockSubsystem.h"
 #include "Flow/CampSaveSubsystem.h"
 #include "Loot/LootBagComponent.h"
@@ -44,7 +45,18 @@ void URunOutcomeSubsystem::EndRun(ULootBagComponent* Bag, ERunOutcome NewOutcome
 	if (UCampStockSubsystem* Camp = GetWorld()->GetGameInstance()->GetSubsystem<UCampStockSubsystem>())
 	{
 		Camp->AddIron(LastResult.IronGained);
-		Camp->AddRelics(LastResult.RelicsBanked);
+		// Carrying a lost film reel out alive unlocks the option it names, for every later run.
+		if (NewOutcome == ERunOutcome::Extracted)
+		{
+			const TArray<FRelicRow> Rows = Bag->GetConfig()->GetRelicRows();
+			for (const FName Option : FReelUnlocks::OptionsForReels(LastResult.RelicsBanked, Rows))
+			{
+				if (Camp->UnlockOption(Option))
+				{
+					LastResult.OptionsUnlocked.Add(Option);
+				}
+			}
+		}
 	}
 	// One save slot, written after every run (the stock listener fires only when the stock changed).
 	if (UCampSaveSubsystem* Save = GetWorld()->GetGameInstance()->GetSubsystem<UCampSaveSubsystem>())
@@ -59,9 +71,9 @@ void URunOutcomeSubsystem::EndRun(ULootBagComponent* Bag, ERunOutcome NewOutcome
 
 	const bool bExtracted = NewOutcome == ERunOutcome::Extracted;
 	const FString Summary = bExtracted
-		? FString::Printf(TEXT("EXTRACTED: bag Iron %d x %.2f = +%d to camp, %d relics banked"),
-			LastResult.BagIron, LastResult.MultiplierUsed, LastResult.IronGained, LastResult.RelicsBanked.Num())
-		: FString::Printf(TEXT("DIED: lost %d Iron and %d relics"), LastResult.IronLost, LastResult.RelicsLost.Num());
+		? FString::Printf(TEXT("EXTRACTED: bag Iron %d x %.2f = +%d to camp, %d lost reels carried out, %d options unlocked"),
+			LastResult.BagIron, LastResult.MultiplierUsed, LastResult.IronGained, LastResult.RelicsBanked.Num(), LastResult.OptionsUnlocked.Num())
+		: FString::Printf(TEXT("DIED: lost %d Iron and %d lost reels"), LastResult.IronLost, LastResult.RelicsLost.Num());
 	UE_LOG(LogExtraction, Log, TEXT("%s"), *Summary);
 
 	OnRunEnded.Broadcast(LastResult);

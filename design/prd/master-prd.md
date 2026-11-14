@@ -140,6 +140,6 @@ Check in order; execute when triggered, no haggling:
 ## 13. Open Questions
 
 - After v2, the details in `design/gdd/run-progression.md`, `loot-inventory-heat.md` and `camp-meta.md` are still written the v1 way; where they conflict with this file, this file wins, and they will be updated when work reaches the corresponding system.
-- Directions that were discussed but not taken (split scenes + gold shop, CUT screen clear, gray-to-color restore item, scene-chain multiplier) are recorded in `docs/devlog/day-2-2026-11-13.md`.
+- Directions that were discussed but not taken (split scenes + gold shop, CUT screen clear, gray-to-color restore item, scene-chain multiplier) are recorded in `docs/devlog/day-2/03-seven-ideas-and-the-agent-review.md`.
 - `engine.language` in `project.yaml` says "Blueprint", but this project has decided on C++ as primary. When the UE project is created, update this item and the project path in `commands` together.
 - The game's official name is undecided; *Director's Cut* is the working title.

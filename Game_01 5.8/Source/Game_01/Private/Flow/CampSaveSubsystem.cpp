@@ -2,13 +2,21 @@
 #include "Flow/CampSaveGame.h"
 #include "Camp/CampMetaSubsystem.h"
 #include "Extraction/CampStockSubsystem.h"
+#include "Loot/LootConfig.h"
 #include "Kismet/GameplayStatics.h"
+#include "Misc/CommandLine.h"
+#include "Misc/Parse.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogCampSave, Log, All);
 
 const FString& UCampSaveSubsystem::GetSlotName()
 {
-	static const FString Slot(TEXT("CampSave"));
+	// -SaveSlot=Name picks another slot, so a probe or a clean-save test never touches the real save.
+	static const FString Slot = []()
+	{
+		FString Override;
+		return FParse::Value(FCommandLine::Get(), TEXT("SaveSlot="), Override) && !Override.IsEmpty() ? Override : FString(TEXT("CampSave"));
+	}();
 	return Slot;
 }
 
@@ -31,11 +39,28 @@ void UCampSaveSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 		if (const UCampSaveGame* Save = Cast<UCampSaveGame>(UGameplayStatics::LoadGameFromSlot(GetSlotName(), 0)))
 		{
 			bApplyingLoad = true;
-			Stock->RestoreState(Save->Iron, Save->WarehouseRelics);
+			TArray<FName> Unlocked = Save->UnlockedOptions;
+			if (Save->SaveVersion < 2)
+			{
+				// A v1 save kept relics in a warehouse: each one becomes the option its reel row names.
+				const ULootConfig* Config = ULootConfig::CreateFromSettings(GetTransientPackage());
+				for (const FName Option : FReelUnlocks::OptionsForReels(Save->WarehouseRelics, Config->GetRelicRows()))
+				{
+					FReelUnlocks::AddOption(Unlocked, Option);
+				}
+				FString RelicNames;
+				for (const ERelicType Relic : Save->WarehouseRelics)
+				{
+					RelicNames += StaticEnum<ERelicType>()->GetNameStringByValue(static_cast<int64>(Relic)) + TEXT(" ");
+				}
+				UE_LOG(LogCampSave, Log, TEXT("Migrated a v%d save: %d relics [%s] -> %d unlocked options"),
+					Save->SaveVersion, Save->WarehouseRelics.Num(), *RelicNames, Unlocked.Num());
+			}
+			Stock->RestoreState(Save->Iron, Unlocked);
 			Meta->RestoreLevels(Save->BuildingLevels);
 			bApplyingLoad = false;
-			UE_LOG(LogCampSave, Log, TEXT("Loaded camp save: Iron %d, %d relics, %d building entries"),
-				Save->Iron, Save->WarehouseRelics.Num(), Save->BuildingLevels.Num());
+			UE_LOG(LogCampSave, Log, TEXT("Loaded camp save: Iron %d, %d unlocked options, %d building entries"),
+				Save->Iron, Unlocked.Num(), Save->BuildingLevels.Num());
 		}
 		else
 		{
@@ -85,13 +110,14 @@ bool UCampSaveSubsystem::SaveNow()
 	}
 
 	UCampSaveGame* Save = Cast<UCampSaveGame>(UGameplayStatics::CreateSaveGameObject(UCampSaveGame::StaticClass()));
+	Save->SaveVersion = UCampSaveGame::CurrentSaveVersion;
 	Save->Iron = Stock->GetIron();
-	Save->WarehouseRelics = Stock->GetWarehouseRelics();
+	Save->UnlockedOptions = Stock->GetUnlockedOptions();
 	Save->BuildingLevels = Meta->GetLevels();
 
 	const bool bOk = UGameplayStatics::SaveGameToSlot(Save, GetSlotName(), 0);
-	UE_LOG(LogCampSave, Log, TEXT("Camp save %s: Iron %d, %d relics"), bOk ? TEXT("written") : TEXT("FAILED"),
-		Save->Iron, Save->WarehouseRelics.Num());
+	UE_LOG(LogCampSave, Log, TEXT("Camp save %s: Iron %d, %d unlocked options"), bOk ? TEXT("written") : TEXT("FAILED"),
+		Save->Iron, Save->UnlockedOptions.Num());
 	return bOk;
 }
 

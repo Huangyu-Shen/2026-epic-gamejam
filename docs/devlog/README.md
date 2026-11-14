@@ -3,13 +3,52 @@
 A solo entry to the 2026 Epic AI MegaJam, built in Unreal Engine 5.8 (C++) with
 Claude Code driving the editor through the official Unreal MCP plugin.
 
-**Status:** this log is updated every day of the jam. Days 1 and 2 are written;
-Days 3 and 4 will be added as they happen.
+**Status:** this log is updated every day of the jam. Days 1 and 2 are written,
+Day 3 is in progress, and Day 4 has a plan on record.
+
+**Public address of this log** (the repository is public):
+<https://github.com/Huangyu-Shen/2026-epic-gamejam/blob/main/docs/devlog/README.md>
+
+The log is split into one folder per day. Inside each folder the entries are
+numbered in the order things happened, and each one covers a single topic, so you
+can read a day from top to bottom or open just the part you care about.
+
+### Day 1 — 12 Nov: from a theme to a playable loop
 
 | Entry | What it covers |
 |---|---|
-| [Day 1 — 12 Nov](day-1-2026-11-12.md) | Reading the theme, planning, the first playable loop (stories 001–003) |
-| [Day 2 — 13 Nov](day-2-2026-11-13.md) | Progression, camp, UI and save (stories 004–007); realising the theme was missing from the game; the redesign; the packaging problems |
+| [01 Reading the theme](day-1/01-reading-the-theme.md) | What "Director's Cut" can mean in a game, and the first design |
+| [02 Planning before code](day-1/02-planning-before-code.md) | The requirements plan, the master PRD with its cut rules, one design doc per system |
+| [03 The first stories and a frame-rate probe](day-1/03-first-stories-and-performance.md) | Stories 001–003 and the 150-enemy performance measurement |
+| [04 What went wrong, and what I did not do](day-1/04-what-went-wrong-and-what-was-skipped.md) | The hero that could not die, and the playtest I skipped |
+
+### Day 2 — 13 Nov: finishing the loop, then admitting the theme was missing
+
+| Entry | What it covers |
+|---|---|
+| [01 The first loop](day-2/01-finishing-the-first-loop.md) | Stories 004–007: progression, pre-run editing, camp, flow, save and UI |
+| [02 The moment I stopped](day-2/02-the-moment-i-stopped.md) | Why the game did not fit the theme, and the open-source research |
+| [03 Seven ideas, and the agent review](day-2/03-seven-ideas-and-the-agent-review.md) | Which ideas were dropped and by whom; asking the agent to attack its own plan |
+| [04 The redesign and how it was checked](day-2/04-the-redesign-and-how-it-was-checked.md) | "Cut one, keep two", star merging, tests and an in-game probe |
+| [05 Packaging in five attempts](day-2/05-packaging-in-five-attempts.md) | Why the first package would not build, then would not run |
+| [06 Making the repository English](day-2/06-english-sweep-and-gitignore.md) | Translating the project with parallel agents; auditing `.gitignore` |
+| [07 Honest status](day-2/07-honest-status.md) | What was built, decided, unchecked and missing at the end of the day |
+
+### Day 3 — 14 Nov: the lost film reels (in progress)
+
+| Entry | What it covers |
+|---|---|
+| [01 Reviewing the new stories](day-3/01-reviewing-the-new-stories.md) | The holes found in stories 008–012 before building them, and the order for the day |
+| [02 Story 008: lost film reels](day-3/02-story-008-lost-film-reels.md) | Relics become unlock keys; data tables; probes in the editor and the package |
+| [03 A bug only my real save showed](day-3/03-a-bug-only-the-real-save-showed.md) | A save-version default that silently skipped the migration |
+| [04 Keeping the docs honest](day-3/04-keeping-the-docs-honest.md) | Updating the wiki and design docs, and checking the sub-agent's work |
+| [05 Status so far](day-3/05-status-so-far.md) | What is done, not done and not checked |
+
+### Day 4 — 15 Nov: package and submit (planned)
+
+| Entry | What it covers |
+|---|---|
+| [01 Plan](day-4/01-plan.md) | The submission checklist, written in advance |
 
 ## The game in one paragraph
 
@@ -18,7 +57,8 @@ film cards that decide how hard the run is. During the run you auto-attack,
 level up, loot crates and extract. As of Day 2 the level-up is the heart of the
 theme: **you are offered three options, you cut one, and you keep the other
 two.** Three copies of the same option merge into a two-star version, nine into
-a three-star one.
+a three-star one. As of Day 3, relics are **lost film reels**: carry one out
+alive and a new option joins the pool for every later run.
 
 ## How I direct the AI
 
@@ -51,15 +91,20 @@ process, not a description of what I intended.
 
 ## By the numbers
 
-Counted from the repository on 13 November.
+Counted from the repository on 14 November, part-way through Day 3. Work from
+Day 3 is not committed yet, so these are working-tree counts.
 
-- 14 commits on `main`, two of them through pull requests.
-- 73 C++ source files, about 6,800 lines (`.h` and `.cpp` under `Source/`).
-- 7 stories shipped for the first version of the loop, plus the Day 2 redesign.
-- 12 design documents (one master PRD and 11 system docs).
-- 4 automated tests (the star-merge and cut rules). The earlier stories were
-  verified by playing and by screenshots; automated tests were waived at the
-  project's minimal QA level. That is a gap, and I say so in Day 2.
+- 17 commits on `main` as of the evening of Day 2, two of them through pull
+  requests.
+- 74 C++ source files, about 6,950 lines (`.h` and `.cpp` under `Source/`).
+- 8 stories shipped: the 7 for the first version of the loop, plus story 008 on
+  Day 3; the Day 2 redesign (cut one, keep two; star merge) was built without a
+  story file.
+- 13 story files in all, and 12 design documents (one master PRD and 11 system docs).
+- 9 automated tests (the star-merge and cut rules, and the lost-reel unlock rules).
+  The earlier stories were verified by playing and by screenshots; automated tests
+  were waived at the project's minimal QA level. That is a gap, and I say so in
+  Day 2.
 - Performance check: 152 enemies on screen averaged **132 FPS**, with the single
   worst frame at 50 FPS (target was 60 or more). I accepted that as advisory.
 
@@ -87,6 +132,16 @@ Each of these happened in this project; the day entries have the details.
 5. **The human's job is taste.** The agent produced plenty of plausible
    mechanics. Choosing which one is fun, and which only sounds clever, was the
    part it could not do for me.
+6. **Test against data the old code wrote.** A save-version default that looked
+   right passed every test written by the new code, and silently skipped the
+   migration of my real save. Only loading a copy of the real file showed it. See
+   [Day 3, entry 03](day-3/03-a-bug-only-the-real-save-showed.md).
+7. **Delegate the work, not the checking.** Eight sub-agents translated the
+   project in parallel and a sub-agent updated the wiki; both reported success, and
+   in both cases the checks that mattered (links, leftovers, unverified claims)
+   were run afterwards by me and the main agent. See
+   [Day 2, entry 06](day-2/06-english-sweep-and-gitignore.md) and
+   [Day 3, entry 04](day-3/04-keeping-the-docs-honest.md).
 
 ## Tools
 
@@ -98,6 +153,9 @@ For the submission's "Tools you used" field:
 - **Claude Code Game Studios**, an open-source template of subagents and skills
   (49 agents, 74 skills) by Donchitos. I did not write it; I configured and used
   it. <https://github.com/Donchitos/Claude-Code-Game-Studios>
+- Sub-agents inside Claude Code for parallel translation and documentation work.
+- Unreal's Python scripting plugin, run from the command line, to create data
+  tables without opening the editor.
 - Git and GitHub for version control.
 
 Not used so far: any AI 3D, texture or audio generator. This list will change on

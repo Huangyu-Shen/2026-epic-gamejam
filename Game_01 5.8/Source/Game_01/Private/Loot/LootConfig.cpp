@@ -1,29 +1,26 @@
 #include "Loot/LootConfig.h"
 #include "Engine/DataTable.h"
+#include "Game/DirectorTuningSettings.h"
 
 ULootConfig::ULootConfig()
 {
 	// Editable inline defaults (used only when no tables are assigned).
-	// Relic buff values: one row per relic type.
-	FRelicRow Swift;
-	Swift.RelicType = ERelicType::Swiftstep;
-	Swift.DisplayName = FText::FromString(TEXT("Swiftstep"));
-	Swift.Buff.MoveSpeedMultiplier = 1.3f;
-	Swift.Buff.DurationSeconds = 20.0f;
+	// One row per reel type. Only the first reel is mapped to an option until story 009 adds more options
+	// (a reel with no option never drops).
+	FRelicRow FastCut;
+	FastCut.RelicType = ERelicType::Swiftstep;
+	FastCut.DisplayName = FText::FromString(TEXT("Fast Cut"));
+	FastCut.UnlocksOption = TEXT("Haste");
 
-	FRelicRow War;
-	War.RelicType = ERelicType::Warbrand;
-	War.DisplayName = FText::FromString(TEXT("Warbrand"));
-	War.Buff.DamageMultiplier = 1.5f;
-	War.Buff.DurationSeconds = 20.0f;
+	FRelicRow WideShot;
+	WideShot.RelicType = ERelicType::Warbrand;
+	WideShot.DisplayName = FText::FromString(TEXT("Wide Shot"));
 
-	FRelicRow Aegis;
-	Aegis.RelicType = ERelicType::Aegis;
-	Aegis.DisplayName = FText::FromString(TEXT("Aegis"));
-	Aegis.Buff.DamageTakenMultiplier = 0.6f;
-	Aegis.Buff.DurationSeconds = 20.0f;
+	FRelicRow ChainScene;
+	ChainScene.RelicType = ERelicType::Aegis;
+	ChainScene.DisplayName = FText::FromString(TEXT("Chain Scene"));
 
-	DefaultRelics = { Swift, War, Aegis };
+	DefaultRelics = { FastCut, WideShot, ChainScene };
 
 	FLootContainerRow Crate;
 	Crate.ContainerType = ELootContainerType::SupplyCrate;
@@ -40,6 +37,23 @@ ULootConfig::ULootConfig()
 	Vault.RelicChance = 1.0f;
 
 	DefaultContainers = { Crate, Vault };
+}
+
+ULootConfig* ULootConfig::CreateFromSettings(UObject* Outer)
+{
+	ULootConfig* Config = NewObject<ULootConfig>(Outer);
+	if (const UDirectorTuningSettings* Settings = GetDefault<UDirectorTuningSettings>())
+	{
+		Config->TuningTable = Settings->LootTuningTable.LoadSynchronous();
+		Config->ContainerTable = Settings->LootContainerTable.LoadSynchronous();
+		Config->RelicTable = Settings->ReelTable.LoadSynchronous();
+	}
+	return Config;
+}
+
+bool ULootConfig::IsTuningFromTable() const
+{
+	return TuningTable && TuningTable->FindRow<FLootTuning>(TuningRowName, TEXT("ULootConfig::IsTuningFromTable"), false) != nullptr;
 }
 
 FLootTuning ULootConfig::GetTuning() const
@@ -115,27 +129,34 @@ bool ULootConfig::FindContainerRow(ELootContainerType Type, FLootContainerRow& O
 	return false;
 }
 
-bool ULootConfig::PickRandomRelic(ERelicType& OutType) const
+bool ULootConfig::PickRandomRelic(const TArray<FName>& UnlockedOptions, const TArray<ERelicType>& ReelsInBag, ERelicType& OutType) const
 {
-	const TArray<FRelicRow> Rows = GetRelicRows();
-	if (Rows.Num() == 0)
+	TArray<FRelicRow> Candidates;
+	for (const FRelicRow& Row : GetRelicRows())
+	{
+		if (Row.IsDroppable(UnlockedOptions, ReelsInBag))
+		{
+			Candidates.Add(Row);
+		}
+	}
+	if (Candidates.Num() == 0)
 	{
 		return false;
 	}
 
 	float Total = 0.0f;
-	for (const FRelicRow& Row : Rows)
+	for (const FRelicRow& Row : Candidates)
 	{
 		Total += FMath::Max(0.0f, Row.DropWeight);
 	}
 	if (Total <= 0.0f)
 	{
-		OutType = Rows[FMath::RandRange(0, Rows.Num() - 1)].RelicType;
+		OutType = Candidates[FMath::RandRange(0, Candidates.Num() - 1)].RelicType;
 		return true;
 	}
 
 	float Roll = FMath::FRandRange(0.0f, Total);
-	for (const FRelicRow& Row : Rows)
+	for (const FRelicRow& Row : Candidates)
 	{
 		Roll -= FMath::Max(0.0f, Row.DropWeight);
 		if (Roll <= 0.0f)
@@ -144,6 +165,6 @@ bool ULootConfig::PickRandomRelic(ERelicType& OutType) const
 			return true;
 		}
 	}
-	OutType = Rows.Last().RelicType;
+	OutType = Candidates.Last().RelicType;
 	return true;
 }

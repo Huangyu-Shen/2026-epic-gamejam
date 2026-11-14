@@ -1,4 +1,5 @@
-// Director's Cut - Story 001 (design/game-brief.md, MVP feature 3: loot, bag, heat).
+// Director's Cut - Story 001 (loot, bag, heat), reworked by Story 008 (design/game-brief.md, v2 item 3):
+// relics are now "lost film reels". A reel does nothing in a run; carried out alive it unlocks one upgrade option.
 #pragma once
 
 #include "CoreMinimal.h"
@@ -7,13 +8,16 @@
 
 DECLARE_LOG_CATEGORY_EXTERN(LogLoot, Log, All);
 
-/** The three relic types. Each can be kept in the bag or used on the spot for its buff. */
+/**
+ * The lost film reel types. A reel cannot be used in a run: carried out alive it unlocks the upgrade option
+ * its data row names (FRelicRow::UnlocksOption). The enum name predates the rename and is kept for save compatibility.
+ */
 UENUM(BlueprintType)
 enum class ERelicType : uint8
 {
-	Swiftstep UMETA(DisplayName = "Swiftstep"),	// move speed buff
-	Warbrand  UMETA(DisplayName = "Warbrand"),	// damage dealt buff
-	Aegis     UMETA(DisplayName = "Aegis")		// damage taken reduction buff
+	Swiftstep UMETA(DisplayName = "Fast Cut"),
+	Warbrand  UMETA(DisplayName = "Wide Shot"),
+	Aegis     UMETA(DisplayName = "Chain Scene")
 };
 
 /** Kinds of searchable container. */
@@ -33,59 +37,71 @@ enum class EBagAddResult : uint8
 	InvalidItem
 };
 
-/**
- * Plain stat modifier a pawn can read (see ULootBagComponent::GetActiveModifier).
- * Multipliers of 1.0 are neutral. Values live in data rows, not code.
- */
-USTRUCT(BlueprintType)
-struct GAME_01_API FLootStatModifier
-{
-	GENERATED_BODY()
-
-	/** Multiplier on movement speed. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Loot")
-	float MoveSpeedMultiplier = 1.0f;
-
-	/** Multiplier on damage dealt. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Loot")
-	float DamageMultiplier = 1.0f;
-
-	/** Multiplier on damage taken (below 1 = tougher). */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Loot")
-	float DamageTakenMultiplier = 1.0f;
-
-	/** Seconds the buff lasts after use. 0 or less = lasts until the bag/run is reset. */
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Loot")
-	float DurationSeconds = 0.0f;
-
-	/** Multiplies the three multipliers of Other into this one (duration is ignored). */
-	void Stack(const FLootStatModifier& Other)
-	{
-		MoveSpeedMultiplier *= Other.MoveSpeedMultiplier;
-		DamageMultiplier *= Other.DamageMultiplier;
-		DamageTakenMultiplier *= Other.DamageTakenMultiplier;
-	}
-};
-
-/** Data row: definition of one relic type. */
+/** Data row: definition of one lost film reel type. */
 USTRUCT(BlueprintType)
 struct GAME_01_API FRelicRow : public FTableRowBase
 {
 	GENERATED_BODY()
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Relic")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Reel")
 	ERelicType RelicType = ERelicType::Swiftstep;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Relic")
+	/** Name shown for the reel on the HUD and the result screen. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Reel")
 	FText DisplayName;
 
-	/** Buff applied when the relic is used. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Relic")
-	FLootStatModifier Buff;
+	/**
+	 * Id of the upgrade option this reel unlocks (a weapon or passive row name, e.g. "Haste"). None = the option
+	 * does not exist yet, and the reel never drops.
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Reel")
+	FName UnlocksOption = NAME_None;
 
 	/** Relative chance of being rolled from a container (all zero = uniform). */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Relic", meta = (ClampMin = "0.0"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Reel", meta = (ClampMin = "0.0"))
 	float DropWeight = 1.0f;
+
+	/**
+	 * Whether this reel may drop: it unlocks a real option the camp does not have yet, and the bag does not
+	 * already hold one of this type.
+	 */
+	bool IsDroppable(const TArray<FName>& UnlockedOptions, const TArray<ERelicType>& ReelsInBag) const
+	{
+		return !UnlocksOption.IsNone() && !UnlockedOptions.Contains(UnlocksOption) && !ReelsInBag.Contains(RelicType);
+	}
+};
+
+/** Pure helpers for the reel-to-option mapping and the unlocked set. They touch no UObjects, so tests need no world. */
+struct GAME_01_API FReelUnlocks
+{
+	/** Adds Option to Unlocked unless it is None or already there. Returns true if it was added. */
+	static bool AddOption(TArray<FName>& Unlocked, FName Option)
+	{
+		if (Option.IsNone() || Unlocked.Contains(Option))
+		{
+			return false;
+		}
+		Unlocked.Add(Option);
+		return true;
+	}
+
+	/** The options these reels unlock, in reel order, without duplicates. Reels with no mapped option are skipped. */
+	static TArray<FName> OptionsForReels(const TArray<ERelicType>& Reels, const TArray<FRelicRow>& Rows)
+	{
+		TArray<FName> Options;
+		for (const ERelicType Reel : Reels)
+		{
+			for (const FRelicRow& Row : Rows)
+			{
+				if (Row.RelicType == Reel)
+				{
+					AddOption(Options, Row.UnlocksOption);
+					break;
+				}
+			}
+		}
+		return Options;
+	}
 };
 
 /** Data row: what one kind of container yields per search. */
@@ -106,14 +122,14 @@ struct GAME_01_API FLootContainerRow : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Container", meta = (ClampMin = "0"))
 	int32 IronMax = 0;
 
-	/** Chance 0..1 that a search also yields a relic. */
+	/** Chance 0..1 that a search also yields a lost film reel (when one can still drop). */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Container", meta = (ClampMin = "0.0", ClampMax = "1.0"))
 	float RelicChance = 0.0f;
 };
 
 /**
- * Bag / heat / relic-use tuning. These member initializers are the editable
- * defaults used when no config asset or table overrides them.
+ * Bag and heat tuning. These member initializers are the editable defaults used when no config asset
+ * or table overrides them.
  */
 USTRUCT(BlueprintType)
 struct GAME_01_API FLootTuning : public FTableRowBase
@@ -128,13 +144,9 @@ struct GAME_01_API FLootTuning : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Bag", meta = (ClampMin = "1"))
 	int32 IronPerSlot = 10;
 
-	/** Heat added each time a rare item (relic) is picked up. */
+	/** Heat added each time a lost film reel is picked up. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Heat", meta = (ClampMin = "0.0"))
 	float HeatPerRarePickup = 15.0f;
-
-	/** Heat removed when a relic is used. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Heat", meta = (ClampMin = "0.0"))
-	float HeatReductionOnRelicUse = 8.0f;
 
 	/** Heat ceiling. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Heat", meta = (ClampMin = "1.0"))

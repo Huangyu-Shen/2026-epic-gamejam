@@ -17,11 +17,6 @@ namespace
 	{
 		return StaticEnum<EBuildingType>()->GetDisplayNameTextByValue(static_cast<int64>(Type)).ToString();
 	}
-
-	FString CampRelicLabel(ERelicType Type)
-	{
-		return StaticEnum<ERelicType>()->GetDisplayNameTextByValue(static_cast<int64>(Type)).ToString();
-	}
 }
 
 TSharedRef<SWidget> UCampWidget::RebuildWidget()
@@ -60,9 +55,9 @@ FString UCampWidget::MakeSignature() const
 		if (const UCampStockSubsystem* Stock = GI->GetSubsystem<UCampStockSubsystem>())
 		{
 			Sig += FString::Printf(TEXT("|I%d"), Stock->GetIron());
-			for (const ERelicType Relic : Stock->GetWarehouseRelics())
+			for (const FName Option : Stock->GetUnlockedOptions())
 			{
-				Sig += FString::Printf(TEXT(",%d"), static_cast<int32>(Relic));
+				Sig += TEXT(",") + Option.ToString();
 			}
 		}
 		if (const UCampMetaSubsystem* Camp = GI->GetSubsystem<UCampMetaSubsystem>())
@@ -135,19 +130,16 @@ void UCampWidget::Rebuild()
 		Button->OnAction.AddDynamic(this, &UCampWidget::HandleAction);
 	}
 
-	// Warehouse.
-	const TArray<ERelicType> Relics = Stock->GetWarehouseRelics();
-	DirectorUi::AddText(WidgetTree, Content, FString::Printf(TEXT("\nWAREHOUSE (%d relics)"), Relics.Num()), 16, DirectorUi::DimColor);
-	if (Relics.IsEmpty())
+	// Storage: the upgrade options that lost film reels have unlocked.
+	const TArray<FName>& Unlocked = Stock->GetUnlockedOptions();
+	DirectorUi::AddText(WidgetTree, Content, FString::Printf(TEXT("\nSTORAGE - unlocked upgrade options (%d)"), Unlocked.Num()), 16, DirectorUi::DimColor);
+	if (Unlocked.IsEmpty())
 	{
-		DirectorUi::AddText(WidgetTree, Content, TEXT("Empty. Extract with relics to store them here."), 16, DirectorUi::DimColor);
+		DirectorUi::AddText(WidgetTree, Content, TEXT("None yet. Carry a lost film reel out alive to unlock one."), 16, DirectorUi::DimColor);
 	}
-	for (int32 Index = 0; Index < Relics.Num(); ++Index)
+	for (const FName Option : Unlocked)
 	{
-		UUiActionButton* Button = DirectorUi::AddButton(WidgetTree, Content,
-			FString::Printf(TEXT("Dismantle %s  (+%d Iron)"), *CampRelicLabel(Relics[Index]), Camp->GetRelicDismantleIron()),
-			TEXT("Dismantle"), Index);
-		Button->OnAction.AddDynamic(this, &UCampWidget::HandleAction);
+		DirectorUi::AddText(WidgetTree, Content, TEXT("  ") + Option.ToString(), 18, DirectorUi::GoodColor);
 	}
 
 	// Editing room.
@@ -193,12 +185,6 @@ void UCampWidget::HandleAction(FName Action, int32 Index)
 			Message = Reason.ToString();
 			bMessageIsError = true;
 		}
-	}
-	else if (Action == TEXT("Dismantle"))
-	{
-		const int32 Gained = Camp->DismantleRelic(Index);
-		Message = Gained > 0 ? FString::Printf(TEXT("Relic dismantled: +%d Iron"), Gained) : FString(TEXT("Nothing to dismantle"));
-		bMessageIsError = Gained <= 0;
 	}
 	else if (Action == TEXT("Card") && Cards)
 	{

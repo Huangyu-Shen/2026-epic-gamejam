@@ -9,12 +9,12 @@ Corresponds to commit `cd44b7f` on the `main` branch (2026-11-13, stories 001-00
 | Engine | Unreal Engine 5.8 (5.8.4 on this machine) | [Game_01.uproject](../../Game_01%205.8/Game_01.uproject) |
 | Language | C++20 (the engine 5.8 minimum); all gameplay and UI are C++, no Blueprint classes | [Source/](../../Game_01%205.8/Source/Game_01/) |
 | UI | UMG; the widget tree is built in C++ inside `RebuildWidget`, no widget Blueprints | [Public/UI](../../Game_01%205.8/Source/Game_01/Public/UI/) |
-| Data | 9 DataTables (`Content/Data/`), referenced by the project setting `Director Tuning` | [DirectorTuningSettings.h](../../Game_01%205.8/Source/Game_01/Public/Game/DirectorTuningSettings.h) |
+| Data | 12 DataTables (`Content/Data/`), referenced by the project setting `Director Tuning` | [DirectorTuningSettings.h](../../Game_01%205.8/Source/Game_01/Public/Game/DirectorTuningSettings.h) |
 | Save | `USaveGame`, single slot `CampSave` | [CampSaveGame.h](../../Game_01%205.8/Source/Game_01/Public/Flow/CampSaveGame.h) |
 | Input | Raw key bindings (`BindKey`), no input assets | [HeroCharacter.cpp](../../Game_01%205.8/Source/Game_01/Private/Player/HeroCharacter.cpp) |
 | AI collaboration | Unreal MCP plugins (`ModelContextProtocol`, `AllToolsets`) | [.uproject](../../Game_01%205.8/Game_01.uproject) |
 
-The game is a fantasy angled-top-down "mow-down x search-and-extract x thin camp" game: on the run map you loot, fight and level up, then extract with your bag; extracted Iron and relics go into camp, where buildings are upgraded and take effect from the next run.
+The game is a fantasy angled-top-down "mow-down x search-and-extract x thin camp" game: on the run map you loot, fight and level up, then extract with your bag; extracted Iron goes into camp, where buildings are upgraded and take effect from the next run. Lost film reels carried out alive unlock upgrade options for every later run.
 
 ## 2. Two maps, two game modes
 
@@ -31,7 +31,7 @@ The map names `L_Camp` and `L_Greybox` are hardcoded: in the `Start` action of [
 ```mermaid
 graph TD
   subgraph Session-level GameInstance subsystems persist across levels
-    Stock[UCampStockSubsystem<br/>Iron and stored relics]
+    Stock[UCampStockSubsystem<br/>Iron and unlocked upgrade options]
     Meta[UCampMetaSubsystem<br/>Building levels and bonuses<br/>Pending film cards]
     Save[UCampSaveSubsystem<br/>Single-slot save]
     Msg[UHudMessageSubsystem<br/>On-screen messages]
@@ -69,9 +69,9 @@ graph TD
 
 Dependencies are not checked automatically (there are no architecture tests and no lint rules); the direction is kept by convention:
 
-- `Loot/` is the lowest layer: apart from sending messages to `UHudMessageSubsystem` (`LootBagComponent`, `LootContainer`), it references no other gameplay directory and exposes events upward only through delegates. `Combat/` is not a bottom layer: the weapon component has to read progression, the enemy manager and camp bonuses (see the tally in [dependencies.md](dependencies.md#1-how-modules-depend-on-each-other)).
-- The UI only reads subsystems and components; all state changes go through the subsystems' public functions (upgrade, dismantle, pick a card, pick a level-up option).
-- Camp state (Iron, relics, building levels) lives in a GameInstance subsystem because `OpenLevel` destroys the whole World; per-run state (enemies, heat, XP) lives in World subsystems and is naturally cleared on a map change.
+- `Loot/` is close to the bottom layer: apart from sending messages to `UHudMessageSubsystem` (`LootBagComponent`, `LootContainer`), reading the loot tables from `UDirectorTuningSettings` (`ULootConfig`) and reading the unlocked options from `UCampStockSubsystem` (`ALootContainer`, to decide which reels can still drop), it references no other gameplay directory, and exposes events upward only through delegates. `Combat/` is not a bottom layer: the weapon component has to read progression, the enemy manager and camp bonuses (see the tally in [dependencies.md](dependencies.md#1-how-modules-depend-on-each-other)).
+- The UI only reads subsystems and components; all state changes go through the subsystems' public functions (upgrade, pick a card, pick a level-up option).
+- Camp state (Iron, unlocked upgrade options, building levels) lives in a GameInstance subsystem because `OpenLevel` destroys the whole World; per-run state (enemies, heat, XP) lives in World subsystems and is naturally cleared on a map change.
 
 ## 4. Runtime structure
 
@@ -107,7 +107,7 @@ sequenceDiagram
   H->>HUD: CreateHud
   P->>H: Loot, fight, level up, stand in the extraction zone
   H->>R: ReportExtracted, or HandleDied calls ReportPlayerDied
-  R->>R: Settle: Compute, add to Stock
+  R->>R: Settle: Compute, add Iron to Stock<br/>if extracted, unlock the options of the reels carried out
   R->>S: SaveNow
   R-->>HUD: OnRunEnded settlement page appears
   F-->>F: HandleRunEnded clears cards
@@ -119,6 +119,7 @@ Key points:
 
 - Settlement happens only once: [`URunOutcomeSubsystem::EndRun`](../../Game_01%205.8/Source/Game_01/Private/Extraction/RunOutcomeSubsystem.cpp) checks `bRunActive` at the start, so if extraction and death happen in the same frame, first come first served.
 - The save is written explicitly in `EndRun`, because when the player dies with no Iron in the bag the stock does not change and `OnStockChanged` would not trigger the save listener.
+- Lost film reels do nothing during a run. Only a run that ends by extraction unlocks the options its reels name (`UCampStockSubsystem::UnlockOption`); dying loses the reels and unlocks nothing.
 - Camp bonuses do not accumulate: every run's `StartRun` resets the value to `GetBaseMaxHealth() + Clinic bonus`; the Smithy bonus is read live on every shot.
 
 ### 5.2 Camp upgrade
@@ -162,7 +163,7 @@ Kill -> `UEnemyManagerSubsystem::OnEnemyKilled` -> `URunProgressionSubsystem::Ha
 ├── Game_01 5.8/                 # The only UE project currently in use
 │   ├── Game_01.uproject
 │   ├── Config/                  # DefaultEngine / DefaultGame / DefaultInput ...
-│   ├── Content/Data/            # 9 DataTables (LFS)
+│   ├── Content/Data/            # 12 DataTables (LFS)
 │   ├── Content/Maps/            # L_Camp, L_Greybox
 │   └── Source/Game_01/{Public,Private}/
 │       ├── Camp/ Combat/ Editing/ Enemies/ Extraction/

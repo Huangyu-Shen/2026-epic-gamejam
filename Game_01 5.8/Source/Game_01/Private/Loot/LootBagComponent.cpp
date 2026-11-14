@@ -7,8 +7,7 @@
 
 ULootBagComponent::ULootBagComponent()
 {
-	PrimaryComponentTick.bCanEverTick = true;
-	PrimaryComponentTick.bStartWithTickEnabled = false; // only ticks while buffs are active
+	PrimaryComponentTick.bCanEverTick = false;
 }
 
 void ULootBagComponent::BeginPlay()
@@ -21,6 +20,13 @@ void ULootBagComponent::BeginPlay()
 			Heat->SetTuning(GetConfig()->GetTuning());
 		}
 	}
+	// A missing table falls back to the C++ defaults without an error, so print where the numbers came from
+	// (read this line in a packaged build's log).
+	const FLootTuning Tuning = GetConfig()->GetTuning();
+	UE_LOG(LogLoot, Log, TEXT("LOOTCFG source=%s capacity=%d ironPerSlot=%d heatPerReel=%.1f maxHeat=%.1f pressure=%.2f..%.2f reelRows=%d"),
+		GetConfig()->IsTuningFromTable() ? TEXT("table") : TEXT("c++ defaults"), Tuning.BagCapacitySlots, Tuning.IronPerSlot,
+		Tuning.HeatPerRarePickup, Tuning.MaxHeat, Tuning.SpawnPressureAtZeroHeat, Tuning.SpawnPressureAtMaxHeat,
+		GetConfig()->GetRelicRows().Num());
 }
 
 ULootConfig* ULootBagComponent::GetConfig()
@@ -31,7 +37,7 @@ ULootConfig* ULootBagComponent::GetConfig()
 	}
 	if (!FallbackConfig)
 	{
-		FallbackConfig = NewObject<ULootConfig>(this, TEXT("FallbackLootConfig"));
+		FallbackConfig = ULootConfig::CreateFromSettings(this);
 	}
 	return FallbackConfig;
 }
@@ -94,7 +100,7 @@ EBagAddResult ULootBagComponent::TryAddLoot(int32 IronAmount, bool bAddRelic, ER
 	if (bAddRelic)
 	{
 		Relics.Add(RelicType);
-		// A relic is the rare pickup: it raises heat.
+		// A lost film reel is the rare pickup: it raises heat.
 		if (UWorld* World = GetWorld())
 		{
 			if (ULootHeatSubsystem* Heat = World->GetSubsystem<ULootHeatSubsystem>())
@@ -107,99 +113,9 @@ EBagAddResult ULootBagComponent::TryAddLoot(int32 IronAmount, bool bAddRelic, ER
 	return Result;
 }
 
-bool ULootBagComponent::UseRelic(int32 Index)
-{
-	if (!Relics.IsValidIndex(Index))
-	{
-		return false;
-	}
-
-	const ERelicType Type = Relics[Index];
-	Relics.RemoveAt(Index);
-
-	FRelicRow Row;
-	if (GetConfig()->FindRelicRow(Type, Row))
-	{
-		FActiveRelicBuff Buff;
-		Buff.RelicType = Type;
-		Buff.Modifier = Row.Buff;
-		const UWorld* World = GetWorld();
-		Buff.ExpireTime = (Row.Buff.DurationSeconds > 0.0f && World)
-			? World->GetTimeSeconds() + Row.Buff.DurationSeconds
-			: -1.0;
-		ActiveBuffs.Add(Buff);
-		SetComponentTickEnabled(true);
-	}
-	else
-	{
-		UE_LOG(LogLoot, Warning, TEXT("UseRelic: no data row for relic type %d; no buff applied."), static_cast<int32>(Type));
-	}
-
-	if (UWorld* World = GetWorld())
-	{
-		if (ULootHeatSubsystem* Heat = World->GetSubsystem<ULootHeatSubsystem>())
-		{
-			Heat->ReduceHeatForRelicUse();
-		}
-	}
-
-	UHudMessageSubsystem::Post(this,
-		FString::Printf(TEXT("Used relic: %s"), *StaticEnum<ERelicType>()->GetDisplayNameTextByValue(static_cast<int64>(Type)).ToString()),
-		FLinearColor(0.35f, 0.9f, 0.4f));
-
-	OnRelicUsed.Broadcast(Type);
-	OnBagChanged.Broadcast();
-	OnBuffsChanged.Broadcast();
-	return true;
-}
-
 void ULootBagComponent::ClearBag()
 {
-	const bool bHadBuffs = ActiveBuffs.Num() > 0;
 	IronCount = 0;
 	Relics.Reset();
-	ActiveBuffs.Reset();
-	SetComponentTickEnabled(false);
 	OnBagChanged.Broadcast();
-	if (bHadBuffs)
-	{
-		OnBuffsChanged.Broadcast();
-	}
-}
-
-FLootStatModifier ULootBagComponent::GetActiveModifier() const
-{
-	FLootStatModifier Combined;
-	for (const FActiveRelicBuff& Buff : ActiveBuffs)
-	{
-		Combined.Stack(Buff.Modifier);
-	}
-	return Combined;
-}
-
-void ULootBagComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
-{
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	const UWorld* World = GetWorld();
-	if (!World)
-	{
-		return;
-	}
-	const double Now = World->GetTimeSeconds();
-	const int32 Removed = ActiveBuffs.RemoveAll([Now](const FActiveRelicBuff& Buff)
-	{
-		return Buff.ExpireTime >= 0.0 && Now >= Buff.ExpireTime;
-	});
-	if (Removed > 0)
-	{
-		OnBuffsChanged.Broadcast();
-	}
-
-	// Stop ticking when no timed buff remains.
-	const bool bAnyTimed = ActiveBuffs.ContainsByPredicate([](const FActiveRelicBuff& Buff) { return Buff.ExpireTime >= 0.0; });
-	if (!bAnyTimed)
-	{
-		SetComponentTickEnabled(false);
-	}
 }

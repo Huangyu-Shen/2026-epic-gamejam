@@ -12,15 +12,15 @@ void UCampStockSubsystem::AddIron(int32 Amount)
 	OnStockChanged.Broadcast();
 }
 
-void UCampStockSubsystem::AddRelics(const TArray<ERelicType>& NewRelics)
+bool UCampStockSubsystem::UnlockOption(FName Option)
 {
-	if (NewRelics.IsEmpty())
+	if (!FReelUnlocks::AddOption(UnlockedOptions, Option))
 	{
-		return;
+		return false;
 	}
-	WarehouseRelics.Append(NewRelics);
-	UE_LOG(LogExtraction, Log, TEXT("Warehouse relics %d (+%d)"), WarehouseRelics.Num(), NewRelics.Num());
+	UE_LOG(LogExtraction, Log, TEXT("Upgrade option unlocked: %s (%d unlocked)"), *Option.ToString(), UnlockedOptions.Num());
 	OnStockChanged.Broadcast();
+	return true;
 }
 
 bool UCampStockSubsystem::SpendIron(int32 Amount)
@@ -39,22 +39,14 @@ bool UCampStockSubsystem::SpendIron(int32 Amount)
 	return true;
 }
 
-void UCampStockSubsystem::RestoreState(int32 InIron, const TArray<ERelicType>& InRelics)
+void UCampStockSubsystem::RestoreState(int32 InIron, const TArray<FName>& InUnlockedOptions)
 {
 	Iron = FMath::Max(InIron, 0);
-	WarehouseRelics = InRelics;
-	UE_LOG(LogExtraction, Log, TEXT("Camp stock restored: Iron %d, %d relics"), Iron, WarehouseRelics.Num());
-	OnStockChanged.Broadcast();
-}
-
-bool UCampStockSubsystem::RemoveRelicAt(int32 Index)
-{
-	if (!WarehouseRelics.IsValidIndex(Index))
+	UnlockedOptions.Reset();
+	for (const FName Option : InUnlockedOptions)
 	{
-		return false;
+		FReelUnlocks::AddOption(UnlockedOptions, Option);
 	}
-	WarehouseRelics.RemoveAt(Index);
-	UE_LOG(LogExtraction, Log, TEXT("Warehouse relic removed at %d (%d left)"), Index, WarehouseRelics.Num());
+	UE_LOG(LogExtraction, Log, TEXT("Camp stock restored: Iron %d, %d unlocked options"), Iron, UnlockedOptions.Num());
 	OnStockChanged.Broadcast();
-	return true;
 }

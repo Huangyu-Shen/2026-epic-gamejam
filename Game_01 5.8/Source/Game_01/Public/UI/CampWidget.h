@@ -38,7 +38,7 @@ private:
 
 	FString LastSignature;
 
-	/** Result of the last action, shown at the top (upgrade refused, relic dismantled...). */
+	/** Result of the last action, shown at the top (upgrade refused, building upgraded...). */
 	FString Message;
 	bool bMessageIsError = false;
 };

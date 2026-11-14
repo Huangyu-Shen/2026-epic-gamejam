@@ -51,7 +51,7 @@ You can use the editor's Build, but **do not use Live Coding hot reload**: it ho
 ### 4.1 In the editor (PIE)
 
 1. The editor opens `L_Camp` automatically; click Play.
-2. In the camp's left panel, upgrade, dismantle and pick cards, then click **START RUN**.
+2. In the camp's left panel, upgrade buildings and pick cards (the STORAGE list below them shows the upgrade options unlocked so far), then click **START RUN**.
 3. On the run map: loot, fight, level up, stand in the extraction zone; on the settlement page click **Return to Camp**.
 
 To test the run map directly, open `Content/Maps/L_Greybox.umap` and click Play; there are no camp bonuses and the cards are empty.
@@ -73,11 +73,11 @@ The `commands` in [project.yaml](../../project.yaml) (build, test, run, smoke) a
 | Run | W A S D | Move |
 | Run | Space | Dodge (dash, invulnerability, cooldown) |
 | Run | E | Loot the nearest container |
-| Run | 1 to 6 | Use the relic in the matching bag slot (1 to 3 pick a level-up option while the level-up panel is shown) |
+| Run | 1 to 3 | Cut one of the three level-up options while the level-up panel is shown (lost film reels cannot be used) |
 | Run | K | Debug: the hero dies immediately |
 | Run | Mouse | Click level-up panel buttons, click Return to Camp on the settlement page |
 | Camp | Click a 3D building with the mouse | Upgrade |
-| Camp | Click the left panel with the mouse | Upgrade, dismantle relics, add or remove film cards, START RUN |
+| Camp | Click the left panel with the mouse | Upgrade, add or remove film cards, START RUN |
 
 ## 6. Performance probe `-PerfProbe`
 
@@ -91,9 +91,29 @@ The run map (`L_Greybox`) must be specified, because the default startup map is 
 
 Story 003 measurement record (see the [evidence document](../../production/qa/evidence/story-003-combat-enemies-map-evidence.md) for the original): `enemies=152 avgFPS=132.3 minFPS=50.0 samples=1324` (1080p standalone window). The average is above 60 and the worst single frame, 50, is below 60; the user accepted this. This is the result from story 003; systems such as progression and UI were added afterwards and it has not been re-measured.
 
+### Level-up probe `-OfferProbe`
+
+Run-map game mode (`ADirectorGameMode::StepOfferProbe`): forces level-ups, cuts the first option each time, saves three screenshots of the level-up panel and the HUD to `Game_01 5.8/Saved/OfferProbe/`, logs `OFFERPROBE` lines and exits. Use it the same way as the performance probe, with `/Game/Maps/L_Greybox` and `-game`.
+
+### Lost-reel probe `-ReelProbe` and `-ReelProbe=die`
+
+```bash
+"D:/Game/EPIC/UE_5.8/Engine/Binaries/Win64/UnrealEditor.exe" "Game_01 5.8/Game_01.uproject" /Game/Maps/L_Greybox -game -ReelProbe -SaveSlot=ReelProbe
+```
+
+Run-map game mode (`ADirectorGameMode::StepReelProbe`): the hero goes into god mode and spawning is turned off, 25 Iron and one Fast Cut reel go into the bag (picking the reel up raises heat), then the run ends by extraction, or by death with `-ReelProbe=die`. Screenshots go to `Game_01 5.8/Saved/ReelProbe/`: `1-reel-in-bag.png`, then `2-result-extracted.png` or `3-result-died.png`. `REELPROBE` lines in `LogEnemies` show `reelsInBag`, `heat`, `unlocked` (the unlocked options), `anotherReelCanDrop` and `outcome` before and after. After extraction the unlocked list should hold `Haste`; after death it should be unchanged and the reel is lost. The run is settled for real and saved, so add `-SaveSlot=Name` (see [data-and-storage.md](data-and-storage.md#1-save-game)) to keep the probe away from the real save.
+
+### Camp screenshot `-CampShot`
+
+```bash
+"D:/Game/EPIC/UE_5.8/Engine/Binaries/Win64/UnrealEditor.exe" "Game_01 5.8/Game_01.uproject" -game -CampShot
+```
+
+Camp game mode (`ACampGameMode::TakeCampShot`): after 4 seconds it logs one `CAMPSHOT iron=... unlocked=[...]` line, saves `Saved/ReelProbe/camp-storage.png` (the camp panel with the STORAGE list) and exits. It starts on the default camp map and reads the current save slot, so it can be combined with `-SaveSlot=Name`.
+
 ## 7. Testing
 
-**The project has no automated tests**: `Source/` contains no `IMPLEMENT_SIMPLE_AUTOMATION_TEST` or `DEFINE_SPEC`, and there is no `tests/` directory. No tests were run for this document. `qa.level` in `project.yaml` is `minimal`, so tests are exempt under the rules, and "retained screenshots" serve as evidence instead.
+**The project has 9 automated tests**, all `IMPLEMENT_SIMPLE_AUTOMATION_TEST` tests under `Source/Game_01/Private/Tests/`: 4 in `StarTuningTest.cpp` (`Game_01.Progression.*`) and 5 in `ReelUnlockTest.cpp` (`Game_01.Loot.*`: `UnlockedSetAddsOnceAndSkipsNone`, `ReelsMapToTheirOptions`, `OnlyUsefulReelsDrop`, `PickRandomSkipsUselessReels`, `V1SaveRelicsBecomeUnlockedOptions`). Run them from the editor's Session Frontend (Automation tab) by filtering on `Game_01`. No tests were run for this document. `qa.level` in `project.yaml` is `minimal`, so tests are optional under the rules; "retained screenshots" serve as the evidence for what the player sees.
 
 ### Visual and flow evidence
 
@@ -104,6 +124,7 @@ Story 003 measurement record (see the [evidence document](../../production/qa/ev
 | 003 | [production/qa/evidence/story-003-combat-enemies-map/](../../production/qa/evidence/story-003-combat-enemies-map/), [assessment document](../../production/qa/evidence/story-003-combat-enemies-map-evidence.md) |
 | 006 | [story-006-camp-colors.png](../../production/qa/evidence/story-006-camp-colors.png) |
 | 007 | [production/qa/evidence/story-007-flow-save-ui/](../../production/qa/evidence/story-007-flow-save-ui/), 11 screenshots and one evidence stamp |
+| 008 | [production/qa/evidence/story-008-lost-film-reels/](../../production/qa/evidence/story-008-lost-film-reels/) |
 
 ## 8. Packaging and release
 
@@ -130,7 +151,7 @@ MCP is only available while the editor is open. `Game_01 5.8/.mcp.json` is a cop
 |---|---|
 | Branches | Trunk-based development; routine features go on a `feature/...` branch plus a PR (auto-merged in the personal repository) |
 | Commits | Conventional Commits (`feat:`, `fix:`, `docs:`, `chore:`), with `Story: ...` in the body |
-| Stories | 7 stories under [production/epics/directors-cut/](../../production/epics/directors-cut/), with the status in the header of each story file |
+| Stories | 13 stories under [production/epics/directors-cut/](../../production/epics/directors-cut/), with the status in the header of each story file |
 | Process | `/dev-story` to implement -> `/story-done` to accept -> `/git-push-project` to commit |
 | Session state | `production/session-state/active.md` (gitignored, not in the repository) |
 

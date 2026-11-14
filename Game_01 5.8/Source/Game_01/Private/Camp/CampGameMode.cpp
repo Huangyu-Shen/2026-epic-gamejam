@@ -4,6 +4,12 @@
 #include "Camp/CampWarehouse.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
+#include "Extraction/CampStockSubsystem.h"
+#include "Misc/CommandLine.h"
+#include "Misc/Parse.h"
+#include "Misc/Paths.h"
+#include "TimerManager.h"
+#include "UnrealClient.h"
 
 ACampGameMode::ACampGameMode()
 {
@@ -58,4 +64,27 @@ void ACampGameMode::BeginPlay()
 		Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 		World->SpawnActor<ACampWarehouse>(ACampWarehouse::StaticClass(), FVector(0.0f, -350.0f, 60.0f), FRotator::ZeroRotator, Params);
 	}
+
+	if (FParse::Param(FCommandLine::Get(), TEXT("CampShot")))
+	{
+		GetWorldTimerManager().SetTimer(CampShotHandle, this, &ACampGameMode::TakeCampShot, 4.0f);
+	}
+}
+
+void ACampGameMode::TakeCampShot()
+{
+	FString Unlocked;
+	int32 Iron = 0;
+	if (const UCampStockSubsystem* Stock = GetGameInstance()->GetSubsystem<UCampStockSubsystem>())
+	{
+		Iron = Stock->GetIron();
+		for (const FName Option : Stock->GetUnlockedOptions())
+		{
+			Unlocked += Option.ToString() + TEXT(" ");
+		}
+	}
+	UE_LOG(LogTemp, Display, TEXT("CAMPSHOT iron=%d unlocked=[%s]"), Iron, *Unlocked);
+	FScreenshotRequest::RequestScreenshot(FPaths::ProjectSavedDir() / TEXT("ReelProbe") / TEXT("camp-storage.png"), true, false);
+	FTimerHandle Exit;
+	GetWorldTimerManager().SetTimer(Exit, []() { FPlatformMisc::RequestExit(false); }, 1.5f, false);
 }

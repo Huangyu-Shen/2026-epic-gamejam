@@ -14,14 +14,27 @@ class GAME_01_API UCampSaveGame : public USaveGame
 	GENERATED_BODY()
 
 public:
+	/** Version written by the current game: 1 = relics in a warehouse, 2 = unlocked upgrade options (story 008). */
+	static constexpr int32 CurrentSaveVersion = 2;
+
+	/**
+	 * The version stored in the file. The default must stay 1: a save stores only the values that differ from the
+	 * class defaults, so a v1 file has no SaveVersion at all and reads back as this default. UCampSaveSubsystem::SaveNow
+	 * sets CurrentSaveVersion explicitly, which differs from 1 and is therefore written.
+	 */
 	UPROPERTY()
 	int32 SaveVersion = 1;
 
 	UPROPERTY()
 	int32 Iron = 0;
 
+	/** Read from a v1 save only (each relic becomes its unlocked option); never written. */
 	UPROPERTY()
 	TArray<ERelicType> WarehouseRelics;
+
+	/** Unlocked upgrade options, by stable name (not by enum number). */
+	UPROPERTY()
+	TArray<FName> UnlockedOptions;
 
 	UPROPERTY()
 	TMap<EBuildingType, int32> BuildingLevels;
