@@ -115,17 +115,6 @@ float UCampMetaSubsystem::GetMaxHealthBonus() const
 	return static_cast<float>(Levels.FindRef(EBuildingType::Clinic)) * Buildings.FindChecked(EBuildingType::Clinic).MaxHealthPerLevel;
 }
 
-int32 UCampMetaSubsystem::DismantleRelic(int32 Index)
-{
-	UCampStockSubsystem* Stock = GetGameInstance()->GetSubsystem<UCampStockSubsystem>();
-	if (!Stock || !Stock->RemoveRelicAt(Index))
-	{
-		return 0;
-	}
-	Stock->AddIron(RelicDismantleIron);
-	return RelicDismantleIron;
-}
-
 void UCampMetaSubsystem::RestoreLevels(const TMap<EBuildingType, int32>& InLevels)
 {
 	Levels.Reset();

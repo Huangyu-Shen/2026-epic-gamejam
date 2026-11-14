@@ -43,7 +43,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Run")
 	void SetEarningsMultiplier(float NewMultiplier);
 
-	/** Success: bag Iron x multiplier to camp, relics to the warehouse. Ignored if the run already ended. */
+	/** Success: bag Iron x multiplier to camp, lost film reels unlock their options. Ignored if the run already ended. */
 	UFUNCTION(BlueprintCallable, Category = "Run")
 	void ReportExtracted(ULootBagComponent* Bag);
 

@@ -1,6 +1,11 @@
 #include "Game/DirectorGameMode.h"
 #include "Combat/AutoWeaponComponent.h"
 #include "Combat/HealthComponent.h"
+#include "Extraction/CampStockSubsystem.h"
+#include "Extraction/RunOutcomeSubsystem.h"
+#include "Loot/LootBagComponent.h"
+#include "Loot/LootConfig.h"
+#include "Loot/LootHeatSubsystem.h"
 #include "Enemies/EnemyManagerSubsystem.h"
 #include "Enemies/EnemySpawnSubsystem.h"
 #include "Enemies/EnemyTypes.h"
@@ -35,6 +40,77 @@ void ADirectorGameMode::BeginPlay()
 	if (FParse::Param(FCommandLine::Get(), TEXT("OfferProbe")))
 	{
 		GetWorldTimerManager().SetTimer(OfferProbeHandle, this, &ADirectorGameMode::StepOfferProbe, OfferProbe.StepSeconds, true, OfferProbe.StartDelaySeconds);
+	}
+
+	FString ReelProbeMode;
+	if (FParse::Param(FCommandLine::Get(), TEXT("ReelProbe")) || FParse::Value(FCommandLine::Get(), TEXT("ReelProbe="), ReelProbeMode))
+	{
+		bReelProbeDies = ReelProbeMode.Equals(TEXT("die"), ESearchCase::IgnoreCase);
+		GetWorldTimerManager().SetTimer(ReelProbeHandle, this, &ADirectorGameMode::StepReelProbe, OfferProbe.StepSeconds, true, OfferProbe.StartDelaySeconds);
+	}
+}
+
+void ADirectorGameMode::StepReelProbe()
+{
+	AHeroCharacter* Hero = Cast<AHeroCharacter>(UGameplayStatics::GetPlayerPawn(this, 0));
+	URunOutcomeSubsystem* Outcome = GetWorld()->GetSubsystem<URunOutcomeSubsystem>();
+	UCampStockSubsystem* Stock = GetWorld()->GetGameInstance()->GetSubsystem<UCampStockSubsystem>();
+	ULootHeatSubsystem* Heat = GetWorld()->GetSubsystem<ULootHeatSubsystem>();
+	if (!Hero || !Outcome || !Stock || !Heat)
+	{
+		UE_LOG(LogEnemies, Error, TEXT("REELPROBE aborted: missing hero, outcome, stock or heat subsystem."));
+		FPlatformMisc::RequestExit(false);
+		return;
+	}
+
+	auto Shot = [](const TCHAR* Name)
+	{
+		FScreenshotRequest::RequestScreenshot(FPaths::ProjectSavedDir() / TEXT("ReelProbe") / Name, true, false);
+	};
+	auto LogState = [&](const TCHAR* Label)
+	{
+		FString Unlocked;
+		for (const FName Option : Stock->GetUnlockedOptions())
+		{
+			Unlocked += Option.ToString() + TEXT(" ");
+		}
+		ERelicType Dummy;
+		const bool bAnotherReelDrops = Hero->Bag->GetConfig()->PickRandomRelic(Stock->GetUnlockedOptions(), Hero->Bag->GetRelics(), Dummy);
+		UE_LOG(LogEnemies, Display, TEXT("REELPROBE %s reelsInBag=%d heat=%.1f unlocked=[%s] anotherReelCanDrop=%d outcome=%d"), Label,
+			Hero->Bag->GetRelicCount(), Heat->GetHeat(), *Unlocked, bAnotherReelDrops ? 1 : 0, static_cast<int32>(Outcome->GetOutcome()));
+	};
+
+	switch (ReelProbeStep++)
+	{
+	case 0:
+		// A reel and some Iron in the bag; picking the reel up raises heat. Nothing else spawns, the hero cannot die by accident.
+		Hero->Health->bGodMode = true;
+		GetWorld()->GetSubsystem<UEnemySpawnSubsystem>()->SetSchedulerEnabled(false);
+		Hero->Bag->TryAddIron(25);
+		Hero->Bag->TryAddRelic(ERelicType::Swiftstep);
+		LogState(TEXT("reel-in-bag"));
+		break;
+	case 1:
+		Shot(TEXT("1-reel-in-bag.png"));
+		break;
+	case 2:
+		if (bReelProbeDies)
+		{
+			Outcome->ReportPlayerDied(Hero->Bag);
+		}
+		else
+		{
+			Outcome->ReportExtracted(Hero->Bag);
+		}
+		LogState(bReelProbeDies ? TEXT("after-death") : TEXT("after-extraction"));
+		break;
+	case 3:
+		Shot(bReelProbeDies ? TEXT("3-result-died.png") : TEXT("2-result-extracted.png"));
+		break;
+	default:
+		GetWorldTimerManager().ClearTimer(ReelProbeHandle);
+		FPlatformMisc::RequestExit(false);
+		break;
 	}
 }
 

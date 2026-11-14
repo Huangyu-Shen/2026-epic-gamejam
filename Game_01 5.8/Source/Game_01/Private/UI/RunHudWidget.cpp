@@ -33,6 +33,16 @@ namespace
 		}
 		return Out.IsEmpty() ? FString(TEXT("none")) : Out;
 	}
+
+	FString HudOptionNames(const TArray<FName>& Options)
+	{
+		FString Out;
+		for (const FName Option : Options)
+		{
+			Out += (Out.IsEmpty() ? FString() : FString(TEXT(", "))) + Option.ToString();
+		}
+		return Out.IsEmpty() ? FString(TEXT("none")) : Out;
+	}
 }
 
 TSharedRef<SWidget> URunHudWidget::RebuildWidget()
@@ -76,7 +86,7 @@ TSharedRef<SWidget> URunHudWidget::RebuildWidget()
 		BottomLeft.Alignment = FVector2D(0.0, 1.0);
 		BottomLeft.Position = FVector2D(16.0, -16.0);
 		UPanelWidget* Help = DirectorUi::MakePanel(WidgetTree, Canvas, BottomLeft);
-		DirectorUi::AddText(WidgetTree, Help, TEXT("WASD move   Space dodge   E search a crate   1-6 use a relic"), 14, DirectorUi::DimColor);
+		DirectorUi::AddText(WidgetTree, Help, TEXT("WASD move   Space dodge   E search   1-3 cut an option"), 14, DirectorUi::DimColor);
 
 		// Bottom-centre: extraction bar.
 		FUiPlacement Bottom;
@@ -163,13 +173,12 @@ void URunHudWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 	// Bag.
 	BagText->SetText(FText::FromString(FString::Printf(TEXT("%d / %d slots    Iron %d"),
 		Hero->Bag->GetUsedSlots(), Hero->Bag->GetCapacitySlots(), Hero->Bag->GetIronCount())));
-	FString Relics;
-	const TArray<ERelicType> Held = Hero->Bag->GetRelics();
-	for (int32 Index = 0; Index < Held.Num(); ++Index)
+	FString Reels;
+	for (const ERelicType Held : Hero->Bag->GetRelics())
 	{
-		Relics += FString::Printf(TEXT("[%d] %s\n"), Index + 1, *HudRelicLabel(Held[Index]));
+		Reels += FString::Printf(TEXT("Lost reel: %s\n"), *HudRelicLabel(Held));
 	}
-	RelicText->SetText(FText::FromString(Relics.IsEmpty() ? FString(TEXT("No relics")) : Relics.TrimEnd()));
+	RelicText->SetText(FText::FromString(Reels.IsEmpty() ? FString(TEXT("No lost film reel")) : Reels.TrimEnd()));
 
 	// Extraction bar.
 	if (!Zone.IsValid())
@@ -226,13 +235,14 @@ void URunHudWidget::RefreshResultPanel()
 		FString Text;
 		if (Result.Outcome == ERunOutcome::Extracted)
 		{
-			Text = FString::Printf(TEXT("EXTRACTED\n\nBag Iron %d x %.2f = +%d Iron to camp\nRelics banked (%d): %s"),
-				Result.BagIron, Result.MultiplierUsed, Result.IronGained, Result.RelicsBanked.Num(), *HudRelicNames(Result.RelicsBanked));
+			Text = FString::Printf(TEXT("EXTRACTED\n\nBag Iron %d x %.2f = +%d Iron to camp\nLost film reels carried out (%d): %s\nUnlocked for every later run: %s"),
+				Result.BagIron, Result.MultiplierUsed, Result.IronGained, Result.RelicsBanked.Num(), *HudRelicNames(Result.RelicsBanked),
+				*HudOptionNames(Result.OptionsUnlocked));
 			ResultText->SetColorAndOpacity(FSlateColor(DirectorUi::GoodColor));
 		}
 		else
 		{
-			Text = FString::Printf(TEXT("YOU DIED\n\nLost %d Iron and %d relics: %s"),
+			Text = FString::Printf(TEXT("YOU DIED\n\nLost %d Iron and %d lost film reels: %s\nThe reels were lost: nothing was unlocked"),
 				Result.IronLost, Result.RelicsLost.Num(), *HudRelicNames(Result.RelicsLost));
 			ResultText->SetColorAndOpacity(FSlateColor(DirectorUi::BadColor));
 		}

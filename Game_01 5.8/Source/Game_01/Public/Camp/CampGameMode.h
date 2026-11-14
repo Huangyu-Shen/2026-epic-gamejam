@@ -15,4 +15,10 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+
+private:
+	/** -CampShot: logs the camp state, saves a screenshot to Saved/ReelProbe/ and exits. */
+	void TakeCampShot();
+
+	FTimerHandle CampShotHandle;
 };

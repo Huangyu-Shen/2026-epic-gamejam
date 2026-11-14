@@ -57,11 +57,15 @@ struct GAME_01_API FRunResult
 	UPROPERTY(BlueprintReadOnly, Category = "Run")
 	int32 IronLost = 0;
 
-	/** Extracted: relics sent to the warehouse. */
+	/** Extracted: lost film reels carried out. */
 	UPROPERTY(BlueprintReadOnly, Category = "Run")
 	TArray<ERelicType> RelicsBanked;
 
-	/** Died: relics that were in the bag and are gone. */
+	/** Extracted: upgrade options newly unlocked by those reels (filled by URunOutcomeSubsystem, not by Compute). */
+	UPROPERTY(BlueprintReadOnly, Category = "Run")
+	TArray<FName> OptionsUnlocked;
+
+	/** Died: lost film reels that were in the bag and are gone. */
 	UPROPERTY(BlueprintReadOnly, Category = "Run")
 	TArray<ERelicType> RelicsLost;
 
@@ -74,7 +78,7 @@ struct GAME_01_API FRunResult
 struct GAME_01_API FRunSettlement
 {
 	/**
-	 * Extracted: IronGained = floor(BagIron * EarningsMultiplier), all relics banked.
+	 * Extracted: IronGained = floor(BagIron * EarningsMultiplier), all reels carried out.
 	 * Died: nothing gained, the whole bag reported as lost. None: empty result.
 	 */
 	static FRunResult Compute(int32 BagIron, const TArray<ERelicType>& BagRelics, float EarningsMultiplier, ERunOutcome Outcome);

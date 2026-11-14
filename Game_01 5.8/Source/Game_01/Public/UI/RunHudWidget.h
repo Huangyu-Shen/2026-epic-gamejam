@@ -15,7 +15,7 @@ class UWidget;
 
 /**
  * Built entirely in C++ (no widget blueprint). Reads the run subsystems every frame; owns no game state.
- * Shows: HP, level + XP bar, heat, bag usage and relics, the extraction bar while it fills,
+ * Shows: HP, level + XP bar, heat, bag usage and lost film reels, the extraction bar while it fills,
  * the 3-choice level-up panel while an offer is pending, and the result screen when the run ends.
  */
 UCLASS()

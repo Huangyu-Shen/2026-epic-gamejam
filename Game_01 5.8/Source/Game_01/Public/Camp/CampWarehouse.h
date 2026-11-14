@@ -1,4 +1,4 @@
-// Director's Cut - Story 006. The greybox warehouse; clicking it toggles the dismantle panel.
+// Director's Cut - Story 006. The greybox warehouse: a decorative cube in the camp (relics can no longer be dismantled, story 008).
 #pragma once
 
 #include "CoreMinimal.h"

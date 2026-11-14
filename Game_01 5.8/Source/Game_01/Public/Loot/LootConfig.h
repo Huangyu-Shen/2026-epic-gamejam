@@ -21,7 +21,10 @@ class GAME_01_API ULootConfig : public UDataAsset
 public:
 	ULootConfig();
 
-	/** Optional table of FRelicRow. Overrides DefaultRelics when it has rows. */
+	/** Builds a config whose tables come from Project Settings > Director Tuning (any unset table keeps the C++ defaults). */
+	static ULootConfig* CreateFromSettings(UObject* Outer);
+
+	/** Optional table of FRelicRow (the lost film reels). Overrides DefaultRelics when it has rows. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Tables", meta = (RequiredAssetDataTags = "RowStructure=/Script/Game_01.RelicRow"))
 	TObjectPtr<UDataTable> RelicTable;
 
@@ -40,7 +43,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Defaults")
 	FLootTuning DefaultTuning;
 
-	/** Inline relic definitions used when RelicTable is missing/empty. */
+	/** Inline reel definitions used when RelicTable is missing/empty. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Defaults")
 	TArray<FRelicRow> DefaultRelics;
 
@@ -52,11 +55,11 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Loot")
 	FLootTuning GetTuning() const;
 
-	/** All effective relic rows. */
+	/** All effective reel rows. */
 	UFUNCTION(BlueprintCallable, Category = "Loot")
 	TArray<FRelicRow> GetRelicRows() const;
 
-	/** Finds the effective row for a relic type. Returns false if none. */
+	/** Finds the effective row for a reel type. Returns false if none. */
 	UFUNCTION(BlueprintCallable, Category = "Loot")
 	bool FindRelicRow(ERelicType Type, FRelicRow& OutRow) const;
 
@@ -64,7 +67,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Loot")
 	bool FindContainerRow(ELootContainerType Type, FLootContainerRow& OutRow) const;
 
-	/** Weighted random relic type from the effective rows. Returns false if there are no rows. */
-	UFUNCTION(BlueprintCallable, Category = "Loot")
-	bool PickRandomRelic(ERelicType& OutType) const;
+	/** True when the tuning came from TuningTable's row, false when the inline defaults were used. */
+	bool IsTuningFromTable() const;
+
+	/**
+	 * Weighted random reel type among the reels that can still drop (see FRelicRow::IsDroppable): not already
+	 * unlocked, mapped to an option, and not already in the bag. Returns false if none can drop.
+	 */
+	bool PickRandomRelic(const TArray<FName>& UnlockedOptions, const TArray<ERelicType>& ReelsInBag, ERelicType& OutType) const;
 };

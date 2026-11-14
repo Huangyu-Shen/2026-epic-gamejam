@@ -57,14 +57,6 @@ void AStandInCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCo
 	PlayerInputComponent->BindKey(EKeys::E, IE_Pressed, this, &AStandInCharacter::SearchNearestContainerKey);
 	PlayerInputComponent->BindKey(EKeys::K, IE_Pressed, this, &AStandInCharacter::DebugDieKey);
 	PlayerInputComponent->BindKey(EKeys::N, IE_Pressed, this, &AStandInCharacter::DebugNewRunKey);
-
-	const FKey RelicKeys[] = { EKeys::One, EKeys::Two, EKeys::Three, EKeys::Four, EKeys::Five, EKeys::Six };
-	for (int32 Index = 0; Index < UE_ARRAY_COUNT(RelicKeys); ++Index)
-	{
-		FInputKeyBinding Binding(FInputChord(RelicKeys[Index]), IE_Pressed);
-		Binding.KeyDelegate.GetDelegateForManualSet().BindWeakLambda(this, [this, Index]() { UseRelicSlot(Index); });
-		PlayerInputComponent->KeyBindings.Add(Binding);
-	}
 }
 
 void AStandInCharacter::SearchNearestContainerKey()
@@ -102,15 +94,6 @@ bool AStandInCharacter::SearchNearestContainer()
 	return Nearest && Nearest->Interact(this);
 }
 
-void AStandInCharacter::UseRelicSlot(int32 Index)
-{
-	if (!Bag->UseRelic(Index) && GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(-1, 1.5f, FColor::Orange,
-			FString::Printf(TEXT("No relic in slot %d"), Index + 1));
-	}
-}
-
 void AStandInCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
@@ -123,8 +106,7 @@ void AStandInCharacter::Tick(float DeltaSeconds)
 		AddMovementInput(FVector::RightVector, Right);
 	}
 
-	// The move-speed buff from a used relic is the one stat this stand-in can show.
-	GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed * Bag->GetActiveModifier().MoveSpeedMultiplier;
+	GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed;
 
 	DrawDebugState();
 }
@@ -144,26 +126,24 @@ void AStandInCharacter::DrawDebugState() const
 		Pressure = HeatSystem->GetSpawnPressureMultiplier();
 	}
 
-	FString RelicList;
+	FString ReelList;
 	const TArray<ERelicType> Relics = Bag->GetRelics();
 	for (int32 Index = 0; Index < Relics.Num(); ++Index)
 	{
-		RelicList += FString::Printf(TEXT(" [%d] %s"), Index + 1,
+		ReelList += FString::Printf(TEXT(" [%d] %s"), Index + 1,
 			*StaticEnum<ERelicType>()->GetDisplayNameTextByValue(static_cast<int64>(Relics[Index])).ToString());
 	}
-	if (RelicList.IsEmpty())
+	if (ReelList.IsEmpty())
 	{
-		RelicList = TEXT(" none");
+		ReelList = TEXT(" none");
 	}
 
 	const URunOutcomeSubsystem* RunSystem = GetWorld()->GetSubsystem<URunOutcomeSubsystem>();
 	const TCHAR* RunState = RunSystem && !RunSystem->IsRunActive() ? TEXT("RUN ENDED (N = new run)") : TEXT("run active");
 
-	const FLootStatModifier Modifier = Bag->GetActiveModifier();
 	const FString Text = FString::Printf(
-		TEXT("STATE: %s\nHEAT %.0f  (spawn pressure x%.2f)\nBAG %d/%d slots   Iron %d\nRELICS:%s\nBUFFS %d active   speed x%.2f  damage x%.2f  damage taken x%.2f\nWASD move   E search   1-6 use relic   K die   N new run"),
-		RunState, Heat, Pressure, Bag->GetUsedSlots(), Bag->GetCapacitySlots(), Bag->GetIronCount(), *RelicList,
-		Bag->GetActiveBuffs().Num(), Modifier.MoveSpeedMultiplier, Modifier.DamageMultiplier, Modifier.DamageTakenMultiplier);
+		TEXT("STATE: %s\nHEAT %.0f  (spawn pressure x%.2f)\nBAG %d/%d slots   Iron %d\nLOST REELS:%s\nWASD move   E search   K die   N new run"),
+		RunState, Heat, Pressure, Bag->GetUsedSlots(), Bag->GetCapacitySlots(), Bag->GetIronCount(), *ReelList);
 
 	// A fixed key replaces the same message each frame instead of stacking new lines.
 	GEngine->AddOnScreenDebugMessage(1001, 0.0f, FColor::White, Text);

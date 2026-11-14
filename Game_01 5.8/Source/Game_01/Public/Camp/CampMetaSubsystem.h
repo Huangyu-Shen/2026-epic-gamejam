@@ -46,10 +46,6 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Camp")
 	float GetMaxHealthBonus() const;
 
-	/** Dismantles the warehouse relic at Index into Iron. Returns the Iron gained (0 on a bad index). */
-	UFUNCTION(BlueprintCallable, Category = "Camp")
-	int32 DismantleRelic(int32 Index);
-
 	/** Current building levels (copy), for saving. */
 	TMap<EBuildingType, int32> GetLevels() const { return Levels; }
 
@@ -59,10 +55,6 @@ public:
 	/** Resets every building to level 0 (fresh game). */
 	UFUNCTION(BlueprintCallable, Category = "Camp")
 	void ResetCamp();
-
-	/** Iron one dismantled relic yields. */
-	UFUNCTION(BlueprintPure, Category = "Camp")
-	int32 GetRelicDismantleIron() const { return RelicDismantleIron; }
 
 	/**
 	 * Film cards slotted in the editing room, kept here so they survive the camp -> run level change
@@ -79,7 +71,4 @@ private:
 
 	UPROPERTY(VisibleInstanceOnly, Category = "Camp", meta = (AllowPrivateAccess = "true"))
 	TMap<EBuildingType, int32> Levels;
-
-	/** Iron each dismantled relic yields (fixed default; not in the building table). */
-	int32 RelicDismantleIron = 8;
 };

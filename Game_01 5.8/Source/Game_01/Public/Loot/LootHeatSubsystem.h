@@ -8,7 +8,7 @@
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnHeatChanged, float, NewHeat, float, Delta);
 
 /**
- * Global run heat. Rare pickups raise it; using a relic lowers it. Story 003's
+ * Global run heat. Picking up a lost film reel raises it. Story 003's
  * spawner reads GetSpawnPressureMultiplier() (or binds OnHeatChanged).
  * Access: GetWorld()->GetSubsystem<ULootHeatSubsystem>().
  */
@@ -45,13 +45,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Heat")
 	void AddHeat(float Amount);
 
-	/** Adds HeatPerRarePickup. */
+	/** Adds HeatPerRarePickup (a lost film reel was picked up). */
 	UFUNCTION(BlueprintCallable, Category = "Heat")
 	void AddRarePickupHeat();
-
-	/** Removes HeatReductionOnRelicUse. */
-	UFUNCTION(BlueprintCallable, Category = "Heat")
-	void ReduceHeatForRelicUse();
 
 	/** Sets heat to zero (start of a new run). */
 	UFUNCTION(BlueprintCallable, Category = "Heat")

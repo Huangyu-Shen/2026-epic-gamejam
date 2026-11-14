@@ -116,15 +116,7 @@ void AHeroCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 	PlayerInputComponent->BindKey(EKeys::E, IE_Pressed, this, &AHeroCharacter::SearchNearestContainerKey);
 	PlayerInputComponent->BindKey(EKeys::K, IE_Pressed, this, &AHeroCharacter::DebugDieKey);
 
-	const FKey RelicKeys[] = { EKeys::One, EKeys::Two, EKeys::Three, EKeys::Four, EKeys::Five, EKeys::Six };
-	for (int32 Index = 0; Index < UE_ARRAY_COUNT(RelicKeys); ++Index)
-	{
-		FInputKeyBinding Binding(FInputChord(RelicKeys[Index]), IE_Pressed);
-		Binding.KeyDelegate.GetDelegateForManualSet().BindWeakLambda(this, [this, Index]() { UseRelicSlot(Index); });
-		PlayerInputComponent->KeyBindings.Add(Binding);
-	}
-
-	// 1/2/3 also cut a level-up option while the offer is showing (brief v2). They double as relic slots otherwise.
+	// 1/2/3 cut a level-up option while the offer is showing (brief v2). A lost film reel cannot be used.
 	const FKey OfferKeys[] = { EKeys::One, EKeys::Two, EKeys::Three };
 	for (int32 Index = 0; Index < UE_ARRAY_COUNT(OfferKeys); ++Index)
 	{
@@ -204,7 +196,7 @@ void AHeroCharacter::StartRun()
 
 float AHeroCharacter::ReceiveEnemyDamage(float Amount)
 {
-	return Health->ApplyDamage(Amount * Bag->GetActiveModifier().DamageTakenMultiplier);
+	return Health->ApplyDamage(Amount);
 }
 
 bool AHeroCharacter::TryDodge()
@@ -243,19 +235,6 @@ bool AHeroCharacter::SearchNearestContainer()
 	return Nearest && Nearest->Interact(this);
 }
 
-void AHeroCharacter::UseRelicSlot(int32 Index)
-{
-	if (!CanAct())
-	{
-		return;
-	}
-	if (!Bag->UseRelic(Index))
-	{
-		UHudMessageSubsystem::Post(this, FString::Printf(TEXT("No relic in slot %d"), Index + 1),
-			FLinearColor(1.0f, 0.6f, 0.2f), 1.5f);
-	}
-}
-
 void AHeroCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
@@ -284,5 +263,5 @@ void AHeroCharacter::Tick(float DeltaSeconds)
 	}
 
 	const float ProgressionSpeed = GetWorld()->GetSubsystem<URunProgressionSubsystem>()->GetMoveSpeedMultiplier();
-	GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed * Bag->GetActiveModifier().MoveSpeedMultiplier * ProgressionSpeed;
+	GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed * ProgressionSpeed;
 }

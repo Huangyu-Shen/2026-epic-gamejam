@@ -38,7 +38,7 @@ void UAutoWeaponComponent::TickComponent(float DeltaTime, ELevelTick TickType, F
 		return;
 	}
 
-	const float DamageMultiplier = (OwnerBag ? OwnerBag->GetActiveModifier().DamageMultiplier : 1.0f) * Progression->GetDamageMultiplier();
+	const float DamageMultiplier = Progression->GetDamageMultiplier();
 
 	for (uint8 W = 0; W < static_cast<uint8>(EWeaponType::Count); ++W)
 	{

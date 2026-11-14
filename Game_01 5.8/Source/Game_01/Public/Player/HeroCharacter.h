@@ -39,11 +39,10 @@ struct GAME_01_API FDodgeTuning
 /**
  * The player: top-down camera, raw-key controls, health, the bag and the auto weapon.
  *
- * Controls: WASD move, Space dodge, E search the nearest container, 1-6 use the relic in that
- * bag position (1-3 also pick a level-up choice while the offer shows). Film cards are slotted
- * in the camp's editing room; the run starts from the camp (StartRun applies the cards and the
- * camp bonuses). Debug: K die. The move-speed, damage and damage-taken multipliers come from the
- * bag's active relic buffs. The HUD is URunHudWidget (story 007).
+ * Controls: WASD move, Space dodge, E search the nearest container, 1-3 cut a level-up option
+ * while the offer shows. A lost film reel in the bag cannot be used. Film cards are slotted
+ * in the camp editing room; the run starts from the camp (StartRun applies the cards and the
+ * camp bonuses). Debug: K die. The HUD is URunHudWidget (story 007).
  */
 UCLASS()
 class GAME_01_API AHeroCharacter : public ACharacter
@@ -57,7 +56,7 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Hero")
 	float InteractRange = 250.0f;
 
-	/** Walk speed (cm/s) before relic buffs. */
+	/** Walk speed (cm/s) before the progression speed multiplier. */
 	UPROPERTY(EditAnywhere, Category = "Hero")
 	float BaseWalkSpeed = 600.0f;
 
@@ -102,7 +101,6 @@ private:
 
 	void SearchNearestContainerKey();
 	void DodgeKey();
-	void UseRelicSlot(int32 Index);
 	void DebugDieKey();
 	/** Resets the run systems and applies the camp bonuses and slotted film cards. Called once when the run map loads. */
 	void StartRun();

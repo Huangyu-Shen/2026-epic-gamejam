@@ -48,7 +48,9 @@ struct GAME_01_API FOfferProbeTuning
  * With -PerfProbe on the command line it also runs a 150-enemy frame-rate probe, logs one
  * PERFPROBE line to LogEnemies and exits. With -OfferProbe it forces level-ups, cuts the first option
  * each time, saves three screenshots of the level-up panel and the HUD to Saved/OfferProbe/, logs
- * OFFERPROBE lines and exits. Without either flag nothing probe-related runs.
+ * OFFERPROBE lines and exits. With -ReelProbe (or -ReelProbe=die) it puts a lost film reel in the bag, ends the run
+ * by extraction (or death), saves screenshots of the HUD and the result screen to Saved/ReelProbe/, logs REELPROBE
+ * lines and exits. Without these flags nothing probe-related runs.
  */
 UCLASS()
 class GAME_01_API ADirectorGameMode : public AGameModeBase
@@ -74,9 +76,15 @@ private:
 	/** Runs one step of the level-up probe; called on a repeating timer. */
 	void StepOfferProbe();
 
+	/** Runs one step of the lost-reel probe; called on a repeating timer. */
+	void StepReelProbe();
+
 	FTimerHandle ProbeStartHandle;
 	FTimerHandle OfferProbeHandle;
+	FTimerHandle ReelProbeHandle;
 	int32 OfferProbeStep = 0;
+	int32 ReelProbeStep = 0;
+	bool bReelProbeDies = false;
 	float SampledSeconds = 0.0f;
 	float WorstFrameSeconds = 0.0f;
 	int32 SampleCount = 0;
