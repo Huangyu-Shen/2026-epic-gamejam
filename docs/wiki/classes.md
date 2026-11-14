@@ -13,26 +13,29 @@ Implementation: [HeroCharacter.cpp](../../Game_01%205.8/Source/Game_01/Private/P
 | `void CreateHud()` (private) | Creates `URunHudWidget`, sets it to `SelfHitTestInvisible` (only buttons take clicks), shows the mouse, input mode `GameAndUI` without locking the mouse | Falls back to `GetPlayerController(0)` when the controller is null; does not create the HUD again if one exists |
 | `bool TryDodge()` | Direction is the current WASD direction, or the facing direction if no key is pressed; dash 0.18 seconds, speed 1800, cooldown 0.8 seconds, invulnerability 0.25 seconds | Returns false on `!CanAct()`, while dashing, or during cooldown |
 | `bool SearchNearestContainer()` | Finds the nearest unsearched `ALootContainer` within `InteractRange` (250) and calls `Interact` | Returns false when the bag is full, and the container stays searchable |
-| `float ReceiveEnemyDamage(float)` | Multiplies by the bag buff's `DamageTakenMultiplier`, then hands it to `UHealthComponent::ApplyDamage` | Returns the actual damage, 0 while invulnerable |
+| `float ReceiveEnemyDamage(float)` | Hands the damage straight to `UHealthComponent::ApplyDamage` (there are no bag buffs any more) | Returns the actual damage, 0 while invulnerable |
 | `void HandleDied()` | Bound to `OnDied`, calls `ReportPlayerDied` | — |
-| `Tick` | Reads WASD (`IsInputKeyDown`); move speed = `BaseWalkSpeed x bag move-speed multiplier x passive move-speed multiplier`; during a dash it uses a sweeping `AddActorWorldOffset` instead of normal movement | Input is zeroed when `CanAct()` is false |
+| `Tick` | Reads WASD (`IsInputKeyDown`); move speed = `BaseWalkSpeed x passive move-speed multiplier`; during a dash it uses a sweeping `AddActorWorldOffset` instead of normal movement | Input is zeroed when `CanAct()` is false |
 
-Keys: Space dodge, E search, 1 to 6 use the matching bag slot, K suicide (debug). 1 to 3 are also the shortcuts for the three-way level-up choice; `UseRelicSlot` returns immediately when `CanAct()` is false (that is, while the level-up panel is shown), so there is no conflict.
+Keys: Space dodge, E search, K suicide (debug), and 1 to 3 cut one of the three level-up options (`URunProgressionSubsystem::CutOffer`). Lost film reels cannot be used, so there is no bag-slot key; `UseRelicSlot` and the 4 to 6 keys were removed in story 008.
 
-## 2. Bag and relics `ULootBagComponent`
+## 2. Bag and lost film reels `ULootBagComponent`
 
 Implementation: [LootBagComponent.cpp](../../Game_01%205.8/Source/Game_01/Private/Loot/LootBagComponent.cpp).
 
 | Function | Behavior | Errors or edge cases |
 |---|---|---|
-| `EBagAddResult CanAdd(int32 Iron, bool bWithRelic)` | Does not modify anything; checks whether it fits | `Iron < 0`, or `Iron == 0` with no relic -> `InvalidItem`; over capacity -> `BagFull` |
-| `TryAddLoot(int32 Iron, bool bAddRelic, ERelicType)` | Atomically adds Iron and at most one relic; if there is a relic, `AddRarePickupHeat` | On failure nothing is added, a message `Pickup refused: ...` is shown and `OnPickupRefused` is broadcast |
-| `bool UseRelic(int32 Index)` | Removes the relic, adds the buff per `FRelicRow`, `ReduceHeatForRelicUse`, message `Used relic: ...` | Returns false for an invalid index; with no matching data row it only warns, adds no buff, but the relic is still consumed |
-| `FLootStatModifier GetActiveModifier() const` | Multiplies the three multipliers of all active buffs | All 1.0 when there are no buffs |
-| `ClearBag()` | Clears Iron, relics and buffs, stops Tick | Does not touch heat (heat is reset separately at settlement) |
-| `TickComponent` | Removes expired buffs; turns off its own Tick when there are no timed buffs | Off by default, only turned on while there are buffs |
+| `EBagAddResult CanAdd(int32 Iron, bool bWithRelic)` | Does not modify anything; checks whether it fits | `Iron < 0`, or `Iron == 0` with no reel -> `InvalidItem`; over capacity -> `BagFull` |
+| `TryAddLoot(int32 Iron, bool bAddRelic, ERelicType)` | Atomically adds Iron and at most one lost film reel; if there is a reel, `AddRarePickupHeat` | On failure nothing is added, a message `Pickup refused: ...` is shown and `OnPickupRefused` is broadcast |
+| `GetRelics()` / `GetRelicCount()` | The reels in the bag (a copy), and how many | A reel is read-only cargo: nothing in a run can use or consume it |
+| `ClearBag()` | Clears Iron and the reels | Does not touch heat (heat is reset separately at settlement) |
+| `BeginPlay` | Pushes the tuning into `ULootHeatSubsystem` and logs `LOOTCFG source=table or c++ defaults, capacity=..., reelRows=...` | `source=c++ defaults` means the `LootTuningTable` row `Default` was not found |
 
-Default relic values (inline defaults in [LootConfig.cpp](../../Game_01%205.8/Source/Game_01/Private/Loot/LootConfig.cpp)): Swiftstep move speed x1.3, Warbrand damage x1.5, Aegis damage taken x0.6, each lasting 20 seconds. Containers: supply crate Iron 3 to 6, relic chance 0.2; vault Iron 10 to 20, relic chance 1.0.
+Story 008 removed `UseRelic`, `GetActiveModifier`, `GetActiveBuffs`, the `OnRelicUsed` and `OnBuffsChanged` delegates, `FLootStatModifier`, `FActiveRelicBuff` and the bag's Tick. The bag no longer ticks at all.
+
+Default reel rows (inline defaults in [LootConfig.cpp](../../Game_01%205.8/Source/Game_01/Private/Loot/LootConfig.cpp); `DT_Reels` is the table that overrides them): Fast Cut (`ERelicType::Swiftstep`) unlocks the option `Haste`; Wide Shot (`Warbrand`) and Chain Scene (`Aegis`) have no option yet (story 009 adds options), so a reel with no option never drops. `FRelicRow::IsDroppable` is the drop rule: the row names an option, the camp has not unlocked that option, and the bag does not already hold that reel. `ULootConfig::PickRandomRelic` picks among the droppable rows by `DropWeight`, and `ALootContainer` rolls the reel only when this finds one. Containers: supply crate Iron 3 to 6, reel chance 0.2; vault Iron 10 to 20, reel chance 1.0 (the field is still called `RelicChance`).
+
+Where the numbers come from: `ULootConfig::CreateFromSettings` reads three tables from `Director Tuning`, `LootTuningTable` (`DT_LootTuning`, row `Default`, an `FLootTuning`), `LootContainerTable` (`DT_LootContainers`, rows `SupplyCrate` and `Vault`) and `ReelTable` (`DT_Reels`, rows `FastCut`, `WideShot`, `ChainScene`). A table that is not set keeps the C++ defaults above. A `ULootConfig` data asset assigned to the bag's `Config` still takes precedence, but none exists in the project.
 
 ## 3. Heat `ULootHeatSubsystem`
 
@@ -40,8 +43,8 @@ Default relic values (inline defaults in [LootConfig.cpp](../../Game_01%205.8/So
 |---|---|
 | `float GetSpawnPressureMultiplier() const` | `Lerp(SpawnPressureAtZeroHeat, SpawnPressureAtMaxHeat, heat/max heat)`, default 1.0 to 3.0 |
 | `AddHeat(float)` | Clamped to 0 through `MaxHeat`; if the change is 0, `OnHeatChanged` is not broadcast |
-| `AddRarePickupHeat()` / `ReduceHeatForRelicUse()` | Default +15 / -8 |
-| `SetTuning` | The bag pushes its own config in at `BeginPlay`; so the heat parameters actually come from `ULootConfig`, not from `Director Tuning` |
+| `AddRarePickupHeat()` | Adds `HeatPerRarePickup` (default +15) when a lost film reel is picked up. `ReduceHeatForRelicUse()` and `HeatReductionOnRelicUse` were removed: nothing lowers heat during a run, and `ResetHeat()` runs only at the end of a run |
+| `SetTuning` | The bag pushes its own config in at `BeginPlay`; the config is built from the `LootTuningTable` in `Director Tuning` (row `Default`), or from the C++ defaults when that row is missing |
 
 ## 4. Health `UHealthComponent`
 
@@ -57,7 +60,7 @@ Default relic values (inline defaults in [LootConfig.cpp](../../Game_01%205.8/So
 
 [AutoWeaponComponent.cpp](../../Game_01%205.8/Source/Game_01/Private/Combat/AutoWeaponComponent.cpp). When `bEnabled`, no level-up choice is pending, the hero is alive and a run is in progress, `TickComponent` iterates the three weapons and fires any with level > 0 whose cooldown is ready.
 
-Damage formula: `(Row.Damage + Row.DamagePerLevel x (level - 1) + Smithy bonus) x bag damage multiplier x passive damage multiplier`.
+Damage formula: `(Row.Damage + Row.DamagePerLevel x (level - 1) + Smithy bonus) x passive damage multiplier` (the weapon's star multiplier is applied on top).
 
 | Weapon | Default values (`DefaultWeapon`) | Hit rule |
 |---|---|---|
@@ -112,7 +115,7 @@ Passive defaults: Swiftness +10% move speed per stack, Might +15% damage, Vitali
 |---|---|
 | `ReportExtracted(ULootBagComponent*)` | Ends with `Extracted` |
 | `ReportPlayerDied(ULootBagComponent*)` | Ends with `Died` |
-| `EndRun` (private) | Ignored if already ended; `FRunSettlement::Compute`; `AddIron` and `AddRelics` into the stock; `SaveNow`; clears the bag; resets heat; broadcasts `OnRunEnded` |
+| `EndRun` (private) | Ignored if already ended; `FRunSettlement::Compute`; `AddIron` into the stock; on extraction `OptionsForReels` maps the reels carried out to their options and `UnlockOption` unlocks each new one (stored in `FRunResult::OptionsUnlocked`); dying unlocks nothing; `SaveNow`; clears the bag; resets heat; broadcasts `OnRunEnded` |
 | `StartNewRun()` | Resets state, keeps `EarningsMultiplier` |
 | `SetEarningsMultiplier(float)` | At least 0; set by `UFilmCardSubsystem` at the start of a run |
 
@@ -130,13 +133,12 @@ Passive defaults: Swiftness +10% move speed per stack, Might +15% damage, Vitali
 | `bool TryUpgrade(EBuildingType, FText& Reason)` | Returns false with a message (`Not enough Iron (need N)`) when already at max level or Iron is insufficient; on success it spends Iron, upgrades and broadcasts `OnMetaChanged` |
 | `float GetWeaponDamageBonus() const` | Smithy level x `DamagePerLevel` (default 5) |
 | `float GetMaxHealthBonus() const` | Clinic level x `MaxHealthPerLevel` (default 25) |
-| `int32 DismantleRelic(int32 Index)` | Removes a stored relic and adds `RelicDismantleIron` (8, hardcoded); returns 0 for an invalid index |
 | `RestoreLevels(const TMap<...>&)` | Used when loading the save; each level is clamped to 0 through `MaxLevel`, and keys not in `Buildings` are discarded |
 | `TArray<FName> PendingFilmCards` | Cards picked before a run, kept across levels, not saved to disk |
 
 ### `UCampStockSubsystem`
 
-`AddIron` (non-positive ignored), `AddRelics`, `SpendIron` (returns false if insufficient and changes nothing), `RemoveRelicAt`, `RestoreState` (Iron clamped to >= 0). Every change broadcasts `OnStockChanged`.
+`AddIron` (non-positive ignored), `UnlockOption(FName)` (returns true only when the option is new; `None` and repeats return false), `IsOptionUnlocked`, `GetUnlockedOptions` (in unlock order), `SpendIron` (returns false if insufficient and changes nothing), `RestoreState(Iron, TArray<FName>)` (Iron clamped to >= 0). Every change broadcasts `OnStockChanged`. `AddRelics`, `RemoveRelicAt` and `GetWarehouseRelics` were removed in story 008; `UCampMetaSubsystem::DismantleRelic` and `RelicDismantleIron` went with them.
 
 ## 11. Film cards `UFilmCardSubsystem`
 
@@ -153,3 +155,10 @@ The default values of the two cards are in `DT_FilmCards`: `HordeNight` (40 Grun
 ## 12. Performance probe `ADirectorGameMode`
 
 Command-line `-PerfProbe`: after a 3-second delay the hero goes into god mode, weapons are turned off, the scheduler is turned off, `SpawnHorde(150, true)` is called, it samples for 10 seconds, writes one line `PERFPROBE enemies=... avgFPS=... minFPS=... samples=...` to `LogEnemies`, and then exits. Without this argument `Tick` is not enabled.
+
+Two more probes follow the same pattern (timer steps, screenshots, log lines, then exit):
+
+- `-OfferProbe`: forces level-ups, cuts the first option each time, saves screenshots to `Saved/OfferProbe/` and logs `OFFERPROBE` lines.
+- `-ReelProbe` or `-ReelProbe=die` (`ADirectorGameMode::StepReelProbe`): puts 25 Iron and a Fast Cut reel in the bag (hero in god mode, spawning off), then ends the run by extraction, or by death with `=die`. It saves screenshots to `Saved/ReelProbe/` (`1-reel-in-bag.png`, then `2-result-extracted.png` or `3-result-died.png`) and logs `REELPROBE <label> reelsInBag=... heat=... unlocked=[...] anotherReelCanDrop=... outcome=...` lines.
+
+`-CampShot` belongs to `ACampGameMode::TakeCampShot` instead: in the camp map it waits 4 seconds, logs `CAMPSHOT iron=... unlocked=[...]`, saves `Saved/ReelProbe/camp-storage.png` and exits.

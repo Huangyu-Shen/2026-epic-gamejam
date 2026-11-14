@@ -10,17 +10,17 @@ For the overall dependency graph see [section 3 of architecture.md](architecture
 | `Combat/` | Camp, Enemies, Extraction, Game, Loot, Progression | Game, Player, Progression, UI |
 | `Editing/` | Camp, Enemies, Extraction, Game | Player, UI |
 | `Enemies/` | Extraction, Game, Loot, Player, Progression | Combat, Editing, Game, Player, Progression |
-| `Extraction/` | Flow, Loot | Camp, Combat, Editing, Enemies, Flow, Player, UI |
+| `Extraction/` | Flow, Loot | Camp, Combat, Editing, Enemies, Flow, Loot, Player, UI |
 | `Flow/` | Camp, Extraction, Loot | Extraction |
-| `Game/` | Combat, Enemies, Player | Camp, Combat, Editing, Enemies, Progression |
-| `Loot/` | UI (only calls `UHudMessageSubsystem::Post`) | Combat, Enemies, Extraction, Flow, Player, UI |
+| `Game/` | Combat, Enemies, Player | Camp, Combat, Editing, Enemies, Loot, Progression |
+| `Loot/` | Extraction (`ALootContainer` reads the unlocked options from `UCampStockSubsystem`), Game (`ULootConfig` reads `UDirectorTuningSettings`), UI (only calls `UHudMessageSubsystem::Post`) | Combat, Enemies, Extraction, Flow, Player, UI |
 | `Player/` | Camp, Combat, Editing, Enemies, Extraction, Loot, Progression, UI | Enemies, Game, Progression, UI |
 | `Progression/` | Combat, Enemies, Game, Player | Combat, Enemies, Player, UI |
 | `UI/` | Camp, Combat, Editing, Extraction, Loot, Player, Progression | Camp, Loot, Player |
 
 Counting method: for the headers and implementation files of each directory, count the set of directories it pulls in with `#include "<other directory>/..."` (2026-11-13). In the `Game/` directory, `UDirectorTuningSettings` is read by the various systems, and `ADirectorGameMode` references the hero, enemies and weapons.
 
-**There are cycles**: Enemies<->Player<->Progression, Progression<->Combat, Extraction<->Flow, Camp<->UI, Loot<->UI. The reasons: enemies have to damage the hero, the hero has to read progression, progression has to add to hero health, and settlement has to write the save while the save has to read the stock. All of these cycles are inside the same C++ module `Game_01`, so compilation is fine. No automated check guards the dependency direction, and there is no rules file. When adding a new system, follow the conventions in [section 3 of architecture.md](architecture.md#3-layers-and-dependency-graph): the UI only reads and never modifies, camp state goes in the GameInstance, and per-run state goes in the World.
+**There are cycles**: Enemies<->Player<->Progression, Progression<->Combat, Extraction<->Flow, Camp<->UI, Loot<->UI, Loot<->Extraction. The reasons: enemies have to damage the hero, the hero has to read progression, progression has to add to hero health, and settlement has to write the save while the save has to read the stock. All of these cycles are inside the same C++ module `Game_01`, so compilation is fine. No automated check guards the dependency direction, and there is no rules file. When adding a new system, follow the conventions in [section 3 of architecture.md](architecture.md#3-layers-and-dependency-graph): the UI only reads and never modifies, camp state goes in the GameInstance, and per-run state goes in the World.
 
 ## 2. UE Module Dependencies
 
@@ -38,7 +38,7 @@ Declared in [Game_01.Build.cs](../../Game_01%205.8/Source/Game_01/Game_01.Build.
 
 `PCHUsage = UseExplicitOrSharedPCHs`. The target files [Game_01.Target.cs](../../Game_01%205.8/Source/Game_01.Target.cs) and [Game_01Editor.Target.cs](../../Game_01%205.8/Source/Game_01Editor.Target.cs) both use `BuildSettingsVersion.V7` and `EngineIncludeOrderVersion.Unreal5_8`.
 
-**Unity build pitfall**: UBT merges several `.cpp` files into one compilation unit. Helper functions with the same name in anonymous namespaces will collide. For example, `RunHudWidget.cpp` and `CampWidget.cpp` each used to have a `RelicName`, which after merging produced C2084. They are now called `HudRelicLabel` and `CampRelicLabel` respectively. When adding new files, give internal functions names that are specific to the file.
+**Unity build pitfall**: UBT merges several `.cpp` files into one compilation unit. Helper functions with the same name in anonymous namespaces will collide. For example, `RunHudWidget.cpp` and `CampWidget.cpp` each used to have a `RelicName`, which after merging produced C2084. The one in `RunHudWidget.cpp` is now called `HudRelicLabel` (the camp panel no longer prints relic names, so `CampWidget.cpp` has no such helper any more). When adding new files, give internal functions names that are specific to the file.
 
 ## 3. Engine Plugins
 
