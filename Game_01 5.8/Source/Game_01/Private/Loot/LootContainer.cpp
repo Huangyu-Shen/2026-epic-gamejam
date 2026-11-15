@@ -1,4 +1,5 @@
 #include "Loot/LootContainer.h"
+#include "Engine/GameInstance.h"
 #include "Audio/GameAudioSubsystem.h"
 #include "Loot/LootBagComponent.h"
 #include "Loot/LootConfig.h"
@@ -105,7 +106,7 @@ bool ALootContainer::Interact(AActor* InInstigator)
 		TArray<FName> Unlocked;
 		if (const UWorld* World = GetWorld())
 		{
-			if (const UCampStockSubsystem* Stock = World->GetGameInstance()->GetSubsystem<UCampStockSubsystem>())
+			if (const UCampStockSubsystem* Stock = UGameInstance::GetSubsystem<UCampStockSubsystem>(World->GetGameInstance()))
 			{
 				Unlocked = Stock->GetUnlockedOptions();
 			}

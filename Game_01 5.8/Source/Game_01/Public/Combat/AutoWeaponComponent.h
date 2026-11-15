@@ -8,7 +8,6 @@
 
 class UHealthComponent;
 class AEnemy;
-class ULootBagComponent;
 class AOrbitOrb;
 
 /** Fired every time a weapon fires: which weapon and how many enemies it hit. Story 011's audio and hit feedback bind here. */
@@ -54,9 +53,6 @@ private:
 
 	/** Fires one weapon. Returns how many enemies it hit. */
 	int32 FireWeapon(EWeaponType Type, int32 Level, const FWeaponRow& Row, float DamageMultiplier);
-
-	UPROPERTY(Transient)
-	TObjectPtr<ULootBagComponent> OwnerBag;
 
 	UPROPERTY(Transient)
 	TObjectPtr<UHealthComponent> OwnerHealth;

@@ -2,8 +2,9 @@
 
 [Dev log index](../README.md)
 
-**Status: not started.** This page is written in advance so that the plan is on
-record. It will be replaced by real entries as Day 4 happens.
+**Status: in progress.** This page was written in advance so that the plan is on
+record. It stays as the plan; what actually happened is in the entries after it
+(see [02](02-preparing-the-submission-materials.md)).
 
 The deadline is 16 Nov, 01:59 UK time. I submit in person; Claude prepares the
 files and the texts but does not upload or submit.

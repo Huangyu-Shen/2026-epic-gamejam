@@ -1,4 +1,5 @@
 #include "Camp/CampGameMode.h"
+#include "Engine/GameInstance.h"
 #include "Audio/GameAudioSubsystem.h"
 #include "Camp/CampBuilding.h"
 #include "Camp/CampPawn.h"
@@ -90,7 +91,7 @@ void ACampGameMode::TakeCampShot()
 {
 	FString Unlocked;
 	int32 Iron = 0;
-	if (const UCampStockSubsystem* Stock = GetGameInstance()->GetSubsystem<UCampStockSubsystem>())
+	if (const UCampStockSubsystem* Stock = UGameInstance::GetSubsystem<UCampStockSubsystem>(GetGameInstance()))
 	{
 		Iron = Stock->GetIron();
 		for (const FName Option : Stock->GetUnlockedOptions())

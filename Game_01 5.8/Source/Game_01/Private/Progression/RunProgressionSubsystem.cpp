@@ -106,6 +106,8 @@ namespace
 
 void URunProgressionSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
+	// The enemy manager must exist first: the kill binding below is made once, here.
+	Collection.InitializeDependency<UEnemyManagerSubsystem>();
 	Super::Initialize(Collection);
 
 	// Project Settings > Game > Director Tuning. Missing tables/rows silently keep the inline defaults.
@@ -174,16 +176,6 @@ void URunProgressionSubsystem::ResetProgression()
 	CuttingRoomFloor.Reset();
 	PermanentCutsLeft = Stars.PermanentCutsForPool(GetPoolSize());
 	UE_LOG(LogTemp, Log, TEXT("PROGRESSION pool=%d permanentCuts=%d"), GetPoolSize(), PermanentCutsLeft);
-
-	// Clear any offer text still on screen.
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(2203, 0.0f, FColor::Green, TEXT(""));
-		for (int32 i = 0; i < 3; ++i)
-		{
-			GEngine->AddOnScreenDebugMessage(2200 + i, 0.0f, FColor::Green, TEXT(""));
-		}
-	}
 
 	// Destroy leftover pickups from the previous run (Destroy() unregisters them).
 	TArray<TObjectPtr<AXpPickup>> Doomed = MoveTemp(Pickups);
@@ -500,15 +492,6 @@ void URunProgressionSubsystem::ChooseOption(int32 Index)
 	bOfferPending = false;
 	Offer.Reset();
 	ApplyOption(Chosen);
-
-	if (GEngine)
-	{
-		GEngine->AddOnScreenDebugMessage(2203, 0.0f, FColor::Green, TEXT(""));
-		for (int32 i = 0; i < 3; ++i)
-		{
-			GEngine->AddOnScreenDebugMessage(2200 + i, 0.0f, FColor::Green, TEXT(""));
-		}
-	}
 
 	CheckLevelUp(); // leftover XP may already qualify for another level.
 }

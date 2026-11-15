@@ -1,4 +1,5 @@
 #include "Camp/CampBuilding.h"
+#include "Engine/GameInstance.h"
 #include "Camp/CampMetaSubsystem.h"
 #include "Components/SceneComponent.h"
 #include "Components/StaticMeshComponent.h"
@@ -76,7 +77,7 @@ void ACampBuilding::BeginPlay()
 		Mesh->SetVisibility(false); // the cube stays for the clicks, unseen
 	}
 
-	if (UCampMetaSubsystem* Camp = GetGameInstance()->GetSubsystem<UCampMetaSubsystem>())
+	if (UCampMetaSubsystem* Camp = UGameInstance::GetSubsystem<UCampMetaSubsystem>(GetGameInstance()))
 	{
 		Camp->OnMetaChanged.AddDynamic(this, &ACampBuilding::HandleMetaChanged);
 		SetLevel(Camp->GetBuildingLevel(BuildingType));
@@ -85,7 +86,7 @@ void ACampBuilding::BeginPlay()
 
 void ACampBuilding::HandleMetaChanged()
 {
-	if (const UCampMetaSubsystem* Camp = GetGameInstance()->GetSubsystem<UCampMetaSubsystem>())
+	if (const UCampMetaSubsystem* Camp = UGameInstance::GetSubsystem<UCampMetaSubsystem>(GetGameInstance()))
 	{
 		SetLevel(Camp->GetBuildingLevel(BuildingType));
 	}
@@ -93,8 +94,6 @@ void ACampBuilding::HandleMetaChanged()
 
 void ACampBuilding::SetLevel(int32 NewLevel)
 {
-	CachedLevel = NewLevel;
-
 	if (bUsesModel)
 	{
 		// A wide invisible click target; the model grows taller with each level.

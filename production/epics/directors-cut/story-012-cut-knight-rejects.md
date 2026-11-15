@@ -30,7 +30,7 @@
 - [x] In a run with The Cut Knight card slotted, the boss gains what the player cuts in that run. Runs without the card have no boss and are unchanged. (checked by the author's play; "no card, no boss" by code only)
 - [x] The boss spawns at run start, before any cut, so it gains each cut at the moment the player makes it. (author's play)
 - [ ] A cut weapon gives the boss that weapon's attack aimed at the hero; a cut passive raises the matching boss stat. (UNTESTED in part: weapons seen in screenshots; Might, Swiftness and Haste not observed)
-- [ ] Both permanent and skipped cuts count (everything in the run's cut list). Nothing carries over from earlier runs. (OBSOLETE: since v3 a cut is refused once permanent cuts run out, so there are no skipped cuts)
+- [~] ~~Both permanent and skipped cuts count (everything in the run's cut list). Nothing carries over from earlier runs.~~ (OBSOLETE, not tested and no longer needed: since v3 a cut is refused once permanent cuts run out, so there are no skipped cuts. Everything in the cut list counts, and the list is per run by code)
 - [x] With no cuts made yet, the boss fights as it does today (contact damage only). (author's play)
 - [ ] (Review 2) The boss gets the base version of a cut option, with no stars, whatever the player owns of it. Cutting the same weapon again raises that attack's damage by one step instead of adding a second copy of the attack. (UNTESTED: only in code, each weapon was cut once in the probe)
 - [x] (Review 2) A cut that has no mapping (for example an option added by story 009) still counts: it gives the boss a small generic health bonus, so no cut is silently ignored. (probe log: Greed gave health)
@@ -86,7 +86,7 @@ All paths are under `Game_01 5.8/Source/Game_01/`.
 **Story Type**: Integration
 **Required evidence**: integration test or documented playtest; retained screenshot in `production/qa/evidence/`
 
-**Status**: [ ] Not yet created
+**Status**: [x] Created 2026-11-15: `production/qa/evidence/story-012-cut-knight/` (1-gun-balls, 2-slam-warning, 3-ring-of-balls, plus the void fix). Taken from the `-BossProbe` run, not from a normal run. Taken before the HUD wording fix; re-capture if exact wording matters.
 
 ---
 
@@ -106,7 +106,7 @@ Built as `UBossRejectsSubsystem` (new), hooked from `UEnemySpawnSubsystem::Spawn
 - All numbers are `BossRejects` in Project Settings > Game > Director Tuning (code defaults, no table).
 - Boss dead → its balls and rings disappear, later cuts do nothing.
 - Without the Cut Knight card there is no boss, so nothing changes.
-- Not yet done: a real run through the camp with the card slotted; checking the "a build that used all its cuts can still beat the boss" criterion by hand; the boss-attack damage numbers are first estimates.
+- Not yet done (as of 2026-11-15): checking the "a build that used all its cuts can still beat the boss" criterion by hand; the boss-attack damage numbers are first estimates. A real run through the camp with the card slotted was done at acceptance (see Completion Notes).
 - Evidence (probe `-BossProbe`, boss placed 900 cm from the hero, hero in god mode): `production/qa/evidence/story-012-cut-knight/` — 1-gun-balls, 2-slam-warning, 3-ring-of-balls.
 
 ## Completion Notes

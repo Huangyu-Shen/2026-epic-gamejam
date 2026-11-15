@@ -3,9 +3,10 @@
 A solo entry to the 2026 Epic AI MegaJam, built in Unreal Engine 5.8 (C++) with
 Claude Code driving the editor through the official Unreal MCP plugin.
 
-**Status:** this log is updated every day of the jam. Days 1 and 2 are written,
-Day 3 is in progress (stories 008, 009 and 010 closed, 010 with 8 criteria deferred to a human playtest), and Day 4 has a plan
-on record.
+**Status:** this log is updated every day of the jam. Days 1, 2 and 3 are written. Day 4
+(15 Nov) is the package-and-submit day and is in progress. Stories 001 to 010 and 012 are
+closed; story 011 (art, audio, feel) is in progress with its code done and its packaged-build
+checks open; story 013 (package and submission) is started.
 
 **Public address of this log** (the repository is public):
 <https://github.com/Huangyu-Shen/2026-epic-gamejam/blob/main/docs/devlog/README.md>
@@ -35,7 +36,7 @@ can read a day from top to bottom or open just the part you care about.
 | [06 Making the repository English](day-2/06-english-sweep-and-gitignore.md) | Translating the project with parallel agents; auditing `.gitignore` |
 | [07 Honest status](day-2/07-honest-status.md) | What was built, decided, unchecked and missing at the end of the day |
 
-### Day 3 — 14 Nov: lost film reels, a playtest, and the boss (in progress)
+### Day 3 — 14 Nov: lost film reels, a playtest, the boss, and the first real art
 
 | Entry | What it covers |
 |---|---|
@@ -59,11 +60,12 @@ can read a day from top to bottom or open just the part you care about.
 | [18 Camp buildings and credits](day-3/18-camp-buildings-and-credits.md) | A house and a factory for the camp from two more Fab packs; the CC BY credit inside the game |
 | [19 Status so far](day-3/19-status-so-far.md) | What is done, not done and not checked |
 
-### Day 4 — 15 Nov: package and submit (planned)
+### Day 4 — 15 Nov: package and submit (in progress)
 
 | Entry | What it covers |
 |---|---|
 | [01 Plan](day-4/01-plan.md) | The submission checklist, written in advance |
+| [02 Preparing the submission materials](day-4/02-preparing-the-submission-materials.md) | Closing the paperwork on stories 011 and 012, what the docs got wrong, and what is still open |
 
 ## The game in one paragraph
 
@@ -107,17 +109,16 @@ process, not a description of what I intended.
 
 ## By the numbers
 
-Counted from the repository on 15 November, early on Day 4. Everything up to the
-level-up rule change is on `main`; the boss, the floor-edge fix, this dev log update and
-the design and wiki corrections sit on a branch and are not merged yet.
+Counted from the repository on 15 November, during Day 4, on `main`. The boss, the floor
+edge fix, the Esc menu, the Fab models and the camp buildings are all merged (pull
+requests 3 to 11).
 
-- 19 commits on `main`, four of them through pull requests (the branch with the boss
-  and the dev log adds one more).
-- 82 C++ source files, about 9,160 lines (`.h` and `.cpp` under `Source/`, not
-  counting the 303 lines of tests).
+- 27 commits on `main`, nine of them through pull requests (3 to 11).
+- 89 C++ source files, about 10,600 lines (`.h` and `.cpp` under `Source/`, including
+  the 303 lines of tests).
 - 13 story files: 11 closed as complete (stories 001 to 010 and 012; 010 with notes),
-  story 011 still in progress (the art swaps are not done) and story 013 (the
-  submission) not started. The Day 2 redesign (cut one, keep two; star merge) was built
+  story 011 in progress (code done; the packaged-build checks are open) and story 013
+  (the submission) started. The Day 2 redesign (cut one, keep two; star merge) was built
   without a story file, and the Day 3 playtest then replaced the cut rule again.
 - 12 game-design documents (the master PRD and 11 system documents, including the art and audio
   direction) plus the one-page brief.
@@ -205,9 +206,9 @@ The rules allow preparing tools and ask us to declare what was made earlier.
 
 ## Assets and credits
 
-The hero and the enemies use 3D models from Fab, imported on 15 November (table below);
-the camp is still made of Unreal Engine
-primitive shapes with one flat-colour material made for this project. The open-source game catalogue
+The hero, the enemies, the floor, the props and the camp buildings use 3D models from Fab,
+imported on 15 November (table below). The weapon effects (beams and rings) are
+still Unreal Engine primitive shapes with one flat-colour material made for this project. The open-source game catalogue
 (github.com/Trilarion/opensourcegames) was read for research and not used as a
 code base (Day 2 explains why).
 
@@ -219,8 +220,8 @@ licence texts, and I am not giving legal advice.
 |---|---|---|---|
 | Path of Adventure - Free Music Pack for JRPG | Kounine | Creative Commons CC-BY (credit required) | Run music (Battle loop) and camp music (Village loop) |
 | 50 Free Game Sounds Pack | PlaceHolder Inc | Fab standard licence, personal tier (free) | The nine sound effects |
-| Atmospheric Worlds - FREE Game Music Pack | Marika Schanz | Fab standard licence; the page says free for commercial and non-commercial use | Imported, not used so far |
-| Small Sound Kit | Sound Works 12 | Fab standard licence | Imported, not used so far |
+| Atmospheric Worlds - FREE Game Music Pack | Marika Schanz | Fab standard licence; the page says free for commercial and non-commercial use | Imported, never used, deleted on 15 Nov |
+| Small Sound Kit | Sound Works 12 | Fab standard licence | Imported, never used, deleted on 15 Nov |
 
 3D models, from Fab, imported on 15 November. The licence is shown on each Fab page; I did not
 open the licence text of these two, and I am not giving legal advice. The packs themselves are not
@@ -231,10 +232,10 @@ in the repository (see Day 3, entry 13 for why).
 | RPG Hero Squad PBR Polyart | Dungeon Mason | Free; Unreal format only | The hero: the RPG Hero model (Polyart version), its sword and shield, and the Run and Walk animations |
 | Monster for Survival Game PBR Polyart | Dungeon Mason | Free; Unreal format only; 1273 to 7523 triangles per monster | Enemies: slime, mushroom, cactus, turtle shell and beholder for the grunts, the chest monster for the boss |
 | RPG Tiny Fantasy Forest | Dungeon Mason | Free; Unreal format only | The floor (grass land mass), the ring of trees and rocks, grass and flowers, the stump and boulder containers and the extraction portal |
-| Battle Wizard (PBR and Polyart), Four Evil Dragons (two packs) | Dungeon Mason | Free | Imported, not used so far |
+| Battle Wizard (PBR and Polyart), Four Evil Dragons (two packs) | Dungeon Mason | Free | Imported, never used, deleted on 15 Nov |
 | Cozy Low Poly House | Demolition Studios | Free; Unreal format only | The clinic in the camp (the house, roof, porch, chimney and foundation parts) |
 | WW2 RTS & SLG Production Buildings Pack | Winyunq | Free under CC BY 4.0 (credit, link the licence, indicate changes); Unreal 5.8 asset package included | The smithy (the factory with the chimney and water tower) and the warehouse (the barracks), as static meshes scaled to about 0.3 times |
-| ZenUV Modular Sci-Fi Kit (Sergey Tyapkin), 5 Free Stylized Sci-Fi Skyscrapers (Meanopoly) | | Free | Imported, not used (science fiction does not fit the theme) |
+| ZenUV Modular Sci-Fi Kit (Sergey Tyapkin), 5 Free Stylized Sci-Fi Skyscrapers (Meanopoly) | | Free | Imported, never used (science fiction does not fit the theme), deleted on 15 Nov |
 
 Two other packs I looked at (Creative Characters FREE and Animals FREE, by ithappy) were
 dropped: the author found they do not support Unreal 5.

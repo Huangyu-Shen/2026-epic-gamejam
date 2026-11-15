@@ -53,13 +53,14 @@ naming:
   scenes: PascalCase
 
 commands:
-  # TODO: confirm these for your UE version and project — adjust via /settings
-  # Project lives in Game_Jam_01/ (warm-up project); PLAN.md says the jam project is
-  # created at the repo root on 11/12 — update these paths then.
-  build: '"D:/Game/EPIC/UE_5.8/Engine/Binaries/DotNET/AutomationTool/AutomationTool.exe" BuildCookRun -project="$(pwd -W 2>/dev/null || pwd)/Game_Jam_01/Game_Jam_01.uproject" -platform=Win64 -build -cook'
-  test: '"D:/Game/EPIC/UE_5.8/Engine/Binaries/Win64/UnrealEditor-Cmd.exe" "$(pwd -W 2>/dev/null || pwd)/Game_Jam_01/Game_Jam_01.uproject" -ExecCmds="Automation RunTests Game_Jam_01.; Quit" -unattended -nullrhi -stdout -FullStdOutLogOutput'
-  run: '"D:/Game/EPIC/UE_5.8/Engine/Binaries/Win64/UnrealEditor.exe" "$(pwd -W 2>/dev/null || pwd)/Game_Jam_01/Game_Jam_01.uproject" -game -windowed -ResX=1280 -ResY=720'
-  smoke: '"D:/Game/EPIC/UE_5.8/Engine/Binaries/Win64/UnrealEditor-Cmd.exe" "$(pwd -W 2>/dev/null || pwd)/Game_Jam_01/Game_Jam_01.uproject" -game -nullrhi -unattended -stdout -ExecCmds="Quit"'
+  # Project: Game_01 5.8/Game_01.uproject (C++ module Game_01). The build command is the one
+  # recorded for the packages (docs/wiki/build-and-run.md section 8): close the editor first,
+  # replace <name> with the package folder name; the output is <name>/Windows/Game_01.exe.
+  # Leave Game_01.pdb out of a zip.
+  build: '"D:/Game/EPIC/UE_5.8/Engine/Build/BatchFiles/RunUAT.bat" BuildCookRun -project="$(pwd -W 2>/dev/null || pwd)/Game_01 5.8/Game_01.uproject" -noP4 -platform=Win64 -clientconfig=Development -build -cook -stage -pak -archive -archivedirectory="$(pwd -W 2>/dev/null || pwd)/Game_01 5.8/Saved/Packages/<name>" -utf8output -unattended'
+  test: '"D:/Game/EPIC/UE_5.8/Engine/Binaries/Win64/UnrealEditor-Cmd.exe" "$(pwd -W 2>/dev/null || pwd)/Game_01 5.8/Game_01.uproject" -ExecCmds="Automation RunTests Game_01.; Quit" -unattended -nullrhi -stdout -FullStdOutLogOutput'
+  run: '"D:/Game/EPIC/UE_5.8/Engine/Binaries/Win64/UnrealEditor.exe" "$(pwd -W 2>/dev/null || pwd)/Game_01 5.8/Game_01.uproject" -game -windowed -ResX=1280 -ResY=720'
+  smoke: '"D:/Game/EPIC/UE_5.8/Engine/Binaries/Win64/UnrealEditor-Cmd.exe" "$(pwd -W 2>/dev/null || pwd)/Game_01 5.8/Game_01.uproject" -game -nullrhi -unattended -stdout -ExecCmds="Quit"'
 
 modes:
   rigor: minimal

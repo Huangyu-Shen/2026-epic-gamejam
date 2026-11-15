@@ -3,7 +3,9 @@
 #include "Camp/CampMetaSubsystem.h"
 #include "Extraction/CampStockSubsystem.h"
 #include "Loot/LootConfig.h"
+#include "Engine/GameInstance.h"
 #include "Kismet/GameplayStatics.h"
+#include "TimerManager.h"
 #include "Misc/CommandLine.h"
 #include "Misc/Parse.h"
 
@@ -78,6 +80,11 @@ void UCampSaveSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 
 void UCampSaveSubsystem::Deinitialize()
 {
+	// A change made in the last frame must not be lost when the game shuts down.
+	if (bSavePending)
+	{
+		SaveNow();
+	}
 	if (UGameInstance* GI = GetGameInstance())
 	{
 		if (UCampStockSubsystem* Stock = GI->GetSubsystem<UCampStockSubsystem>())
@@ -94,14 +101,23 @@ void UCampSaveSubsystem::Deinitialize()
 
 void UCampSaveSubsystem::HandleCampChanged()
 {
-	if (!bApplyingLoad)
+	if (bApplyingLoad || bSavePending)
 	{
-		SaveNow();
+		return;
 	}
+	bSavePending = true;
+	GetGameInstance()->GetTimerManager().SetTimerForNextTick(FTimerDelegate::CreateWeakLambda(this, [this]()
+	{
+		if (bSavePending)
+		{
+			SaveNow();
+		}
+	}));
 }
 
 bool UCampSaveSubsystem::SaveNow()
 {
+	bSavePending = false;
 	const UCampStockSubsystem* Stock = GetGameInstance()->GetSubsystem<UCampStockSubsystem>();
 	const UCampMetaSubsystem* Meta = GetGameInstance()->GetSubsystem<UCampMetaSubsystem>();
 	if (!Stock || !Meta)
