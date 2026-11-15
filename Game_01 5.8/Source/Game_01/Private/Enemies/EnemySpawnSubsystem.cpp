@@ -46,11 +46,11 @@ UEnemySpawnSubsystem::UEnemySpawnSubsystem()
 		return Visual;
 	};
 	const TArray<FEnemyVisualAsset> Candidates = {
-		Find(TEXT("Slime"), TEXT("Slime"), TEXT("Slime_Run_ANIM"), 0.0f, 1.8f),
-		Find(TEXT("Mushroom"), TEXT("Mushroom/SmileVersion"), TEXT("Mushroom_runFWDSmile_ANIM"), 0.0f, 1.8f),
-		Find(TEXT("Cactus"), TEXT("Cactus"), TEXT("Cactus_RunFWD_ANIM"), 0.0f, 1.8f),
-		Find(TEXT("TurtleShell"), TEXT("TurtleShell"), TEXT("TurtleShell_Run_ANIM"), 0.0f, 1.8f),
-		Find(TEXT("Beholder"), TEXT("Beholder"), TEXT("Beholder_Run_ANIM"), 0.0f, 1.8f),
+		Find(TEXT("Slime"), TEXT("Slime"), TEXT("Slime_Run_ANIM"), 0.0f, 1.2f),
+		Find(TEXT("Mushroom"), TEXT("Mushroom/SmileVersion"), TEXT("Mushroom_runFWDSmile_ANIM"), 0.0f, 1.2f),
+		Find(TEXT("Cactus"), TEXT("Cactus"), TEXT("Cactus_RunFWD_ANIM"), 0.0f, 1.2f),
+		Find(TEXT("TurtleShell"), TEXT("TurtleShell"), TEXT("TurtleShell_Run_ANIM"), 0.0f, 1.2f),
+		Find(TEXT("Beholder"), TEXT("Beholder"), TEXT("Beholder_Run_ANIM"), 0.0f, 1.2f),
 	};
 	for (const FEnemyVisualAsset& Candidate : Candidates)
 	{
@@ -59,7 +59,7 @@ UEnemySpawnSubsystem::UEnemySpawnSubsystem()
 			GruntVisuals.Add(Candidate);
 		}
 	}
-	BossVisual = Find(TEXT("ChestMonster"), TEXT("ChestMonster"), TEXT("ChestMonster_Run_ANIM"), 0.0f, 1.0f);
+	BossVisual = Find(TEXT("ChestMonster"), TEXT("ChestMonster"), TEXT("ChestMonster_Run_ANIM"), 0.0f, 0.85f);
 }
 
 void UEnemySpawnSubsystem::Initialize(FSubsystemCollectionBase& Collection)

@@ -6,6 +6,9 @@
 #include "Camp/CampTypes.h"
 #include "CampBuilding.generated.h"
 
+class UStaticMesh;
+class UStaticMeshComponent;
+
 UCLASS()
 class GAME_01_API ACampBuilding : public AActor
 {
@@ -28,12 +31,28 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
+public:
+
 private:
 	UFUNCTION()
 	void HandleMetaChanged();
 
+	/** The invisible cube that takes the clicks. Its size is the clickable area when a pack model replaces it. */
 	UPROPERTY(VisibleAnywhere, Category = "Camp")
 	TObjectPtr<UStaticMeshComponent> Mesh;
+
+	/** The "RPG Tiny Fantasy Forest" model standing in for the cube. Null without the pack. */
+	UPROPERTY(VisibleAnywhere, Category = "Camp")
+	TObjectPtr<UStaticMeshComponent> Model;
+
+	UPROPERTY()
+	TObjectPtr<UStaticMesh> SmithyModel;
+
+	UPROPERTY()
+	TObjectPtr<UStaticMesh> ClinicModel;
+
+	bool bUsesModel = false;
+	float ModelScale = 1.0f;
 
 	int32 CachedLevel = 0;
 };

@@ -57,7 +57,7 @@ FString UFilmCardSubsystem::DescribeCard(FName CardId) const
 	const FString Effect = Row->Effect == EFilmCardEffect::ForceHorde
 		? FString::Printf(TEXT("a horde of %d grunts at the start"), Row->HordeCount)
 		: FString(TEXT("a boss at the start"));
-	return FString::Printf(TEXT("%s: %s, Iron earned x%.2f"), *CardId.ToString(), *Effect, Row->Multiplier);
+	return FString::Printf(TEXT("%s: %s, Loot earned x%.2f"), *CardId.ToString(), *Effect, Row->Multiplier);
 }
 
 const FFilmCardRow* UFilmCardSubsystem::FindRow(FName CardId) const

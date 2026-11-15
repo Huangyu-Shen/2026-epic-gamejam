@@ -50,7 +50,7 @@ int32 ULootBagComponent::SlotsForIron(int32 Iron)
 
 int32 ULootBagComponent::GetUsedSlots()
 {
-	return SlotsForIron(IronCount) + Relics.Num();
+	return SlotsForIron(IronCount) + SlotsForIron(StoneCount) + Relics.Num();
 }
 
 int32 ULootBagComponent::GetCapacitySlots()
@@ -63,13 +63,14 @@ bool ULootBagComponent::IsFull()
 	return GetUsedSlots() >= GetCapacitySlots();
 }
 
-EBagAddResult ULootBagComponent::CanAdd(int32 IronAmount, bool bWithRelic)
+EBagAddResult ULootBagComponent::CanAdd(int32 IronAmount, bool bWithRelic, ELootResource Resource)
 {
 	if (IronAmount < 0 || (IronAmount == 0 && !bWithRelic))
 	{
 		return EBagAddResult::InvalidItem;
 	}
-	const int32 SlotsAfter = SlotsForIron(IronCount + IronAmount) + Relics.Num() + (bWithRelic ? 1 : 0);
+	const bool bStone = Resource == ELootResource::Stone;
+	const int32 SlotsAfter = SlotsForIron(IronCount + (bStone ? 0 : IronAmount)) + SlotsForIron(StoneCount + (bStone ? IronAmount : 0)) + Relics.Num() + (bWithRelic ? 1 : 0);
 	return SlotsAfter > GetCapacitySlots() ? EBagAddResult::BagFull : EBagAddResult::Success;
 }
 
@@ -84,9 +85,9 @@ FText ULootBagComponent::GetAddResultText(EBagAddResult Result)
 	return FText::GetEmpty();
 }
 
-EBagAddResult ULootBagComponent::TryAddLoot(int32 IronAmount, bool bAddRelic, ERelicType RelicType)
+EBagAddResult ULootBagComponent::TryAddLoot(int32 IronAmount, bool bAddRelic, ERelicType RelicType, ELootResource Resource)
 {
-	const EBagAddResult Result = CanAdd(IronAmount, bAddRelic);
+	const EBagAddResult Result = CanAdd(IronAmount, bAddRelic, Resource);
 	if (Result != EBagAddResult::Success)
 	{
 		UE_LOG(LogLoot, Log, TEXT("Pickup refused: %s"), *GetAddResultText(Result).ToString());
@@ -96,7 +97,7 @@ EBagAddResult ULootBagComponent::TryAddLoot(int32 IronAmount, bool bAddRelic, ER
 		return Result;
 	}
 
-	IronCount += IronAmount;
+	(Resource == ELootResource::Stone ? StoneCount : IronCount) += IronAmount;
 	if (bAddRelic)
 	{
 		Relics.Add(RelicType);
@@ -116,6 +117,7 @@ EBagAddResult ULootBagComponent::TryAddLoot(int32 IronAmount, bool bAddRelic, ER
 void ULootBagComponent::ClearBag()
 {
 	IronCount = 0;
+	StoneCount = 0;
 	Relics.Reset();
 	OnBagChanged.Broadcast();
 }

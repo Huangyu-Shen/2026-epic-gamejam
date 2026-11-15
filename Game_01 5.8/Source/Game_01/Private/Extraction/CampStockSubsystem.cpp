@@ -12,6 +12,33 @@ void UCampStockSubsystem::AddIron(int32 Amount)
 	OnStockChanged.Broadcast();
 }
 
+void UCampStockSubsystem::AddStone(int32 Amount)
+{
+	if (Amount <= 0)
+	{
+		return;
+	}
+	Stone += Amount;
+	UE_LOG(LogExtraction, Log, TEXT("Camp stone %d (+%d)"), Stone, Amount);
+	OnStockChanged.Broadcast();
+}
+
+bool UCampStockSubsystem::SpendStone(int32 Amount)
+{
+	if (Amount <= 0)
+	{
+		return true;
+	}
+	if (Stone < Amount)
+	{
+		return false;
+	}
+	Stone -= Amount;
+	UE_LOG(LogExtraction, Log, TEXT("Camp stone %d (-%d)"), Stone, Amount);
+	OnStockChanged.Broadcast();
+	return true;
+}
+
 bool UCampStockSubsystem::UnlockOption(FName Option)
 {
 	if (!FReelUnlocks::AddOption(UnlockedOptions, Option))
@@ -45,9 +72,10 @@ bool UCampStockSubsystem::SpendIron(int32 Amount)
 	return true;
 }
 
-void UCampStockSubsystem::RestoreState(int32 InIron, const TArray<FName>& InUnlockedOptions, const TArray<FName>& InNewOptions)
+void UCampStockSubsystem::RestoreState(int32 InIron, const TArray<FName>& InUnlockedOptions, const TArray<FName>& InNewOptions, int32 InStone)
 {
 	Iron = FMath::Max(InIron, 0);
+	Stone = FMath::Max(InStone, 0);
 	UnlockedOptions.Reset();
 	NewOptions.Reset();
 	for (const FName Option : InUnlockedOptions)

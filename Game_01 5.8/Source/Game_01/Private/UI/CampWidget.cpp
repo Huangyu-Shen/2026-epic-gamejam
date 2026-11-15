@@ -64,7 +64,7 @@ FString UCampWidget::MakeSignature() const
 	{
 		if (const UCampStockSubsystem* Stock = GI->GetSubsystem<UCampStockSubsystem>())
 		{
-			Sig += FString::Printf(TEXT("|I%d"), Stock->GetIron());
+			Sig += FString::Printf(TEXT("|I%d|S%d"), Stock->GetIron(), Stock->GetStone());
 			for (const FName Option : Stock->GetUnlockedOptions())
 			{
 				Sig += TEXT(",") + Option.ToString();
@@ -114,7 +114,7 @@ void UCampWidget::Rebuild()
 	Content->ClearChildren();
 
 	DirectorUi::AddText(WidgetTree, Content, TEXT("CAMP"), 28);
-	DirectorUi::AddText(WidgetTree, Content, FString::Printf(TEXT("Iron: %d"), Stock->GetIron()), 22, DirectorUi::GoodColor);
+	DirectorUi::AddText(WidgetTree, Content, FString::Printf(TEXT("Wood: %d     Stone: %d"), Stock->GetWood(), Stock->GetStone()), 22, DirectorUi::GoodColor);
 	if (!Message.IsEmpty())
 	{
 		DirectorUi::AddText(WidgetTree, Content, Message, 16, bMessageIsError ? DirectorUi::BadColor : DirectorUi::GoodColor);
@@ -134,7 +134,7 @@ void UCampWidget::Rebuild()
 			*CampBuildingName(Type), Level, Row.MaxLevel, *Effect), 18);
 		const FString Caption = Camp->IsMaxLevel(Type)
 			? FString(TEXT("Maximum level"))
-			: FString::Printf(TEXT("Upgrade  (%d Iron)"), Camp->GetUpgradeCost(Type));
+			: FString::Printf(TEXT("Upgrade  (%d %s)"), Camp->GetUpgradeCost(Type), UCampMetaSubsystem::GetCostResource(Type) == ELootResource::Stone ? TEXT("stone") : TEXT("wood"));
 		UUiActionButton* Button = DirectorUi::AddButton(WidgetTree, Content, Caption, TEXT("Upgrade"), B);
 		Button->SetIsEnabled(!Camp->IsMaxLevel(Type));
 		Button->OnAction.AddDynamic(this, &UCampWidget::HandleAction);
@@ -156,7 +156,7 @@ void UCampWidget::Rebuild()
 	if (Cards)
 	{
 		DirectorUi::AddText(WidgetTree, Content,
-			FString::Printf(TEXT("\nEDITING ROOM  (film cards %d / %d - harder run, more Iron)"),
+			FString::Printf(TEXT("\nEDITING ROOM  (film cards %d / %d - harder run, more loot)"),
 				Cards->GetActiveCards().Num(), UFilmCardSubsystem::MaxSlots), 16, DirectorUi::DimColor);
 		const TArray<FName> Available = Cards->GetAvailableCards();
 		for (int32 Index = 0; Index < Available.Num(); ++Index)

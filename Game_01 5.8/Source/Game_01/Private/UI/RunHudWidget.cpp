@@ -181,8 +181,8 @@ void URunHudWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 	}
 
 	// Bag.
-	BagText->SetText(FText::FromString(FString::Printf(TEXT("%d / %d slots    Iron %d"),
-		Hero->Bag->GetUsedSlots(), Hero->Bag->GetCapacitySlots(), Hero->Bag->GetIronCount())));
+	BagText->SetText(FText::FromString(FString::Printf(TEXT("%d / %d slots\nWood %d   Stone %d"),
+		Hero->Bag->GetUsedSlots(), Hero->Bag->GetCapacitySlots(), Hero->Bag->GetWoodCount(), Hero->Bag->GetStoneCount())));
 	FString Reels;
 	for (const ERelicType Held : Hero->Bag->GetRelics())
 	{
@@ -247,15 +247,15 @@ void URunHudWidget::RefreshResultPanel()
 		FString Text;
 		if (Result.Outcome == ERunOutcome::Extracted)
 		{
-			Text = FString::Printf(TEXT("EXTRACTED\n\nBag Iron %d x %.2f = +%d Iron to camp\nLost film reels carried out (%d): %s\nUnlocked for every later run: %s"),
-				Result.BagIron, Result.MultiplierUsed, Result.IronGained, Result.RelicsBanked.Num(), *HudRelicNames(Result.RelicsBanked),
+			Text = FString::Printf(TEXT("EXTRACTED\n\nBag wood %d stone %d x %.2f = +%d wood +%d stone to camp\nLost film reels carried out (%d): %s\nUnlocked for every later run: %s"),
+				Result.BagIron, Result.BagStone, Result.MultiplierUsed, Result.IronGained, Result.StoneGained, Result.RelicsBanked.Num(), *HudRelicNames(Result.RelicsBanked),
 				*HudOptionNames(Result.OptionsUnlocked));
 			ResultText->SetColorAndOpacity(FSlateColor(DirectorUi::GoodColor));
 		}
 		else
 		{
-			Text = FString::Printf(TEXT("YOU DIED\n\nLost %d Iron and %d lost film reels: %s\nThe reels were lost: nothing was unlocked"),
-				Result.IronLost, Result.RelicsLost.Num(), *HudRelicNames(Result.RelicsLost));
+			Text = FString::Printf(TEXT("YOU DIED\n\nLost %d wood, %d stone and %d lost film reels: %s\nThe reels were lost: nothing was unlocked"),
+				Result.IronLost, Result.StoneLost, Result.RelicsLost.Num(), *HudRelicNames(Result.RelicsLost));
 			ResultText->SetColorAndOpacity(FSlateColor(DirectorUi::BadColor));
 		}
 		ResultText->SetText(FText::FromString(Text));
