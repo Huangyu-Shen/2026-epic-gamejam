@@ -6,6 +6,7 @@
 #include "Enemies/EnemyTypes.h"
 #include "Progression/ProgressionTypes.h"
 #include "Progression/OfferRules.h"
+#include "Progression/OfferText.h"
 #include "Progression/RunLoadout.h"
 #include "RunProgressionSubsystem.generated.h"
 
@@ -14,23 +15,11 @@ class AXpPickup;
 /**
  * Owns in-run growth: XP, level, the level-up offer and the weapon/passive loadout.
  * Enemies drop XP pickups on death; collecting enough XP soft-pauses the game and shows three options.
- * Brief v2: the player CUTS one option and keeps the other two. Each kept option adds one copy;
- * 3 copies make two stars and 9 make three (FStarTuning). While permanent cuts remain, the cut option
- * leaves the pool for the rest of the run. Resets with the run.
+ * Each level-up offers three options: the player takes one (it adds a copy) and may first cut one. 3 copies make
+ * two stars and 9 make three (FStarTuning). While permanent cuts remain, a cut option leaves the pool for the rest of the
+ * run and goes to the boss. Resets with the run. The loadout, the offer rules and the offer wording live in
+ * FRunLoadout, FOfferRules and FOfferText; this class adds the world: sounds, messages, XP pickups and the hero.
  */
-/** What one level-up card shows. */
-struct FOfferCardText
-{
-	/** The option's name, with "NEW!" when a lost film reel just unlocked it. */
-	FString Title;
-	/** Level change, or "New weapon". */
-	FString Detail;
-	/** Star progress, e.g. "2 more to 2-STAR" or "2-STAR!". Empty when maxed. */
-	FString Note;
-	/** True for a star-up or a newly unlocked option, so the card can glow. */
-	bool bHighlight = false;
-};
-
 UCLASS()
 class GAME_01_API URunProgressionSubsystem : public UTickableWorldSubsystem
 {
@@ -168,8 +157,6 @@ private:
 	TArray<FName> GetUnlockedOptions() const;
 	void ApplyOption(const FOfferOption& Option);
 	void ShowOffer() const;
-	FString DescribeOption(const FOfferOption& Option) const;
-	FString OptionName(const FOfferOption& Option) const;
 
 	// Loaded tuning (defaults are always present; tables override).
 	FXpCurveRow XpCurve;

@@ -217,7 +217,7 @@ void URunProgressionSubsystem::ApplyOption(const FOfferOption& Option)
 	// A star-up is the payoff moment: say so. (StarsBefore is 0 for a brand-new weapon, which is not a star-up.)
 	if (StarsAfter > StarsBefore && StarsBefore > 0)
 	{
-		const FString Message = FString::Printf(TEXT("%s is now %d-STAR!"), *OptionName(Option).ToUpper(), StarsAfter);
+		const FString Message = FString::Printf(TEXT("%s is now %d-STAR!"), *FOfferText::OptionName(Option).ToUpper(), StarsAfter);
 		UHudMessageSubsystem::Post(this, Message, FLinearColor(1.0f, 0.85f, 0.2f), 4.0f);
 		UE_LOG(LogTemp, Log, TEXT("%s"), *Message);
 		UGameAudioSubsystem::PlayIn(this, EGameSound::StarUp);
@@ -238,7 +238,7 @@ void URunProgressionSubsystem::CutFromOffer(int32 Index)
 	}
 
 	UGameAudioSubsystem::PlayIn(this, EGameSound::Cut);
-	UHudMessageSubsystem::Post(this, FString::Printf(TEXT("CUT: %s now belongs to the Boss"), *OptionName(Cut)), FLinearColor(1.0f, 0.4f, 0.4f), 3.0f);
+	UHudMessageSubsystem::Post(this, FString::Printf(TEXT("CUT: %s now belongs to the Boss"), *FOfferText::OptionName(Cut)), FLinearColor(1.0f, 0.4f, 0.4f), 3.0f);
 }
 
 void URunProgressionSubsystem::ChooseOption(int32 Index)
@@ -266,43 +266,10 @@ TArray<FString> URunProgressionSubsystem::GetOfferDescriptions() const
 	{
 		for (const FOfferOption& Option : Rules.Offer)
 		{
-			Lines.Add(DescribeOption(Option));
+			Lines.Add(FOfferText::Describe(Option, Loadout.Stars));
 		}
 	}
 	return Lines;
-}
-
-FString URunProgressionSubsystem::OptionName(const FOfferOption& Option) const
-{
-	return Option.bIsWeapon
-		? StaticEnum<EWeaponType>()->GetDisplayNameTextByValue(static_cast<int64>(Option.Weapon)).ToString()
-		: StaticEnum<EPassiveType>()->GetDisplayNameTextByValue(static_cast<int64>(Option.Passive)).ToString();
-}
-
-FString URunProgressionSubsystem::DescribeOption(const FOfferOption& Option) const
-{
-	const FString Name = OptionName(Option);
-	const FString NewMark = Option.bIsNewUnlock ? FString(TEXT("NEW! ")) : FString();
-	if (Option.bIsWeapon && Option.bIsNewWeapon)
-	{
-		// An unlocked weapon is both new to the camp and new to the run: say it once.
-		return Option.bIsNewUnlock ? FString::Printf(TEXT("NEW! %s  (unlocked weapon)"), *Name)
-		                           : FString::Printf(TEXT("NEW weapon: %s"), *Name);
-	}
-
-	// What one more copy does to the star: a star-up, or how far the next one is.
-	const int32 After = Option.CurrentLevel + 1;
-	const int32 StarsAfter = Loadout.Stars.StarsForCopies(After);
-	FString StarNote;
-	if (StarsAfter > Loadout.Stars.StarsForCopies(Option.CurrentLevel) && Option.CurrentLevel > 0)
-	{
-		StarNote = FString::Printf(TEXT("   >> %d-STAR!"), StarsAfter);
-	}
-	else if (StarsAfter < 3)
-	{
-		StarNote = FString::Printf(TEXT("   (%d more to %d-STAR)"), Loadout.Stars.CopiesToNextStar(After), StarsAfter + 1);
-	}
-	return FString::Printf(TEXT("%s%s  Lv%d -> Lv%d%s"), *NewMark, *Name, Option.CurrentLevel, After, *StarNote);
 }
 
 TArray<FOfferCardText> URunProgressionSubsystem::GetOfferCards() const
@@ -314,54 +281,14 @@ TArray<FOfferCardText> URunProgressionSubsystem::GetOfferCards() const
 	}
 	for (const FOfferOption& Option : Rules.Offer)
 	{
-		FOfferCardText Card;
-		Card.Title = (Option.bIsNewUnlock ? FString(TEXT("NEW!  ")) : FString()) + OptionName(Option);
-		Card.bHighlight = Option.bIsNewUnlock;
-		if (Option.bIsWeapon && Option.bIsNewWeapon)
-		{
-			Card.Detail = Option.bIsNewUnlock ? FString(TEXT("Unlocked weapon")) : FString(TEXT("New weapon"));
-		}
-		else
-		{
-			const int32 After = Option.CurrentLevel + 1;
-			const int32 StarsAfter = Loadout.Stars.StarsForCopies(After);
-			Card.Detail = FString::Printf(TEXT("Lv%d  >  Lv%d"), Option.CurrentLevel, After);
-			if (StarsAfter > Loadout.Stars.StarsForCopies(Option.CurrentLevel) && Option.CurrentLevel > 0)
-			{
-				Card.Note = FString::Printf(TEXT("%d-STAR UP!"), StarsAfter);
-				Card.bHighlight = true;
-			}
-			else if (StarsAfter < 3)
-			{
-				Card.Note = FString::Printf(TEXT("%d more to %d-STAR"), Loadout.Stars.CopiesToNextStar(After), StarsAfter + 1);
-			}
-		}
-		Cards.Add(Card);
+		Cards.Add(FOfferText::Card(Option, Loadout.Stars));
 	}
 	return Cards;
 }
 
 FString URunProgressionSubsystem::GetLoadoutSummary() const
 {
-	// "Blade Lv3**   Might Lv1*": one asterisk per star.
-	FString Out;
-	auto Append = [&Out, this](const FString& Name, int32 Copies)
-	{
-		if (Copies > 0)
-		{
-			Out += FString::Printf(TEXT("%s%s Lv%d%s"), Out.IsEmpty() ? TEXT("") : TEXT("   "), *Name, Copies,
-				*FString::ChrN(Loadout.Stars.StarsForCopies(Copies), TEXT('*')));
-		}
-	};
-	for (uint8 W = 0; W < static_cast<uint8>(EWeaponType::Count); ++W)
-	{
-		Append(StaticEnum<EWeaponType>()->GetDisplayNameTextByValue(W).ToString(), Loadout.WeaponCopies(static_cast<EWeaponType>(W)));
-	}
-	for (uint8 P = 0; P < static_cast<uint8>(EPassiveType::Count); ++P)
-	{
-		Append(StaticEnum<EPassiveType>()->GetDisplayNameTextByValue(P).ToString(), Loadout.PassiveCopies(static_cast<EPassiveType>(P)));
-	}
-	return Out;
+	return FOfferText::LoadoutSummary(Loadout);
 }
 
 void URunProgressionSubsystem::RegisterPickup(AXpPickup* Pickup)
