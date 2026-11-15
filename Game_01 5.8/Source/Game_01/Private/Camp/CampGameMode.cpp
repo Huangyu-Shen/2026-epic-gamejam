@@ -93,7 +93,7 @@ void ACampGameMode::TakeCampShot()
 	int32 Iron = 0;
 	if (const UCampStockSubsystem* Stock = UGameInstance::GetSubsystem<UCampStockSubsystem>(GetGameInstance()))
 	{
-		Iron = Stock->GetIron();
+		Iron = Stock->GetWood();
 		for (const FName Option : Stock->GetUnlockedOptions())
 		{
 			Unlocked += Option.ToString() + TEXT(" ");

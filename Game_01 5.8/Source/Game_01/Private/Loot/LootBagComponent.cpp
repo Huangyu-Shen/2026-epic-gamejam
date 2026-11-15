@@ -42,15 +42,15 @@ ULootConfig* ULootBagComponent::GetConfig()
 	return FallbackConfig;
 }
 
-int32 ULootBagComponent::SlotsForIron(int32 Iron)
+int32 ULootBagComponent::SlotsForWood(int32 Amount)
 {
 	const int32 PerSlot = FMath::Max(1, GetConfig()->GetTuning().IronPerSlot);
-	return FMath::DivideAndRoundUp(FMath::Max(0, Iron), PerSlot);
+	return FMath::DivideAndRoundUp(FMath::Max(0, Amount), PerSlot);
 }
 
 int32 ULootBagComponent::GetUsedSlots()
 {
-	return SlotsForIron(IronCount) + SlotsForIron(StoneCount) + Relics.Num();
+	return SlotsForWood(WoodCount) + SlotsForWood(StoneCount) + Relics.Num();
 }
 
 int32 ULootBagComponent::GetCapacitySlots()
@@ -63,14 +63,14 @@ bool ULootBagComponent::IsFull()
 	return GetUsedSlots() >= GetCapacitySlots();
 }
 
-EBagAddResult ULootBagComponent::CanAdd(int32 IronAmount, bool bWithRelic, ELootResource Resource)
+EBagAddResult ULootBagComponent::CanAdd(int32 WoodAmount, bool bWithRelic, ELootResource Resource)
 {
-	if (IronAmount < 0 || (IronAmount == 0 && !bWithRelic))
+	if (WoodAmount < 0 || (WoodAmount == 0 && !bWithRelic))
 	{
 		return EBagAddResult::InvalidItem;
 	}
 	const bool bStone = Resource == ELootResource::Stone;
-	const int32 SlotsAfter = SlotsForIron(IronCount + (bStone ? 0 : IronAmount)) + SlotsForIron(StoneCount + (bStone ? IronAmount : 0)) + Relics.Num() + (bWithRelic ? 1 : 0);
+	const int32 SlotsAfter = SlotsForWood(WoodCount + (bStone ? 0 : WoodAmount)) + SlotsForWood(StoneCount + (bStone ? WoodAmount : 0)) + Relics.Num() + (bWithRelic ? 1 : 0);
 	return SlotsAfter > GetCapacitySlots() ? EBagAddResult::BagFull : EBagAddResult::Success;
 }
 
@@ -85,9 +85,9 @@ FText ULootBagComponent::GetAddResultText(EBagAddResult Result)
 	return FText::GetEmpty();
 }
 
-EBagAddResult ULootBagComponent::TryAddLoot(int32 IronAmount, bool bAddRelic, ERelicType RelicType, ELootResource Resource)
+EBagAddResult ULootBagComponent::TryAddLoot(int32 WoodAmount, bool bAddRelic, ERelicType RelicType, ELootResource Resource)
 {
-	const EBagAddResult Result = CanAdd(IronAmount, bAddRelic, Resource);
+	const EBagAddResult Result = CanAdd(WoodAmount, bAddRelic, Resource);
 	if (Result != EBagAddResult::Success)
 	{
 		UE_LOG(LogLoot, Log, TEXT("Pickup refused: %s"), *GetAddResultText(Result).ToString());
@@ -97,7 +97,7 @@ EBagAddResult ULootBagComponent::TryAddLoot(int32 IronAmount, bool bAddRelic, ER
 		return Result;
 	}
 
-	(Resource == ELootResource::Stone ? StoneCount : IronCount) += IronAmount;
+	(Resource == ELootResource::Stone ? StoneCount : WoodCount) += WoodAmount;
 	if (bAddRelic)
 	{
 		Relics.Add(RelicType);
@@ -116,7 +116,7 @@ EBagAddResult ULootBagComponent::TryAddLoot(int32 IronAmount, bool bAddRelic, ER
 
 void ULootBagComponent::ClearBag()
 {
-	IronCount = 0;
+	WoodCount = 0;
 	StoneCount = 0;
 	Relics.Reset();
 	OnBagChanged.Broadcast();

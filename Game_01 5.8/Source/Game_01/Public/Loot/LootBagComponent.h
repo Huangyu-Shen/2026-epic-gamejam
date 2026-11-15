@@ -11,8 +11,8 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnBagChanged);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnBagPickupRefused, EBagAddResult, Reason);
 
 /**
- * The player's run bag: Iron plus lost film reels under a hard slot capacity.
- * Iron occupies ceil(Iron / IronPerSlot) slots, each reel one slot.
+ * The player's run bag: wood, stone and lost film reels under a hard slot capacity.
+ * Wood and stone each occupy ceil(count / IronPerSlot) slots (the table column keeps its old name), each reel one slot.
  * Picking up a reel raises heat. A reel cannot be used: carried out alive it unlocks an upgrade option
  * (story 008). Story 002 reads/clears/settles via the read-only getters and ClearBag().
  */
@@ -44,14 +44,14 @@ public:
 	EBagAddResult CanAdd(int32 Amount, bool bWithRelic, ELootResource Resource = ELootResource::Wood);
 
 	/**
-	 * Atomically adds Iron and optionally one lost film reel. On failure nothing is added,
+	 * Atomically adds wood or stone and optionally one lost film reel. On failure nothing is added,
 	 * OnPickupRefused fires and a debug message is shown. A reel raises heat.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Loot")
 	EBagAddResult TryAddLoot(int32 Amount, bool bAddRelic, ERelicType RelicType, ELootResource Resource = ELootResource::Wood);
 
 	UFUNCTION(BlueprintCallable, Category = "Loot")
-	EBagAddResult TryAddIron(int32 IronAmount) { return TryAddLoot(IronAmount, false, ERelicType::Swiftstep); }
+	EBagAddResult TryAddWood(int32 WoodAmount) { return TryAddLoot(WoodAmount, false, ERelicType::Swiftstep); }
 
 	UFUNCTION(BlueprintCallable, Category = "Loot")
 	EBagAddResult TryAddRelic(ERelicType RelicType) { return TryAddLoot(0, true, RelicType); }
@@ -62,9 +62,9 @@ public:
 
 	// ---- Read-only contents ----
 
-	/** Wood in the bag (the field keeps its old name, IronCount, from when wood was Iron). */
+	/** Wood in the bag. */
 	UFUNCTION(BlueprintPure, Category = "Loot")
-	int32 GetWoodCount() const { return IronCount; }
+	int32 GetWoodCount() const { return WoodCount; }
 
 	UFUNCTION(BlueprintPure, Category = "Loot")
 	int32 GetStoneCount() const { return StoneCount; }
@@ -92,13 +92,13 @@ public:
 	virtual void BeginPlay() override;
 
 private:
-	int32 SlotsForIron(int32 Iron);
+	int32 SlotsForWood(int32 Amount);
 
 	UPROPERTY(Transient)
 	TObjectPtr<ULootConfig> FallbackConfig;
 
 	UPROPERTY(VisibleInstanceOnly, Transient, Category = "Loot", meta = (AllowPrivateAccess = "true"))
-	int32 IronCount = 0;
+	int32 WoodCount = 0;
 
 	UPROPERTY(VisibleInstanceOnly, Transient, Category = "Loot", meta = (AllowPrivateAccess = "true"))
 	int32 StoneCount = 0;

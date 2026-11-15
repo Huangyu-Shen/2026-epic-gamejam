@@ -10,7 +10,7 @@ class ULootConfig;
 class UStaticMesh;
 class UStaticMeshComponent;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FOnContainerSearched, ALootContainer*, Container, int32, IronGained, bool, bGotRelic, ERelicType, RelicType);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FOnContainerSearched, ALootContainer*, Container, int32, WoodGained, bool, bGotRelic, ERelicType, RelicType);
 
 /**
  * A supply crate or vault. One search per container; the yield comes from the
@@ -81,7 +81,7 @@ private:
 	bool bUsesModel = false;
 
 	bool bRolled = false;
-	int32 RolledIron = 0;
+	int32 RolledAmount = 0;
 	bool bRolledRelic = false;
 	ERelicType RolledRelicType = ERelicType::Swiftstep;
 };

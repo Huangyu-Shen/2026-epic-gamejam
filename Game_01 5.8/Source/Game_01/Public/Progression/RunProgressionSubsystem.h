@@ -172,12 +172,6 @@ private:
 	/** The shuffle of the offer pool, seeded differently each session. */
 	FRandomStream Random;
 
-	UPROPERTY(EditAnywhere, Category = "Progression", meta = (ClampMin = "0.0"))
-	float CollectRadius = 80.0f;
-
-	UPROPERTY(EditAnywhere, Category = "Progression", meta = (ClampMin = "0.0"))
-	float MagnetSpeed = 900.0f;
-
 	UPROPERTY(Transient)
 	TArray<TObjectPtr<AXpPickup>> Pickups;
 };

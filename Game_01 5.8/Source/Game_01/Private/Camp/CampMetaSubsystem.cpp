@@ -93,7 +93,7 @@ bool UCampMetaSubsystem::TryUpgrade(EBuildingType Type, FText& Reason)
 	const int32 Cost = GetUpgradeCost(Type);
 	UCampStockSubsystem* Stock = GetGameInstance()->GetSubsystem<UCampStockSubsystem>();
 	const bool bStone = GetCostResource(Type) == ELootResource::Stone;
-	if (!Stock || !(bStone ? Stock->SpendStone(Cost) : Stock->SpendIron(Cost)))
+	if (!Stock || !(bStone ? Stock->SpendStone(Cost) : Stock->SpendWood(Cost)))
 	{
 		Reason = FText::FromString(FString::Printf(TEXT("Not enough %s (need %d)"), bStone ? TEXT("stone") : TEXT("wood"), Cost));
 		return false;

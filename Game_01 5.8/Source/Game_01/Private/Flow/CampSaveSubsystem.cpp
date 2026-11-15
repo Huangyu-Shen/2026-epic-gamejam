@@ -175,7 +175,7 @@ bool UCampSaveSubsystem::SaveNow()
 
 	UCampSaveGame* Save = Cast<UCampSaveGame>(UGameplayStatics::CreateSaveGameObject(UCampSaveGame::StaticClass()));
 	Save->SaveVersion = UCampSaveGame::CurrentSaveVersion;
-	Save->Iron = Stock->GetIron();
+	Save->Iron = Stock->GetWood();
 	Save->Stone = Stock->GetStone();
 	Save->UnlockedOptions = Stock->GetUnlockedOptions();
 	Save->NewOptions = Stock->GetNewOptions();
