@@ -1,5 +1,6 @@
 #include "Camp/CampBuilding.h"
 #include "Camp/CampMetaSubsystem.h"
+#include "Components/SceneComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Engine/StaticMesh.h"
@@ -27,28 +28,50 @@ ACampBuilding::ACampBuilding()
 	}
 	Mesh->SetRelativeScale3D(FVector(1.0f, 1.0f, 1.2f));
 
-	// Models from the "RPG Tiny Fantasy Forest" pack (Dungeon Mason, Fab). The pack has no houses, so these are stand-ins:
-	// a rock outcrop for the smithy and a stone gate for the clinic.
-	Model = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Model"));
-	Model->SetupAttachment(Mesh);
-	Model->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	Model->SetUsingAbsoluteScale(true);
-	Model->SetUsingAbsoluteLocation(true);
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> SmithyFinder(TEXT("/Game/RPGTinyFantasyForest/Mesh/Rock/SM_RockCliffE.SM_RockCliffE"));
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> ClinicFinder(TEXT("/Game/RPGTinyFantasyForest/Mesh/BuildingUtilityDeco/SM_GateC.SM_GateC"));
-	SmithyModel = SmithyFinder.Succeeded() ? SmithyFinder.Object : nullptr;
-	ClinicModel = ClinicFinder.Succeeded() ? ClinicFinder.Object : nullptr;
+	// The smithy is a factory with a chimney and a water tower from the "WW2 RTS & SLG Production Buildings" pack (Winyunq, Fab,
+	// CC BY 4.0). The clinic is the "Cozy Low Poly House" (Demolition Studios, Fab), five parts that share one pivot.
+	ModelRoot = CreateDefaultSubobject<USceneComponent>(TEXT("ModelRoot"));
+	ModelRoot->SetupAttachment(Mesh);
+	ModelRoot->SetUsingAbsoluteScale(true);
+	ModelRoot->SetUsingAbsoluteLocation(true);
+	auto Add = [](TArray<TObjectPtr<UStaticMesh>>& Parts, const TCHAR* Path)
+	{
+		ConstructorHelpers::FObjectFinder<UStaticMesh> Finder(Path);
+		if (Finder.Succeeded())
+		{
+			Parts.Add(Finder.Object);
+		}
+	};
+	Add(SmithyParts, TEXT("/Game/WW2Generic/ProductionBuildings/factory_6/Rig/factory_6_static/StaticMeshes/factory_6_static.factory_6_static"));
+	for (const TCHAR* Part : { TEXT("SM_Foundation"), TEXT("SM_HouseMain"), TEXT("SM_Roof"), TEXT("SM_Porch"), TEXT("SM_PricksTube") })
+	{
+		Add(ClinicParts, *FString::Printf(TEXT("/Game/LowPolyHouse/StaticMeshes/%s.%s"), Part, Part));
+	}
+	// A house with only some of its parts would look broken: all five or none.
+	if (ClinicParts.Num() != 5)
+	{
+		ClinicParts.Reset();
+	}
 }
 
 void ACampBuilding::BeginPlay()
 {
 	Super::BeginPlay();
 
-	UStaticMesh* Chosen = BuildingType == EBuildingType::Clinic ? ClinicModel.Get() : SmithyModel.Get();
-	if (Chosen)
+	const TArray<TObjectPtr<UStaticMesh>>& Parts = BuildingType == EBuildingType::Clinic ? ClinicParts : SmithyParts;
+	for (UStaticMesh* PartMesh : Parts)
 	{
-		Model->SetStaticMesh(Chosen);
-		ModelScale = BuildingType == EBuildingType::Clinic ? 0.9f : 0.35f;
+		UStaticMeshComponent* Part = NewObject<UStaticMeshComponent>(this);
+		Part->SetupAttachment(ModelRoot);
+		Part->SetStaticMesh(PartMesh);
+		Part->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		Part->SetCastShadow(false);
+		Part->RegisterComponent();
+		PartComponents.Add(Part);
+	}
+	if (!PartComponents.IsEmpty())
+	{
+		ModelScale = BuildingType == EBuildingType::Clinic ? 0.45f : 0.35f;
 		bUsesModel = true;
 		Mesh->SetVisibility(false); // the cube stays for the clicks, unseen
 	}
@@ -75,10 +98,10 @@ void ACampBuilding::SetLevel(int32 NewLevel)
 	if (bUsesModel)
 	{
 		// A wide invisible click target; the model grows taller with each level.
-		const float Growth = 1.0f + 0.2f * static_cast<float>(FMath::Max(NewLevel, 0));
+		const float Growth = 1.0f + 0.08f * static_cast<float>(FMath::Max(NewLevel, 0));
 		Mesh->SetRelativeScale3D(FVector(4.0f, 4.0f, 3.0f));
-		Model->SetWorldScale3D(FVector(ModelScale, ModelScale, ModelScale * Growth));
-		Model->SetWorldLocation(GetActorLocation() - FVector(0.0f, 0.0f, 60.0f));
+		ModelRoot->SetWorldScale3D(FVector(ModelScale, ModelScale, ModelScale * Growth));
+		ModelRoot->SetWorldLocation(GetActorLocation() - FVector(0.0f, 0.0f, 60.0f));
 		return;
 	}
 

@@ -56,7 +56,8 @@ can read a day from top to bottom or open just the part you care about.
 | [15 The first real models](day-3/15-the-first-real-models.md) | Hero and enemies swapped for Fab models; two packs dropped; frame rate checked |
 | [16 The forest floor and the props](day-3/16-the-forest-floor.md) | A grass land mass, rim of trees, stumps and boulders as containers, a portal; what the packs lacked |
 | [17 Wood and stone, a forest camp, and sizes](day-3/17-wood-stone-and-the-camp.md) | Loot split into wood and stone, camp dressed like the run map, portal bigger, models smaller |
-| [18 Status so far](day-3/18-status-so-far.md) | What is done, not done and not checked |
+| [18 Camp buildings and credits](day-3/18-camp-buildings-and-credits.md) | A house and a factory for the camp from two more Fab packs; the CC BY credit inside the game |
+| [19 Status so far](day-3/19-status-so-far.md) | What is done, not done and not checked |
 
 ### Day 4 — 15 Nov: package and submit (planned)
 
@@ -231,9 +232,16 @@ in the repository (see Day 3, entry 13 for why).
 | Monster for Survival Game PBR Polyart | Dungeon Mason | Free; Unreal format only; 1273 to 7523 triangles per monster | Enemies: slime, mushroom, cactus, turtle shell and beholder for the grunts, the chest monster for the boss |
 | RPG Tiny Fantasy Forest | Dungeon Mason | Free; Unreal format only | The floor (grass land mass), the ring of trees and rocks, grass and flowers, the stump and boulder containers and the extraction portal |
 | Battle Wizard (PBR and Polyart), Four Evil Dragons (two packs) | Dungeon Mason | Free | Imported, not used so far |
+| Cozy Low Poly House | Demolition Studios | Free; Unreal format only | The clinic in the camp (the house, roof, porch, chimney and foundation parts) |
+| WW2 RTS & SLG Production Buildings Pack | Winyunq | Free under CC BY 4.0 (credit, link the licence, indicate changes); Unreal 5.8 asset package included | The smithy (the factory with the chimney and water tower) and the warehouse (the barracks), as static meshes scaled to about 0.3 times |
+| ZenUV Modular Sci-Fi Kit (Sergey Tyapkin), 5 Free Stylized Sci-Fi Skyscrapers (Meanopoly) | | Free | Imported, not used (science fiction does not fit the theme) |
 
 Two other packs I looked at (Creative Characters FREE and Animals FREE, by ithappy) were
 dropped: the author found they do not support Unreal 5.
 
 **Credit (CC-BY):** music by Kounine, "Path of Adventure - Free Music Pack for JRPG",
 Creative Commons CC-BY, via Fab.
+
+**Credit (CC BY 4.0):** buildings by Winyunq, "WW2 RTS & SLG Production Buildings Pack",
+licence <https://creativecommons.org/licenses/by/4.0/>, via Fab. Changes: only two of the
+buildings are used, as static meshes, uniformly scaled. Both credits are also shown in the game, at the bottom of the Esc menu.

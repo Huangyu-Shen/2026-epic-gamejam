@@ -1,6 +1,6 @@
 # Day 3 (14 Nov) · Status so far
 
-[Dev log index](../README.md) · [← previous](17-wood-stone-and-the-camp.md)
+[Dev log index](../README.md) · [← previous](18-camp-buildings-and-credits.md)
 
 This entry is a snapshot. It replaces the earlier one, written after story 010, and it
 will be rewritten as the work goes on.
@@ -19,6 +19,8 @@ will be rewritten as the work goes on.
   package.
 - The boss, the void fix, the design and wiki corrections and the dev log are merged to
   main (pull requests 4 and 5).
+- The camp's clinic is a house and its smithy and warehouse are factory and barracks models
+  ([entry 18](18-camp-buildings-and-credits.md)); the CC BY credits are in the Esc menu. **Not committed.**
 - Loot is wood (crates) and stone (vaults); the Smithy costs stone, the Clinic wood; the camp has
   the forest floor; sizes and the portal changed ([entry 17](17-wood-stone-and-the-camp.md)).
   **Not committed.**
@@ -36,8 +38,8 @@ will be rewritten as the work goes on.
 
 ## Not done
 
-- Story 011 is still In Progress: the camp buildings are stand-ins (no houses in the pack),
-  the boss attacks are orange balls and a red ring, and star-ups only make beams thicker.
+- Story 011 is still In Progress: the boss attacks are orange balls and a red ring, and star-ups
+  only make beams thicker.
 - Story 013 (package, texts, video, final checks).
 - The design docs do not yet mention the Esc menu and its settings (a PRD Should item the
   author asked for).

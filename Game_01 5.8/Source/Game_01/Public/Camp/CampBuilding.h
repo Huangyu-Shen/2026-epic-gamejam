@@ -7,6 +7,7 @@
 #include "CampBuilding.generated.h"
 
 class UStaticMesh;
+class USceneComponent;
 class UStaticMeshComponent;
 
 UCLASS()
@@ -41,15 +42,18 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "Camp")
 	TObjectPtr<UStaticMeshComponent> Mesh;
 
-	/** The "RPG Tiny Fantasy Forest" model standing in for the cube. Null without the pack. */
+	/** Holds the model's parts. The smithy is one factory mesh (WW2 pack); the clinic is a house made of five parts (Cozy Low Poly House pack). */
 	UPROPERTY(VisibleAnywhere, Category = "Camp")
-	TObjectPtr<UStaticMeshComponent> Model;
+	TObjectPtr<USceneComponent> ModelRoot;
 
 	UPROPERTY()
-	TObjectPtr<UStaticMesh> SmithyModel;
+	TArray<TObjectPtr<UStaticMesh>> SmithyParts;
 
 	UPROPERTY()
-	TObjectPtr<UStaticMesh> ClinicModel;
+	TArray<TObjectPtr<UStaticMesh>> ClinicParts;
+
+	UPROPERTY(Transient)
+	TArray<TObjectPtr<UStaticMeshComponent>> PartComponents;
 
 	bool bUsesModel = false;
 	float ModelScale = 1.0f;
