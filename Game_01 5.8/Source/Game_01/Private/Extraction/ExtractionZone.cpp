@@ -1,4 +1,5 @@
 #include "Extraction/ExtractionZone.h"
+#include "Progression/RunProgressionSubsystem.h"
 #include "Audio/GameAudioSubsystem.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "UI/HudMessageSubsystem.h"
@@ -186,6 +187,15 @@ void AExtractionZone::Tick(float DeltaSeconds)
 		Interrupt();
 		SetActorTickEnabled(Bag != nullptr);
 		return;
+	}
+
+	// The level-up offer is a soft pause: the bar waits, so nobody extracts behind the panel.
+	if (const URunProgressionSubsystem* Progression = GetWorld()->GetSubsystem<URunProgressionSubsystem>())
+	{
+		if (Progression->IsOfferPending())
+		{
+			return;
+		}
 	}
 
 	if (Bag)

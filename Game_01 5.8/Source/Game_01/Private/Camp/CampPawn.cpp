@@ -1,4 +1,5 @@
 #include "Camp/CampPawn.h"
+#include "Engine/GameInstance.h"
 #include "Camp/CampBuilding.h"
 #include "Camp/CampMetaSubsystem.h"
 #include "UI/CampWidget.h"
@@ -111,7 +112,7 @@ void ACampPawn::OnClick()
 	}
 
 	ACampBuilding* Building = Cast<ACampBuilding>(Hit.GetActor());
-	UCampMetaSubsystem* Camp = GetGameInstance()->GetSubsystem<UCampMetaSubsystem>();
+	UCampMetaSubsystem* Camp = UGameInstance::GetSubsystem<UCampMetaSubsystem>(GetGameInstance());
 	if (!Building || !Camp)
 	{
 		return;

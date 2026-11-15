@@ -1,4 +1,5 @@
 #include "Player/HeroCharacter.h"
+#include "Engine/GameInstance.h"
 #include "UI/PauseMenuWidget.h"
 #include "Camp/CampMetaSubsystem.h"
 #include "Combat/AutoWeaponComponent.h"
@@ -20,6 +21,7 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/SkeletalMesh.h"
 #include "Components/CapsuleComponent.h"
+#include "Game/DebugGate.h"
 #include "Components/InputComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/Engine.h"
@@ -191,7 +193,11 @@ void AHeroCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 
 	PlayerInputComponent->BindKey(EKeys::SpaceBar, IE_Pressed, this, &AHeroCharacter::DodgeKey);
 	PlayerInputComponent->BindKey(EKeys::E, IE_Pressed, this, &AHeroCharacter::SearchNearestContainerKey);
-	PlayerInputComponent->BindKey(EKeys::K, IE_Pressed, this, &AHeroCharacter::DebugDieKey);
+	if (GameDebug::CheatsEnabled())
+	{
+		// Debug only: kills the hero. Not bound in a Shipping build, nor in a package started without -DevCheats.
+		PlayerInputComponent->BindKey(EKeys::K, IE_Pressed, this, &AHeroCharacter::DebugDieKey);
+	}
 	// Esc must also work while the menu has the game paused (that is how it closes again).
 	PlayerInputComponent->BindKey(EKeys::Escape, IE_Pressed, this, &AHeroCharacter::QuitKey).bExecuteWhenPaused = true;
 
@@ -270,7 +276,7 @@ void AHeroCharacter::StartRun()
 	GetWorld()->GetSubsystem<ULootHeatSubsystem>()->ResetHeat();
 	Bag->ClearBag();
 	// Camp building bonuses (story 006): Clinic raises max health; applied fresh each run (no compounding).
-	const UCampMetaSubsystem* Camp = GetGameInstance()->GetSubsystem<UCampMetaSubsystem>();
+	const UCampMetaSubsystem* Camp = UGameInstance::GetSubsystem<UCampMetaSubsystem>(GetGameInstance());
 	Health->SetMaxHealth(Health->GetBaseMaxHealth() + (Camp ? Camp->GetMaxHealthBonus() : 0.0f));
 	GetWorld()->GetSubsystem<URunProgressionSubsystem>()->ResetProgression();
 	DodgeTimeRemaining = 0.0f;
@@ -362,7 +368,9 @@ void AHeroCharacter::Tick(float DeltaSeconds)
 		}
 	}
 
-	if (DodgeTimeRemaining > 0.0f)
+	// A dash that is in progress when the level-up offer opens waits there and goes on when the offer closes.
+	const bool bDashing = DodgeTimeRemaining > 0.0f && CanAct();
+	if (bDashing)
 	{
 		// The dash is a swept offset (walls stop it) and replaces normal movement while it lasts.
 		const float Step = FMath::Min(DeltaSeconds, DodgeTimeRemaining);
@@ -378,7 +386,7 @@ void AHeroCharacter::Tick(float DeltaSeconds)
 	if (bHasModel)
 	{
 		const float Speed = GetVelocity().Size2D();
-		const bool bMoving = Speed > 20.0f || DodgeTimeRemaining > 0.0f;
+		const bool bMoving = Speed > 20.0f || bDashing;
 		if (bMoving != bShowingRun)
 		{
 			bShowingRun = bMoving;

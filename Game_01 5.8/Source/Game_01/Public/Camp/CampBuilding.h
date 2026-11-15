@@ -57,6 +57,4 @@ private:
 
 	bool bUsesModel = false;
 	float ModelScale = 1.0f;
-
-	int32 CachedLevel = 0;
 };
