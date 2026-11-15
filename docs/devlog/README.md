@@ -65,8 +65,9 @@ can read a day from top to bottom or open just the part you care about.
 A fantasy top-down horde-survival game with extraction. Before each run you slot
 film cards that decide how hard the run is. During the run you auto-attack,
 level up, loot crates and extract. As of Day 2 the level-up is the heart of the
-theme: **you are offered three options, you cut one, and you keep the other
-two.** Three copies of the same option merge into a two-star version, nine into
+theme. Day 2 made it "cut one, keep two"; after the first playtest on Day 3 it became
+**you are offered three options, you take one, and you may cut one first, which goes to
+the boss.** Three copies of the same option merge into a two-star version, nine into
 a three-star one. As of Day 3, relics are **lost film reels**: carry one out
 alive and a new option joins the pool for every later run.
 
@@ -101,21 +102,24 @@ process, not a description of what I intended.
 
 ## By the numbers
 
-Counted from the repository on 14 November, part-way through Day 3. Work from
-Day 3 is not committed yet, so these are working-tree counts.
+Counted from the repository on 15 November, early on Day 4. Everything up to the
+level-up rule change is on `main`; the boss, the floor-edge fix, this dev log update and
+the design and wiki corrections sit on a branch and are not merged yet.
 
-- 18 commits on `main`, three of them through pull requests; the work of stories 009
-  and 010 and the wiki re-check is not committed yet.
-- 72 C++ source files, about 7,140 lines (`.h` and `.cpp` under `Source/`, not
-  counting the 302 lines of tests).
-- 9 stories shipped: the 7 for the first version of the loop, plus stories 008 and
-  009 on Day 3, and a first pass at story 010; the Day 2 redesign (cut one, keep
-  two; star merge) was built without a story file.
-- 13 story files in all, and 12 design documents (one master PRD and 11 system docs).
-- 12 automated tests (the star-merge and cut rules, the lost-reel unlock rules, and
-  the locked-option rules).
-  The earlier stories were verified by playing and by screenshots; automated tests
-  were waived at the project's minimal QA level. That is a gap, and I say so in
+- 19 commits on `main`, four of them through pull requests (the branch with the boss
+  and the dev log adds one more).
+- 82 C++ source files, about 9,160 lines (`.h` and `.cpp` under `Source/`, not
+  counting the 303 lines of tests).
+- 13 story files: 11 closed as complete (stories 001 to 010 and 012; 010 with notes),
+  story 011 still in progress (the art swaps are not done) and story 013 (the
+  submission) not started. The Day 2 redesign (cut one, keep two; star merge) was built
+  without a story file, and the Day 3 playtest then replaced the cut rule again.
+- 12 game-design documents (the master PRD and 11 system documents, including the art and audio
+  direction) plus the one-page brief.
+- 12 automated tests (the star-merge rules, the lost-reel unlock rules, and the
+  locked-option rules). None cover the boss, the weapons added on Day 3 or the floor
+  clamp. The earlier stories were verified by playing and by screenshots; automated
+  tests were waived at the project's minimal QA level. That is a gap, and I say so in
   Day 2.
 - Performance check: 152 enemies on screen averaged **132 FPS**, with the single
   worst frame at 50 FPS (target was 60 or more). I accepted that as advisory.

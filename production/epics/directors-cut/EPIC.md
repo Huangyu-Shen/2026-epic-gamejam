@@ -3,7 +3,7 @@
 > **Source**: `design/game-brief.md` (scope gate: `design/prd/master-prd.md`)
 > **Status**: Active
 
-**Goal** (v2, from the brief): A fantasy top-down horde-survival game with extraction. At each level-up the player cuts one of three options and keeps the other two; three copies merge into a star upgrade; a lost film reel carried out alive adds one option to every later run's pool. Film cards before the run still set difficulty and payout.
+**Goal** (v2, from the brief): A fantasy top-down horde-survival game with extraction. At each level-up the player picks one of three options and may cut one first (it goes to the boss); three copies merge into a star upgrade; a lost film reel carried out alive adds one option to every later run's pool. Film cards before the run still set difficulty and payout.
 
 **Scope**: stories 001-007 are the brief's v1 MVP (done). Stories 008-012 are the brief's v2 items 3-7; v2 items 1 and 2 (cut one, keep two; star merge) were built on 11/13 without a story file and are recorded in commit `e1f27fe` and `production/qa/evidence/v2-cut-one-keep-two/`. Story 013 is the submission checklist, which is not a feature. Anything outside the brief's list stays out (see the brief's Out of scope).
 

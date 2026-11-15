@@ -1,5 +1,7 @@
 # Run Progression
 
+> **Out of date (2026-11-15).** This document was written on 12 Nov, before the Day 2 and Day 3 rule changes. It describes a weighted draw, "Craft Services" and slot rules the game does not use. For what the game does now, read `design/game-brief.md` (v3) and `docs/wiki/classes.md` section 7: pick one of three, optional cut (the cut option leaves the pool and goes to the boss), 13 base options, three more unlocked by lost film reels. It has not been rewritten.
+
 > **Status**: Designed
 > **Author**: The developer + Claude
 > **Last Updated**: 2026-11-12
