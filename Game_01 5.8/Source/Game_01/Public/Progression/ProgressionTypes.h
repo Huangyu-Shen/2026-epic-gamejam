@@ -259,3 +259,31 @@ struct GAME_01_API FOptionUnlock
 		return !bStartsLocked || Unlocked.Contains(OptionId);
 	}
 };
+
+/** One option in a level-up offer: a new weapon, another copy of a weapon, or another copy of a passive. */
+USTRUCT(BlueprintType)
+struct GAME_01_API FOfferOption
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadOnly, Category = "Progression")
+	bool bIsWeapon = false;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Progression")
+	EWeaponType Weapon = EWeaponType::Blade;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Progression")
+	EPassiveType Passive = EPassiveType::Swiftness;
+
+	/** True when a weapon is offered that the run does not own yet. */
+	UPROPERTY(BlueprintReadOnly, Category = "Progression")
+	bool bIsNewWeapon = false;
+
+	/** Copies held before this pick (copies are also the level). */
+	UPROPERTY(BlueprintReadOnly, Category = "Progression")
+	int32 CurrentLevel = 0;
+
+	/** True when this option was unlocked by a lost film reel since the player last saw an offer go (story 009). */
+	UPROPERTY(BlueprintReadOnly, Category = "Progression")
+	bool bIsNewUnlock = false;
+};
