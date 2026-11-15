@@ -111,6 +111,13 @@ private:
 
 	void SearchNearestContainerKey();
 	void DodgeKey();
+	/** The parts of one tick: stay on the floor, regenerate, read WASD, walk or dash (true while dashing), pick the model's animation. */
+	void KeepOnFloor();
+	void Regenerate(float DeltaSeconds);
+	void ReadMoveInput();
+	bool MoveOrDash(float DeltaSeconds);
+	void UpdateModelAnimation(bool bDashing);
+
 	void DebugDieKey();
 
 	/** Esc opens or closes the pause menu (not while a level-up offer is showing). */

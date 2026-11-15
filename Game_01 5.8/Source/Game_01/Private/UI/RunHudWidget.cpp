@@ -191,10 +191,21 @@ void URunHudWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 	RelicText->SetText(FText::FromString(Reels.IsEmpty() ? FString(TEXT("No lost film reel")) : Reels.TrimEnd()));
 
 	// Extraction bar: a map can hold more than one extraction point, so show the furthest-filled one.
-	float Progress = 0.0f;
-	for (TActorIterator<AExtractionZone> It(World); It; ++It)
+	if (!bZonesFound)
 	{
-		Progress = FMath::Max(Progress, It->GetProgress());
+		for (TActorIterator<AExtractionZone> It(World); It; ++It)
+		{
+			Zones.Add(*It);
+		}
+		bZonesFound = true;
+	}
+	float Progress = 0.0f;
+	for (const TWeakObjectPtr<AExtractionZone>& Point : Zones)
+	{
+		if (Point.IsValid())
+		{
+			Progress = FMath::Max(Progress, Point->GetProgress());
+		}
 	}
 	ExtractionBar->SetPercent(Progress);
 	ExtractionRoot->SetVisibility(Progress > 0.0f ? ESlateVisibility::SelfHitTestInvisible : ESlateVisibility::Collapsed);

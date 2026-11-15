@@ -51,6 +51,15 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Loot")
 	bool Interact(AActor* InInstigator);
 
+private:
+	/** The bag of the actor that interacts: on the actor itself, or on the pawn of a controller. */
+	static ULootBagComponent* FindBag(AActor* InInstigator);
+
+	/** Rolls what this container holds, once. Returns false when no row is set up for its type. */
+	bool RollContents(const ULootBagComponent& Bag, ULootConfig& Config);
+
+public:
+
 	UFUNCTION(BlueprintPure, Category = "Loot")
 	bool HasBeenSearched() const { return bSearched; }
 

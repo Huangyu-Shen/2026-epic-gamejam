@@ -220,6 +220,13 @@ void UBossRejectsSubsystem::Tick(float DeltaTime)
 	}
 
 	const FBossRejectTuning& Tuning = GetDefault<UDirectorTuningSettings>()->BossRejects;
+	FireDueAttacks(Tuning, *Hero);
+	MoveShots(Tuning, *Hero, DeltaTime);
+	CountDownSlams(*Hero, DeltaTime);
+}
+
+void UBossRejectsSubsystem::FireDueAttacks(const FBossRejectTuning& Tuning, AHeroCharacter& Hero)
+{
 	const double Now = GetWorld()->GetTimeSeconds();
 	const float HasteFactor = FMath::Max(FMath::Pow(Tuning.AttackIntervalPerHaste, static_cast<float>(HasteCuts)), 0.5f);
 
@@ -230,12 +237,15 @@ void UBossRejectsSubsystem::Tick(float DeltaTime)
 		if (Attack && Now >= Next)
 		{
 			const float Damage = Attack->Damage * (1.0f + Tuning.RepeatDamageStep * (Pair.Value - 1));
-			FireAttack(Pair.Key, *Attack, Damage, *Hero);
+			FireAttack(Pair.Key, *Attack, Damage, Hero);
 			Next = Now + Attack->Interval * HasteFactor;
 		}
 	}
+}
 
-	const FVector HeroLocation = Hero->GetActorLocation();
+void UBossRejectsSubsystem::MoveShots(const FBossRejectTuning& Tuning, AHeroCharacter& Hero, float DeltaTime)
+{
+	const FVector HeroLocation = Hero.GetActorLocation();
 	for (int32 i = Shots.Num() - 1; i >= 0; --i)
 	{
 		FShot& Shot = Shots[i];
@@ -248,7 +258,7 @@ void UBossRejectsSubsystem::Tick(float DeltaTime)
 			Shot.DistanceLeft -= Step;
 			if (FVector::Dist2D(Visual->GetActorLocation(), HeroLocation) < Tuning.ShotHitRadius)
 			{
-				Hero->ReceiveEnemyDamage(Shot.Damage);
+				Hero.ReceiveEnemyDamage(Shot.Damage);
 				UE_LOG(LogEnemies, Display, TEXT("BOSS ball hit the hero for %.0f"), Shot.Damage);
 				bDone = true;
 			}
@@ -263,7 +273,11 @@ void UBossRejectsSubsystem::Tick(float DeltaTime)
 			Shots.RemoveAtSwap(i);
 		}
 	}
+}
 
+void UBossRejectsSubsystem::CountDownSlams(AHeroCharacter& Hero, float DeltaTime)
+{
+	const FVector HeroLocation = Hero.GetActorLocation();
 	for (int32 i = Slams.Num() - 1; i >= 0; --i)
 	{
 		FSlam& Slam = Slams[i];
@@ -272,7 +286,7 @@ void UBossRejectsSubsystem::Tick(float DeltaTime)
 		{
 			if (FVector::Dist2D(Slam.Center, HeroLocation) < Slam.Radius)
 			{
-				Hero->ReceiveEnemyDamage(Slam.Damage);
+				Hero.ReceiveEnemyDamage(Slam.Damage);
 				UE_LOG(LogEnemies, Display, TEXT("BOSS slam hit the hero for %.0f"), Slam.Damage);
 			}
 			AWeaponEffect::SpawnRing(GetWorld(), Slam.Center, Slam.Radius, FLinearColor::White, 40.0f, 0.25f);

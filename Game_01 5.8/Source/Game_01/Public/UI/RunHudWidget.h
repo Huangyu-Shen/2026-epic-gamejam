@@ -67,4 +67,8 @@ private:
 	UPROPERTY() TObjectPtr<UWidget> ResultRoot;
 	UPROPERTY() TObjectPtr<UTextBlock> ResultText;
 	bool bResultShown = false;
+
+	/** The map's extraction points, found once: looking them up with an actor iterator every frame walks every actor in the world. */
+	TArray<TWeakObjectPtr<AExtractionZone>> Zones;
+	bool bZonesFound = false;
 };

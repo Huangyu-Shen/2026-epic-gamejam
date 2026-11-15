@@ -336,6 +336,18 @@ void AHeroCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
 
+	KeepOnFloor();
+	Regenerate(DeltaSeconds);
+	ReadMoveInput();
+	const bool bDashing = MoveOrDash(DeltaSeconds);
+	UpdateModelAnimation(bDashing);
+
+	const float ProgressionSpeed = GetWorld()->GetSubsystem<URunProgressionSubsystem>()->GetMoveSpeedMultiplier();
+	GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed * ProgressionSpeed;
+}
+
+void AHeroCharacter::KeepOnFloor()
+{
 	// The map has no walls and a void around it: the hero stops at the edge of the floor instead of falling.
 	if (const UPlayAreaSubsystem* PlayArea = GetWorld()->GetSubsystem<UPlayAreaSubsystem>())
 	{
@@ -346,7 +358,10 @@ void AHeroCharacter::Tick(float DeltaSeconds)
 			SetActorLocation(Inside, false, nullptr, ETeleportType::TeleportPhysics);
 		}
 	}
+}
 
+void AHeroCharacter::Regenerate(float DeltaSeconds)
+{
 	// Regen passive: health back while a run is on and no level-up offer has the game paused.
 	if (const URunProgressionSubsystem* Progression = GetWorld()->GetSubsystem<URunProgressionSubsystem>())
 	{
@@ -356,7 +371,10 @@ void AHeroCharacter::Tick(float DeltaSeconds)
 			Health->Heal(Progression->GetRegenPerSecond() * DeltaSeconds);
 		}
 	}
+}
 
+void AHeroCharacter::ReadMoveInput()
+{
 	MoveInput = FVector::ZeroVector;
 	if (CanAct())
 	{
@@ -367,7 +385,10 @@ void AHeroCharacter::Tick(float DeltaSeconds)
 			MoveInput = FVector(Forward, Right, 0.0f).GetSafeNormal();
 		}
 	}
+}
 
+bool AHeroCharacter::MoveOrDash(float DeltaSeconds)
+{
 	// A dash that is in progress when the level-up offer opens waits there and goes on when the offer closes.
 	const bool bDashing = DodgeTimeRemaining > 0.0f && CanAct();
 	if (bDashing)
@@ -381,7 +402,11 @@ void AHeroCharacter::Tick(float DeltaSeconds)
 	{
 		AddMovementInput(MoveInput);
 	}
+	return bDashing;
+}
 
+void AHeroCharacter::UpdateModelAnimation(bool bDashing)
+{
 	// Run while the hero actually moves (the dash too); a frozen walk pose when standing still.
 	if (bHasModel)
 	{
@@ -395,7 +420,4 @@ void AHeroCharacter::Tick(float DeltaSeconds)
 		}
 		GetMesh()->SetPlayRate(bMoving ? FMath::Clamp(Speed / BaseWalkSpeed, 0.6f, 1.6f) : 0.0f);
 	}
-
-	const float ProgressionSpeed = GetWorld()->GetSubsystem<URunProgressionSubsystem>()->GetMoveSpeedMultiplier();
-	GetCharacterMovement()->MaxWalkSpeed = BaseWalkSpeed * ProgressionSpeed;
 }

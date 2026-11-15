@@ -127,6 +127,11 @@ public:
 	virtual void Deinitialize() override;
 
 private:
+	/** The three parts of a tick: start the attacks that are due, fly the balls, count down the slams. */
+	void FireDueAttacks(const FBossRejectTuning& Tuning, AHeroCharacter& Hero);
+	void MoveShots(const FBossRejectTuning& Tuning, AHeroCharacter& Hero, float DeltaTime);
+	void CountDownSlams(AHeroCharacter& Hero, float DeltaTime);
+
 	struct FShot
 	{
 		TWeakObjectPtr<AActor> Visual;

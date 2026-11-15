@@ -7,6 +7,7 @@
 #include "EnemyManagerSubsystem.generated.h"
 
 class AEnemy;
+class AHeroCharacter;
 
 /** Fired when an enemy is killed. Story 004 uses it for XP. */
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnEnemyKilled, EEnemyKind, Kind, FVector, Location);
@@ -73,4 +74,10 @@ private:
 	TArray<float> Yaws;
 	TArray<FVector2D> Pushes;
 	TMap<FIntPoint, TArray<int32>> Grid;
+
+	/** One tick in four passes over the scratch buffers: move toward the hero and hurt it, bucket into a grid, push overlapping bodies apart, apply. */
+	void ChaseHero(AHeroCharacter& Hero, float DeltaTime, double Now);
+	void BuildGrid();
+	void SeparateBodies();
+	void ApplyMovement(float DeltaTime, double Now);
 };
