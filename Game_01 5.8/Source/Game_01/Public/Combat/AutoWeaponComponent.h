@@ -9,6 +9,8 @@
 class UHealthComponent;
 class AEnemy;
 class AOrbitOrb;
+class UEnemyManagerSubsystem;
+struct FWeaponRow;
 
 /** Fired every time a weapon fires: which weapon and how many enemies it hit. Story 011's audio and hit feedback bind here. */
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnWeaponFired, EWeaponType /*Weapon*/, int32 /*EnemiesHit*/);
@@ -51,8 +53,28 @@ private:
 	float OrbitAngle = 0.0f;
 	TMap<TWeakObjectPtr<AEnemy>, double> OrbitHitReady;
 
+	/** Everything one shot of a weapon needs: who to ask for enemies, where the hero is, the weapon's row, its level and the damage rolled for this shot. */
+	struct FFireContext
+	{
+		UEnemyManagerSubsystem* Manager;
+		FVector Origin;
+		const FWeaponRow& Row;
+		int32 Level;
+		float Damage;
+	};
+
 	/** Fires one weapon. Returns how many enemies it hit. */
 	int32 FireWeapon(EWeaponType Type, int32 Level, const FWeaponRow& Row, float DamageMultiplier);
+
+	/** One function per weapon; each returns how many enemies it hit (the Gun returns 1 when a shot was fired). */
+	int32 FireBlade(const FFireContext& Context);
+	int32 FireBolt(const FFireContext& Context);
+	int32 FireNova(const FFireContext& Context);
+	int32 FireChain(const FFireContext& Context);
+	int32 FireGun(const FFireContext& Context);
+
+	/** Damages every collected target and returns how many were hit. */
+	static int32 DamageAll(const TArray<AEnemy*, TInlineAllocator<32>>& Targets, float Damage);
 
 	UPROPERTY(Transient)
 	TObjectPtr<UHealthComponent> OwnerHealth;
