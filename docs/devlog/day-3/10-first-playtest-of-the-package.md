@@ -44,7 +44,7 @@ cut? I offered three answers. The author chose: **they go back into the pool.**
 
 This contradicts the rule written in the game brief and the master PRD (brief v2).
 The design documents still described the old rule at this point; they were corrected
-later the same night (see [entry 16](16-status-so-far.md)).
+later the same night (see [entry 17](17-status-so-far.md)).
 
 ## What this shows about the process
 

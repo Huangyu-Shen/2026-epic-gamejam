@@ -1,6 +1,6 @@
 # Day 3 (14 to 15 Nov, night) · The first real models
 
-[Dev log index](../README.md) · [← previous](14-esc-menu-and-leaving-a-run.md) · [next →](16-status-so-far.md)
+[Dev log index](../README.md) · [← previous](14-esc-menu-and-leaving-a-run.md) · [next →](16-the-forest-floor.md)
 
 Until now every character was a grey, red or blue primitive. This entry covers swapping the
 hero, the enemies and the boss for models from Fab.
