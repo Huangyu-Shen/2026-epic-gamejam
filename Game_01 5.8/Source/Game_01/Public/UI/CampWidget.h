@@ -1,4 +1,4 @@
-// Director's Cut - Story 007. The camp screen: Iron, building upgrades, warehouse dismantle, editing room, Start Run.
+// Director's Cut - Story 007. The camp screen: wood and stone, building upgrades, the unlocked options, the editing room, Start Run.
 #pragma once
 
 #include "CoreMinimal.h"
@@ -9,7 +9,7 @@
 class UPanelWidget;
 
 /**
- * Built in C++. Rebuilds its rows whenever the camp state changes (Iron, levels, warehouse, slotted cards),
+ * Built in C++. Rebuilds its rows whenever the camp state changes (wood, stone, levels, unlocked options, slotted cards),
  * so it always shows what the game actually holds. It changes game state only through the camp subsystems.
  */
 UCLASS()
@@ -33,7 +33,7 @@ private:
 
 	UPROPERTY() TObjectPtr<UPanelWidget> Content;
 
-	/** Short messages (building upgraded, not enough Iron...) at the top centre. */
+	/** Short messages (building upgraded, not enough wood...) at the top centre. */
 	FToastPanel Toasts;
 
 	FString LastSignature;

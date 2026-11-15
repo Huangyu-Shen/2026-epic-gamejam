@@ -6,7 +6,10 @@
 #include "Engine/GameInstance.h"
 #include "Kismet/GameplayStatics.h"
 #include "TimerManager.h"
+#include "HAL/FileManager.h"
+#include "HAL/PlatformFileManager.h"
 #include "Misc/CommandLine.h"
+#include "Misc/Paths.h"
 #include "Misc/Parse.h"
 
 DEFINE_LOG_CATEGORY_STATIC(LogCampSave, Log, All);
@@ -20,6 +23,31 @@ const FString& UCampSaveSubsystem::GetSlotName()
 		return FParse::Value(FCommandLine::Get(), TEXT("SaveSlot="), Override) && !Override.IsEmpty() ? Override : FString(TEXT("CampSave"));
 	}();
 	return Slot;
+}
+
+void UCampSaveSubsystem::BackupSlot(const TCHAR* Reason)
+{
+	const FString Source = FPaths::ProjectSavedDir() / TEXT("SaveGames") / GetSlotName() + TEXT(".sav");
+	const FString Target = Source + TEXT(".") + Reason + TEXT(".bak");
+	IPlatformFile& Files = FPlatformFileManager::Get().GetPlatformFile();
+	if (Files.FileExists(*Source) && !Files.FileExists(*Target))
+	{
+		const bool bCopied = Files.CopyFile(*Target, *Source);
+		UE_LOG(LogCampSave, Log, TEXT("Backup of the save (%s): %s"), Reason, bCopied ? TEXT("written") : TEXT("FAILED"));
+	}
+}
+
+bool UCampSaveSubsystem::SlotFileLooksValid()
+{
+	const FString Source = FPaths::ProjectSavedDir() / TEXT("SaveGames") / GetSlotName() + TEXT(".sav");
+	TUniquePtr<FArchive> Reader(IFileManager::Get().CreateFileReader(*Source));
+	if (!Reader || Reader->TotalSize() < 4)
+	{
+		return false;
+	}
+	uint8 Header[4] = {};
+	Reader->Serialize(Header, 4);
+	return FSaveVersionCheck::LooksLikeSaveFile(Header, 4);
 }
 
 void UCampSaveSubsystem::Initialize(FSubsystemCollectionBase& Collection)
@@ -36,10 +64,29 @@ void UCampSaveSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	}
 
 	// Load first, bind after: restoring must not trigger a save.
-	if (UGameplayStatics::DoesSaveGameExist(GetSlotName(), 0))
+	if (UGameplayStatics::DoesSaveGameExist(GetSlotName(), 0) && !SlotFileLooksValid())
 	{
-		if (const UCampSaveGame* Save = Cast<UCampSaveGame>(UGameplayStatics::LoadGameFromSlot(GetSlotName(), 0)))
+		// Not a save file (empty, half-written, damaged). The engine's loader asserts on such a file, so it is never given one.
+		BackupSlot(TEXT("unreadable"));
+		UE_LOG(LogCampSave, Warning, TEXT("Camp save file is not a valid save; backed up and starting a new camp"));
+	}
+	else if (UGameplayStatics::DoesSaveGameExist(GetSlotName(), 0))
+	{
+		const UCampSaveGame* Save = Cast<UCampSaveGame>(UGameplayStatics::LoadGameFromSlot(GetSlotName(), 0));
+		const FSaveVersionCheck::EResult Check = Save ? FSaveVersionCheck::Classify(Save->SaveVersion, UCampSaveGame::CurrentSaveVersion) : FSaveVersionCheck::EResult::Current;
+		if (Save && Check == FSaveVersionCheck::EResult::TooNew)
 		{
+			// A newer game wrote this file. Keep it as it is (the next change would overwrite the slot) and start a new camp.
+			BackupSlot(TEXT("newer-version"));
+			UE_LOG(LogCampSave, Warning, TEXT("Camp save is version %d, newer than this game (%d); backed up and starting a new camp"),
+				Save->SaveVersion, UCampSaveGame::CurrentSaveVersion);
+		}
+		else if (Save)
+		{
+			if (Check == FSaveVersionCheck::EResult::NeedsMigration)
+			{
+				BackupSlot(TEXT("before-migration"));
+			}
 			bApplyingLoad = true;
 			TArray<FName> Unlocked = Save->UnlockedOptions;
 			if (Save->SaveVersion < 2)
@@ -66,7 +113,8 @@ void UCampSaveSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 		}
 		else
 		{
-			UE_LOG(LogCampSave, Warning, TEXT("Camp save slot exists but could not be loaded; starting fresh"));
+			BackupSlot(TEXT("unreadable"));
+			UE_LOG(LogCampSave, Warning, TEXT("Camp save slot exists but could not be loaded; backed up and starting fresh"));
 		}
 	}
 	else
@@ -127,7 +175,7 @@ bool UCampSaveSubsystem::SaveNow()
 
 	UCampSaveGame* Save = Cast<UCampSaveGame>(UGameplayStatics::CreateSaveGameObject(UCampSaveGame::StaticClass()));
 	Save->SaveVersion = UCampSaveGame::CurrentSaveVersion;
-	Save->Iron = Stock->GetIron();
+	Save->Iron = Stock->GetWood();
 	Save->Stone = Stock->GetStone();
 	Save->UnlockedOptions = Stock->GetUnlockedOptions();
 	Save->NewOptions = Stock->GetNewOptions();
@@ -139,17 +187,3 @@ bool UCampSaveSubsystem::SaveNow()
 	return bOk;
 }
 
-void UCampSaveSubsystem::DeleteSaveAndReset()
-{
-	bApplyingLoad = true;
-	UGameplayStatics::DeleteGameInSlot(GetSlotName(), 0);
-	if (UCampStockSubsystem* Stock = GetGameInstance()->GetSubsystem<UCampStockSubsystem>())
-	{
-		Stock->RestoreState(0, {});
-	}
-	if (UCampMetaSubsystem* Meta = GetGameInstance()->GetSubsystem<UCampMetaSubsystem>())
-	{
-		Meta->ResetCamp();
-	}
-	bApplyingLoad = false;
-}

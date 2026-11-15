@@ -7,7 +7,39 @@
 #include "Camp/CampTypes.h"
 #include "CampSaveGame.generated.h"
 
-/** Persisted camp state. Bump SaveVersion if the layout changes incompatibly. */
+/** What to do with a save file, from the version it was written with. Pure, so it is unit tested. */
+struct GAME_01_API FSaveVersionCheck
+{
+	enum class EResult : uint8
+	{
+		/** Written by this version of the game: load it as it is. */
+		Current,
+		/** Written by an older version: migrate it while loading, and keep a backup of the file first. */
+		NeedsMigration,
+		/** Written by a newer version of the game: do not load it and never overwrite it (back it up). */
+		TooNew,
+	};
+
+	/**
+	 * True when the first bytes look like an Unreal save file (they start with the "GVAS" tag). A file that does not,
+	 * for example an empty or half-written one, must not be handed to the engine's loader: it asserts on a bad name table.
+	 */
+	static bool LooksLikeSaveFile(const uint8* Bytes, int32 Count)
+	{
+		return Bytes && Count >= 4 && Bytes[0] == 'G' && Bytes[1] == 'V' && Bytes[2] == 'A' && Bytes[3] == 'S';
+	}
+
+	static EResult Classify(int32 FileVersion, int32 CurrentVersion)
+	{
+		if (FileVersion > CurrentVersion)
+		{
+			return EResult::TooNew;
+		}
+		return FileVersion < CurrentVersion ? EResult::NeedsMigration : EResult::Current;
+	}
+};
+
+/** Persisted camp state. Bump CurrentSaveVersion (and add a migration) if the layout changes incompatibly. */
 UCLASS()
 class GAME_01_API UCampSaveGame : public USaveGame
 {

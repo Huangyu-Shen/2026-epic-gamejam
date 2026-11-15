@@ -34,7 +34,7 @@ struct GAME_01_API FEnemyTuning : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy", meta = (ClampMin = "0.0"))
 	float MoveSpeed = 330.0f;
 
-	/** Damage per contact hit, before the hero's damage-taken multiplier. */
+	/** Damage per contact hit, before the hero's Armor reduction. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enemy", meta = (ClampMin = "0.0"))
 	float ContactDamage = 10.0f;
 

@@ -124,6 +124,7 @@ struct GAME_01_API FLootContainerRow : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Container")
 	FText DisplayName;
 
+	/** The least and the most a container holds, of wood (a crate) or stone (a vault). The columns keep their old names so the data table keeps its values. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Container", meta = (ClampMin = "0"))
 	int32 IronMin = 0;
 
@@ -148,7 +149,7 @@ struct GAME_01_API FLootTuning : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Bag", meta = (ClampMin = "1"))
 	int32 BagCapacitySlots = 6;
 
-	/** Iron held per slot (iron count is rounded up to whole slots). */
+	/** Wood or stone held per slot (counts are rounded up to whole slots). The column keeps its old name so the data table keeps its value. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Bag", meta = (ClampMin = "1"))
 	int32 IronPerSlot = 10;
 

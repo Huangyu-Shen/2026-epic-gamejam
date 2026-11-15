@@ -403,7 +403,7 @@ void UDirectorProbeSubsystem::StepReelProbe()
 		// A reel and some Iron in the bag; picking the reel up raises heat. Nothing else spawns, the hero cannot die by accident.
 		Hero->Health->bGodMode = true;
 		GetWorld()->GetSubsystem<UEnemySpawnSubsystem>()->SetSchedulerEnabled(false);
-		Hero->Bag->TryAddIron(25);
+		Hero->Bag->TryAddWood(25);
 		{
 			// -ReelCount=N puts the first N reel types in the bag (default 1).
 			int32 ReelCount = 1;

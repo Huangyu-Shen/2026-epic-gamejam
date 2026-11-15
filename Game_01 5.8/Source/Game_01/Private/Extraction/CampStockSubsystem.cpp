@@ -1,14 +1,14 @@
 #include "Extraction/CampStockSubsystem.h"
 #include "Extraction/ExtractionTypes.h"
 
-void UCampStockSubsystem::AddIron(int32 Amount)
+void UCampStockSubsystem::AddWood(int32 Amount)
 {
 	if (Amount <= 0)
 	{
 		return;
 	}
-	Iron += Amount;
-	UE_LOG(LogExtraction, Log, TEXT("Camp Iron %d (+%d)"), Iron, Amount);
+	Wood += Amount;
+	UE_LOG(LogExtraction, Log, TEXT("Camp Wood %d (+%d)"), Wood, Amount);
 	OnStockChanged.Broadcast();
 }
 
@@ -56,25 +56,25 @@ TArray<FName> UCampStockSubsystem::TakeNewOptions()
 	return MoveTemp(NewOptions);
 }
 
-bool UCampStockSubsystem::SpendIron(int32 Amount)
+bool UCampStockSubsystem::SpendWood(int32 Amount)
 {
 	if (Amount <= 0)
 	{
 		return true;
 	}
-	if (Iron < Amount)
+	if (Wood < Amount)
 	{
 		return false;
 	}
-	Iron -= Amount;
-	UE_LOG(LogExtraction, Log, TEXT("Camp Iron %d (-%d)"), Iron, Amount);
+	Wood -= Amount;
+	UE_LOG(LogExtraction, Log, TEXT("Camp Wood %d (-%d)"), Wood, Amount);
 	OnStockChanged.Broadcast();
 	return true;
 }
 
-void UCampStockSubsystem::RestoreState(int32 InIron, const TArray<FName>& InUnlockedOptions, const TArray<FName>& InNewOptions, int32 InStone)
+void UCampStockSubsystem::RestoreState(int32 InWood, const TArray<FName>& InUnlockedOptions, const TArray<FName>& InNewOptions, int32 InStone)
 {
-	Iron = FMath::Max(InIron, 0);
+	Wood = FMath::Max(InWood, 0);
 	Stone = FMath::Max(InStone, 0);
 	UnlockedOptions.Reset();
 	NewOptions.Reset();
@@ -89,6 +89,6 @@ void UCampStockSubsystem::RestoreState(int32 InIron, const TArray<FName>& InUnlo
 			NewOptions.AddUnique(Option);
 		}
 	}
-	UE_LOG(LogExtraction, Log, TEXT("Camp stock restored: Iron %d, %d unlocked options"), Iron, UnlockedOptions.Num());
+	UE_LOG(LogExtraction, Log, TEXT("Camp stock restored: Wood %d, %d unlocked options"), Wood, UnlockedOptions.Num());
 	OnStockChanged.Broadcast();
 }

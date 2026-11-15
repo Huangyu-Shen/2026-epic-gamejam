@@ -25,14 +25,16 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Save")
 	bool SaveNow();
 
-	/** Deletes the slot and resets stock and buildings (developer/new-game helper). */
-	UFUNCTION(BlueprintCallable, Category = "Save")
-	void DeleteSaveAndReset();
-
 	/** Slot name of the single auto-save. */
 	static const FString& GetSlotName();
 
 private:
+	/** Copies the slot's file to <slot>.<Reason>.bak before the game changes or replaces it. Does nothing if that backup exists. */
+	static void BackupSlot(const TCHAR* Reason);
+
+	/** Reads the first bytes of the slot's file and asks FSaveVersionCheck whether it can be loaded safely. */
+	static bool SlotFileLooksValid();
+
 	UFUNCTION()
 	void HandleCampChanged();
 

@@ -17,11 +17,11 @@ bool FRunSettlementExtractedTest::RunTest(const FString& Parameters)
 	const FRunResult Result = FRunSettlement::Compute(25, 7, Reels, 1.5f, ERunOutcome::Extracted);
 
 	// Assert
-	TestEqual(TEXT("wood gained is floor(25 x 1.5)"), Result.IronGained, 37);
+	TestEqual(TEXT("wood gained is floor(25 x 1.5)"), Result.WoodGained, 37);
 	TestEqual(TEXT("stone gained is floor(7 x 1.5)"), Result.StoneGained, 10);
-	TestEqual(TEXT("the bag wood is reported before the multiplier"), Result.BagIron, 25);
+	TestEqual(TEXT("the bag wood is reported before the multiplier"), Result.BagWood, 25);
 	TestEqual(TEXT("both reels are carried out"), Result.RelicsBanked.Num(), 2);
-	TestEqual(TEXT("nothing is lost"), Result.IronLost + Result.StoneLost + Result.RelicsLost.Num(), 0);
+	TestEqual(TEXT("nothing is lost"), Result.WoodLost + Result.StoneLost + Result.RelicsLost.Num(), 0);
 	TestEqual(TEXT("the multiplier used is reported"), Result.MultiplierUsed, 1.5f);
 	return true;
 }
@@ -38,8 +38,8 @@ bool FRunSettlementDiedTest::RunTest(const FString& Parameters)
 	const FRunResult Result = FRunSettlement::Compute(25, 7, Reels, 2.0f, ERunOutcome::Died);
 
 	// Assert
-	TestEqual(TEXT("nothing is gained"), Result.IronGained + Result.StoneGained + Result.RelicsBanked.Num(), 0);
-	TestEqual(TEXT("all the wood is lost"), Result.IronLost, 25);
+	TestEqual(TEXT("nothing is gained"), Result.WoodGained + Result.StoneGained + Result.RelicsBanked.Num(), 0);
+	TestEqual(TEXT("all the wood is lost"), Result.WoodLost, 25);
 	TestEqual(TEXT("all the stone is lost"), Result.StoneLost, 7);
 	TestEqual(TEXT("the reel is lost"), Result.RelicsLost.Num(), 1);
 	return true;
@@ -54,7 +54,7 @@ bool FRunSettlementNoOutcomeTest::RunTest(const FString& Parameters)
 	const FRunResult Result = FRunSettlement::Compute(25, 7, { ERelicType::Aegis }, 2.0f, ERunOutcome::None);
 
 	// Assert
-	TestEqual(TEXT("no wood moves"), Result.IronGained + Result.IronLost, 0);
+	TestEqual(TEXT("no wood moves"), Result.WoodGained + Result.WoodLost, 0);
 	TestEqual(TEXT("no stone moves"), Result.StoneGained + Result.StoneLost, 0);
 	TestEqual(TEXT("no reel moves"), Result.RelicsBanked.Num() + Result.RelicsLost.Num(), 0);
 	return true;
@@ -69,7 +69,7 @@ bool FRunSettlementNegativeMultiplierTest::RunTest(const FString& Parameters)
 	const FRunResult Result = FRunSettlement::Compute(10, 10, {}, -3.0f, ERunOutcome::Extracted);
 
 	// Assert
-	TestEqual(TEXT("wood gained is clamped at zero"), Result.IronGained, 0);
+	TestEqual(TEXT("wood gained is clamped at zero"), Result.WoodGained, 0);
 	TestEqual(TEXT("stone gained is clamped at zero"), Result.StoneGained, 0);
 	return true;
 }

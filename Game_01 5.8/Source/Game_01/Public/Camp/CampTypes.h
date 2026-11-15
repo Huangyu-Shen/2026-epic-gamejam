@@ -28,7 +28,7 @@ struct GAME_01_API FBuildingRow : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Building")
 	FText DisplayName;
 
-	/** Iron cost of the next upgrade: floor(BaseCost * CostGrowth^CurrentLevel). */
+	/** Cost of the next upgrade (wood or stone, see GetCostResource): floor(BaseCost * CostGrowth^CurrentLevel). */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Building", meta = (ClampMin = "0"))
 	int32 BaseCost = 10;
 
@@ -45,4 +45,16 @@ struct GAME_01_API FBuildingRow : public FTableRowBase
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Building", meta = (ClampMin = "1"))
 	int32 MaxLevel = 5;
+
+	/** What the next upgrade costs when the building is at CurrentLevel: floor(BaseCost * CostGrowth^CurrentLevel). */
+	int32 CostForLevel(int32 CurrentLevel) const
+	{
+		return FMath::FloorToInt32(static_cast<float>(BaseCost) * FMath::Pow(CostGrowth, static_cast<float>(CurrentLevel)));
+	}
+
+	/** Total flat weapon damage a Smithy at this level adds. */
+	float DamageBonusForLevel(int32 Level) const { return static_cast<float>(Level) * DamagePerLevel; }
+
+	/** Total flat max health a Clinic at this level adds. */
+	float MaxHealthBonusForLevel(int32 Level) const { return static_cast<float>(Level) * MaxHealthPerLevel; }
 };

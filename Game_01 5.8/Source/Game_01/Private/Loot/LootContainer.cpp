@@ -62,17 +62,8 @@ void ALootContainer::ShowOpened()
 	}
 }
 
-bool ALootContainer::Interact(AActor* InInstigator)
+ULootBagComponent* ALootContainer::FindBag(AActor* InInstigator)
 {
-	if (bSearched || !InInstigator)
-	{
-		if (bSearched)
-		{
-			UHudMessageSubsystem::Post(this, TEXT("Already searched"), FLinearColor(0.6f, 0.6f, 0.6f), 2.0f);
-		}
-		return false;
-	}
-
 	ULootBagComponent* Bag = InInstigator->FindComponentByClass<ULootBagComponent>();
 	if (!Bag)
 	{
@@ -84,6 +75,45 @@ bool ALootContainer::Interact(AActor* InInstigator)
 			}
 		}
 	}
+	return Bag;
+}
+
+bool ALootContainer::RollContents(const ULootBagComponent& Bag, ULootConfig& Config)
+{
+	FLootContainerRow Row;
+	if (!Config.FindContainerRow(ContainerType, Row))
+	{
+		UE_LOG(LogLoot, Warning, TEXT("%s: no container row for this type."), *GetName());
+		return false;
+	}
+	const int32 AmountLo = FMath::Max(0, Row.IronMin);
+	RolledAmount = FMath::RandRange(AmountLo, FMath::Max(AmountLo, Row.IronMax));
+	// A lost film reel only drops if it would unlock something new and the bag does not already hold one.
+	TArray<FName> Unlocked;
+	if (const UWorld* World = GetWorld())
+	{
+		if (const UCampStockSubsystem* Stock = UGameInstance::GetSubsystem<UCampStockSubsystem>(World->GetGameInstance()))
+		{
+			Unlocked = Stock->GetUnlockedOptions();
+		}
+	}
+	bRolledRelic = FMath::FRand() < Row.RelicChance && Config.PickRandomRelic(Unlocked, Bag.GetRelics(), RolledRelicType);
+	bRolled = true;
+	return true;
+}
+
+bool ALootContainer::Interact(AActor* InInstigator)
+{
+	if (bSearched || !InInstigator)
+	{
+		if (bSearched)
+		{
+			UHudMessageSubsystem::Post(this, TEXT("Already searched"), FLinearColor(0.6f, 0.6f, 0.6f), 2.0f);
+		}
+		return false;
+	}
+
+	ULootBagComponent* Bag = FindBag(InInstigator);
 	if (!Bag)
 	{
 		UE_LOG(LogLoot, Warning, TEXT("%s: instigator has no ULootBagComponent."), *GetName());
@@ -92,28 +122,13 @@ bool ALootContainer::Interact(AActor* InInstigator)
 
 	ULootConfig* UseConfig = ConfigOverride ? ConfigOverride.Get() : Bag->GetConfig();
 
-	FLootContainerRow Row;
 	if (!bRolled)
 	{
-		if (!UseConfig->FindContainerRow(ContainerType, Row))
+		if (!RollContents(*Bag, *UseConfig))
 		{
-			UE_LOG(LogLoot, Warning, TEXT("%s: no container row for this type."), *GetName());
 			return false;
 		}
-		const int32 IronLo = FMath::Max(0, Row.IronMin);
-		RolledIron = FMath::RandRange(IronLo, FMath::Max(IronLo, Row.IronMax));
-		// A lost film reel only drops if it would unlock something new and the bag does not already hold one.
-		TArray<FName> Unlocked;
-		if (const UWorld* World = GetWorld())
-		{
-			if (const UCampStockSubsystem* Stock = UGameInstance::GetSubsystem<UCampStockSubsystem>(World->GetGameInstance()))
-			{
-				Unlocked = Stock->GetUnlockedOptions();
-			}
-		}
-		bRolledRelic = FMath::FRand() < Row.RelicChance && UseConfig->PickRandomRelic(Unlocked, Bag->GetRelics(), RolledRelicType);
-		bRolled = true;
-		if (!bRolledRelic && RolledIron == 0)
+		if (!bRolledRelic && RolledAmount == 0)
 		{
 			bSearched = true; // empty container
 			ShowOpened();
@@ -125,7 +140,7 @@ bool ALootContainer::Interact(AActor* InInstigator)
 	if (bRolledRelic && Bag->GetRelics().Contains(RolledRelicType))
 	{
 		bRolledRelic = false;
-		if (RolledIron == 0)
+		if (RolledAmount == 0)
 		{
 			bSearched = true;
 			ShowOpened();
@@ -134,7 +149,7 @@ bool ALootContainer::Interact(AActor* InInstigator)
 	}
 
 	const ELootResource Resource = ContainerType == ELootContainerType::Vault ? ELootResource::Stone : ELootResource::Wood;
-	if (Bag->TryAddLoot(RolledIron, bRolledRelic, RolledRelicType, Resource) != EBagAddResult::Success)
+	if (Bag->TryAddLoot(RolledAmount, bRolledRelic, RolledRelicType, Resource) != EBagAddResult::Success)
 	{
 		return false; // refusal already reported by the bag; container remains searchable
 	}
@@ -144,8 +159,8 @@ bool ALootContainer::Interact(AActor* InInstigator)
 	const FString RelicText = bRolledRelic
 		? FString::Printf(TEXT(" + lost reel %s"), *StaticEnum<ERelicType>()->GetDisplayNameTextByValue(static_cast<int64>(RolledRelicType)).ToString())
 		: FString();
-	UHudMessageSubsystem::Post(this, FString::Printf(TEXT("Searched: +%d %s%s"), RolledIron, Resource == ELootResource::Stone ? TEXT("stone") : TEXT("wood"), *RelicText),
+	UHudMessageSubsystem::Post(this, FString::Printf(TEXT("Searched: +%d %s%s"), RolledAmount, Resource == ELootResource::Stone ? TEXT("stone") : TEXT("wood"), *RelicText),
 		FLinearColor(1.0f, 0.85f, 0.3f), 3.0f);
-	OnSearched.Broadcast(this, RolledIron, bRolledRelic, RolledRelicType);
+	OnSearched.Broadcast(this, RolledAmount, bRolledRelic, RolledRelicType);
 	return true;
 }

@@ -191,10 +191,21 @@ void URunHudWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 	RelicText->SetText(FText::FromString(Reels.IsEmpty() ? FString(TEXT("No lost film reel")) : Reels.TrimEnd()));
 
 	// Extraction bar: a map can hold more than one extraction point, so show the furthest-filled one.
-	float Progress = 0.0f;
-	for (TActorIterator<AExtractionZone> It(World); It; ++It)
+	if (!bZonesFound)
 	{
-		Progress = FMath::Max(Progress, It->GetProgress());
+		for (TActorIterator<AExtractionZone> It(World); It; ++It)
+		{
+			Zones.Add(*It);
+		}
+		bZonesFound = true;
+	}
+	float Progress = 0.0f;
+	for (const TWeakObjectPtr<AExtractionZone>& Point : Zones)
+	{
+		if (Point.IsValid())
+		{
+			Progress = FMath::Max(Progress, Point->GetProgress());
+		}
 	}
 	ExtractionBar->SetPercent(Progress);
 	ExtractionRoot->SetVisibility(Progress > 0.0f ? ESlateVisibility::SelfHitTestInvisible : ESlateVisibility::Collapsed);
@@ -248,14 +259,14 @@ void URunHudWidget::RefreshResultPanel()
 		if (Result.Outcome == ERunOutcome::Extracted)
 		{
 			Text = FString::Printf(TEXT("EXTRACTED\n\nBag wood %d stone %d x %.2f = +%d wood +%d stone to camp\nLost film reels carried out (%d): %s\nUnlocked for every later run: %s"),
-				Result.BagIron, Result.BagStone, Result.MultiplierUsed, Result.IronGained, Result.StoneGained, Result.RelicsBanked.Num(), *HudRelicNames(Result.RelicsBanked),
+				Result.BagWood, Result.BagStone, Result.MultiplierUsed, Result.WoodGained, Result.StoneGained, Result.RelicsBanked.Num(), *HudRelicNames(Result.RelicsBanked),
 				*HudOptionNames(Result.OptionsUnlocked));
 			ResultText->SetColorAndOpacity(FSlateColor(DirectorUi::GoodColor));
 		}
 		else
 		{
 			Text = FString::Printf(TEXT("YOU DIED\n\nLost %d wood, %d stone and %d lost film reels: %s\nThe reels were lost: nothing was unlocked"),
-				Result.IronLost, Result.StoneLost, Result.RelicsLost.Num(), *HudRelicNames(Result.RelicsLost));
+				Result.WoodLost, Result.StoneLost, Result.RelicsLost.Num(), *HudRelicNames(Result.RelicsLost));
 			ResultText->SetColorAndOpacity(FSlateColor(DirectorUi::BadColor));
 		}
 		ResultText->SetText(FText::FromString(Text));
