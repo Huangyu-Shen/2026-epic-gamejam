@@ -1,7 +1,9 @@
 #include "Enemies/EnemySpawnSubsystem.h"
+#include "Enemies/BossRejectsSubsystem.h"
 #include "Enemies/Enemy.h"
 #include "Enemies/EnemyManagerSubsystem.h"
 #include "Extraction/RunOutcomeSubsystem.h"
+#include "Game/PlayAreaSubsystem.h"
 #include "Game/DirectorTuningSettings.h"
 #include "Loot/LootHeatSubsystem.h"
 #include "Player/HeroCharacter.h"
@@ -126,7 +128,16 @@ int32 UEnemySpawnSubsystem::SpawnHorde(int32 Count, bool bIgnoreCap)
 AEnemy* UEnemySpawnSubsystem::SpawnBoss()
 {
 	const AHeroCharacter* Hero = Cast<AHeroCharacter>(UGameplayStatics::GetPlayerPawn(this, 0));
-	return Hero ? SpawnOnRing(*Hero, BossTuning) : nullptr;
+	AEnemy* Boss = Hero ? SpawnOnRing(*Hero, BossTuning) : nullptr;
+	if (Boss)
+	{
+		// Story 012: from now on the player's cuts feed this boss.
+		if (UBossRejectsSubsystem* Rejects = GetWorld()->GetSubsystem<UBossRejectsSubsystem>())
+		{
+			Rejects->SetBoss(Boss);
+		}
+	}
+	return Boss;
 }
 
 AEnemy* UEnemySpawnSubsystem::SpawnOnRing(const AHeroCharacter& Hero, const FEnemyTuning& Row)
@@ -137,8 +148,12 @@ AEnemy* UEnemySpawnSubsystem::SpawnOnRing(const AHeroCharacter& Hero, const FEne
 
 	// Rest the cube on the floor under the hero: the hero's origin is its capsule centre.
 	const double FloorZ = HeroLocation.Z - Hero.GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
-	const FVector Location(HeroLocation.X + FMath::Cos(Angle) * Radius, HeroLocation.Y + FMath::Sin(Angle) * Radius,
+	FVector Location(HeroLocation.X + FMath::Cos(Angle) * Radius, HeroLocation.Y + FMath::Sin(Angle) * Radius,
 		FloorZ + Row.Scale * AEnemy::EngineCubeSize * 0.5f);
+	if (const UPlayAreaSubsystem* PlayArea = GetWorld()->GetSubsystem<UPlayAreaSubsystem>())
+	{
+		Location = PlayArea->ClampToArea(Location, Row.Scale * AEnemy::EngineCubeSize * 0.5f);
+	}
 
 	FActorSpawnParameters Params;
 	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;

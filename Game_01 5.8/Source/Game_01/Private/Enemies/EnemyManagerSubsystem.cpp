@@ -1,4 +1,5 @@
 #include "Enemies/EnemyManagerSubsystem.h"
+#include "Game/PlayAreaSubsystem.h"
 #include "Enemies/Enemy.h"
 #include "Extraction/RunOutcomeSubsystem.h"
 #include "Game/DirectorTuningSettings.h"
@@ -169,7 +170,8 @@ void UEnemyManagerSubsystem::Tick(float DeltaTime)
 		}
 	}
 
-	// Apply.
+	// Apply. Enemies never leave the floor: the map has a void around it.
+	const UPlayAreaSubsystem* PlayArea = GetWorld()->GetSubsystem<UPlayAreaSubsystem>();
 	for (int32 Index = 0; Index < Num; ++Index)
 	{
 		FVector2D Push = Pushes[Index];
@@ -180,6 +182,10 @@ void UEnemyManagerSubsystem::Tick(float DeltaTime)
 		FVector NewLocation = Positions[Index];
 		NewLocation.X += Push.X * DeltaTime;
 		NewLocation.Y += Push.Y * DeltaTime;
+		if (PlayArea)
+		{
+			NewLocation = PlayArea->ClampToArea(NewLocation, Enemies[Index]->GetBodyRadius());
+		}
 		Enemies[Index]->SetActorLocationAndRotation(NewLocation, FRotator(0.0, Yaws[Index], 0.0));
 		Enemies[Index]->UpdateHitFeedback(Now);
 	}

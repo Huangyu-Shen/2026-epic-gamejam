@@ -1,6 +1,6 @@
 # Day 3 (14 Nov) · Closing the stories without pretending
 
-[Dev log index](../README.md) · [← previous](08-story-010-first-number-pass.md) · [next →](10-status-so-far.md)
+[Dev log index](../README.md) · [← previous](08-story-010-first-number-pass.md) · [next →](10-first-playtest-of-the-package.md)
 
 Building a story and closing it are two steps here. After each of stories 008, 009
 and 010 I ran the template's `/story-done` skill, which walks every acceptance

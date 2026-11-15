@@ -35,7 +35,7 @@ can read a day from top to bottom or open just the part you care about.
 | [06 Making the repository English](day-2/06-english-sweep-and-gitignore.md) | Translating the project with parallel agents; auditing `.gitignore` |
 | [07 Honest status](day-2/07-honest-status.md) | What was built, decided, unchecked and missing at the end of the day |
 
-### Day 3 — 14 Nov: the lost film reels (in progress)
+### Day 3 — 14 Nov: lost film reels, a playtest, and the boss (in progress)
 
 | Entry | What it covers |
 |---|---|
@@ -48,7 +48,11 @@ can read a day from top to bottom or open just the part you care about.
 | [07 When the agent was blocked](day-3/07-when-the-agent-was-blocked.md) | A command refused by the permission checker, and what the agent did |
 | [08 Story 010: the first number pass](day-3/08-story-010-first-number-pass.md) | A bot measures the pace; five sets tried; four numbers changed |
 | [09 Closing the stories](day-3/09-closing-the-stories.md) | How stories 008–010 were closed, with the gaps written down |
-| [10 Status so far](day-3/10-status-so-far.md) | What is done, not done and not checked |
+| [10 The first playtest of the package](day-3/10-first-playtest-of-the-package.md) | What the author found, and the level-up rule that was backwards |
+| [11 The new level-up rule and UI](day-3/11-new-level-up-rule-and-ui.md) | Take one of three with an optional cut; 7 to 13 options; the cleaner UI |
+| [12 Sound, free assets, and a bar that never showed](day-3/12-extraction-sound-and-the-two-zones.md) | Audio from free packs, visible weapon effects, the two-zone extraction bug |
+| [13 The boss takes what you cut, and the void](day-3/13-story-012-boss-and-the-void.md) | Story 012 built after its cut-off; the floor edge fix; what was left out of git |
+| [14 Status so far](day-3/14-status-so-far.md) | What is done, not done and not checked |
 
 ### Day 4 — 15 Nov: package and submit (planned)
 

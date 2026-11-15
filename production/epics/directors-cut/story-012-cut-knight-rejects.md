@@ -1,13 +1,13 @@
 # Story 012: The Cut Knight brings the rejects
 
 > **Epic**: Director's Cut (MVP)
-> **Status**: Ready
+> **Status**: Complete
 > **Layer**: N/A (minimal)
 > **Type**: Integration
 > **Estimate**: L
 > **Tier**: Could (`design/prd/master-prd.md` §6 row 3). **Cannot begin after Day 3 18:00** (PRD §8 rule 3). If it has not started by then, it is cut, not carried over
 > **Manifest Version**: N/A (minimal — no control manifest)
-> **Last Updated**: 2026-11-14 (reviewed against the PRD and the source tree; second review filled the gaps marked "Review 2")
+> **Last Updated**: 2026-11-15
 
 ## Context
 
@@ -96,3 +96,24 @@ All paths are under `Game_01 5.8/Source/Game_01/`.
 - (Review 2) Depends on the code part of `production/epics/directors-cut/story-011-art-audio-feel.md`: the boss's weapon attacks need the real weapon visuals. Drawn with DrawDebug they would be invisible in a Shipping package.
 - Order: last. Start only when stories 008-011 are done or safely under way, and before Day 3 18:00
 - Unlocks: None
+
+## Implementation Notes (2026-11-15)
+
+Built as `UBossRejectsSubsystem` (new), hooked from `UEnemySpawnSubsystem::SpawnBoss`. It reads `GetCuttingRoomFloor()` every tick and applies each new cut at once.
+
+- Weapon cut → boss attack: Blade, Bolt, Chain, Gun = one slow ball at the hero; Nova = a red ring on the floor with a 1 s wind-up; Orbit = a ring of 8 balls. Cutting the same weapon again adds 25% of the base damage.
+- Passive cut → Swiftness: +8% boss speed; Might: +15% contact damage; Haste: attack interval ×0.9 (floor 0.5); Vitality: +150 health; everything else (Greed, Magnet, Reach, Armor, Regen, Crit): +100 health. Caps: stat bonus 100%, bonus health 1500.
+- All numbers are `BossRejects` in Project Settings > Game > Director Tuning (code defaults, no table).
+- Boss dead → its balls and rings disappear, later cuts do nothing.
+- Without the Cut Knight card there is no boss, so nothing changes.
+- Not yet done: a real run through the camp with the card slotted; checking the "a build that used all its cuts can still beat the boss" criterion by hand; the boss-attack damage numbers are first estimates.
+- Evidence (probe `-BossProbe`, boss placed 900 cm from the hero, hero in god mode): `production/qa/evidence/story-012-cut-knight/` — 1-gun-balls, 2-slam-warning, 3-ring-of-balls.
+
+## Completion Notes
+**Completed**: 2026-11-15
+**Criteria**: accepted by the author after playing the packaged build (1-2 cuts per run): boss attacks and red rings are readable and dodgeable; the boss does not kill the hero at the start of a run; HUD line per cut shown.
+**Deviations**: None. Not checked: a build that spent all its cuts beating the boss (the author only collected 1-2 cuts). No automated test (waived at `qa.level: minimal`).
+**Test Evidence**: `production/qa/evidence/story-012-cut-knight/` (1 to 3 boss attacks, 4 void fix).
+**Reviewed by**: self, no independent review
+
+Added at acceptance: the map has no walls and a void around it, so `UPlayAreaSubsystem` (new) finds the floor (Floor_0, x and y from -4000 to 4000) at level start and keeps the hero, every enemy, the boss and new spawns on it. Probe `-EdgeProbe`: hero pushed to x=6000 ended at x=3966; farthest enemy 3970.
