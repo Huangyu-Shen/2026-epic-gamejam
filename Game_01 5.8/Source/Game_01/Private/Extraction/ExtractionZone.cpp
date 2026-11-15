@@ -22,7 +22,7 @@ AExtractionZone::AExtractionZone()
 	ZoneVolume = CreateDefaultSubobject<UBoxComponent>(TEXT("ZoneVolume"));
 	SetRootComponent(ZoneVolume);
 	ZoneVolume->SetCollisionProfileName(TEXT("OverlapOnlyPawn"));
-	ZoneVolume->SetBoxExtent(FVector(200.0f, 200.0f, 100.0f));
+	ZoneVolume->SetBoxExtent(FVector(400.0f, 400.0f, 100.0f));
 
 	// Greybox disc: the engine cylinder (100 cm wide) flattened to match the volume's footprint.
 	DiscMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("DiscMesh"));
@@ -32,7 +32,7 @@ AExtractionZone::AExtractionZone()
 	if (CylinderFinder.Succeeded())
 	{
 		DiscMesh->SetStaticMesh(CylinderFinder.Object);
-		DiscMesh->SetRelativeScale3D(FVector(4.0f, 4.0f, 0.02f));
+		DiscMesh->SetRelativeScale3D(FVector(8.0f, 8.0f, 0.02f));
 		DiscMesh->SetRelativeLocation(FVector(0.0f, 0.0f, -100.0f));
 	}
 
@@ -64,7 +64,7 @@ AExtractionZone::AExtractionZone()
 	{
 		PortalMesh->SetStaticMesh(PortalFinder.Object);
 		PortalMesh->SetRelativeLocation(FVector(0.0f, 0.0f, -100.0f));
-		PortalMesh->SetRelativeScale3D(FVector(0.5f));
+		PortalMesh->SetRelativeScale3D(FVector(1.0f));
 	}
 	else
 	{
@@ -81,7 +81,7 @@ AExtractionZone::AExtractionZone()
 
 void AExtractionZone::UpdateFillVisual() const
 {
-	const float Size = FMath::Max(Progress, 0.01f) * 4.0f;
+	const float Size = FMath::Max(Progress, 0.01f) * 8.0f;
 	FillMesh->SetRelativeScale3D(FVector(Size, Size, 0.03f));
 }
 

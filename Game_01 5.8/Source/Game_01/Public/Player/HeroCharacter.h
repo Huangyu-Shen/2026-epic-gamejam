@@ -68,7 +68,7 @@ public:
 
 	/** Size of the hero model against its natural size (the pack's hero is small). */
 	UPROPERTY(EditAnywhere, Category = "Hero|Model", meta = (ClampMin = "0.1"))
-	float HeroModelScale = 1.6f;
+	float HeroModelScale = 1.1f;
 
 	/** Degrees added to the model's facing so it looks where it walks. */
 	UPROPERTY(EditAnywhere, Category = "Hero|Model")

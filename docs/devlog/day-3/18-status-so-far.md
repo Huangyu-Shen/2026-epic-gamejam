@@ -1,6 +1,6 @@
 # Day 3 (14 Nov) · Status so far
 
-[Dev log index](../README.md) · [← previous](16-the-forest-floor.md)
+[Dev log index](../README.md) · [← previous](17-wood-stone-and-the-camp.md)
 
 This entry is a snapshot. It replaces the earlier one, written after story 010, and it
 will be rewritten as the work goes on.
@@ -19,6 +19,9 @@ will be rewritten as the work goes on.
   package.
 - The boss, the void fix, the design and wiki corrections and the dev log are merged to
   main (pull requests 4 and 5).
+- Loot is wood (crates) and stone (vaults); the Smithy costs stone, the Clinic wood; the camp has
+  the forest floor; sizes and the portal changed ([entry 17](17-wood-stone-and-the-camp.md)).
+  **Not committed.**
 - The floor (a meadow with a rim of trees and rocks), the loot containers (stumps and boulders)
   and the extraction point (a portal and the green beam) use the forest pack
   ([entry 16](16-the-forest-floor.md)). Checked in the editor and in a package.
@@ -33,8 +36,8 @@ will be rewritten as the work goes on.
 
 ## Not done
 
-- Story 011 is still In Progress: the camp scene is still plain shapes, the boss attacks are
-  orange balls and a red ring, and star-ups only make beams thicker.
+- Story 011 is still In Progress: the camp buildings are stand-ins (no houses in the pack),
+  the boss attacks are orange balls and a red ring, and star-ups only make beams thicker.
 - Story 013 (package, texts, video, final checks).
 - The design docs do not yet mention the Esc menu and its settings (a PRD Should item the
   author asked for).
@@ -42,6 +45,9 @@ will be rewritten as the work goes on.
 - The extra check on a real development save (moving it to Magnet and Chain) was not run.
 
 ## Not checked
+
+- Stone supply against the Smithy's cost, and clicking the new camp buildings.
+- The design docs, the PRD and the wiki still say Iron.
 
 - The Esc menu with a real mouse, Esc after clicking a button, and the camp's menu.
 

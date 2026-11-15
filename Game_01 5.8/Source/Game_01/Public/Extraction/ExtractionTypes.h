@@ -45,7 +45,7 @@ struct GAME_01_API FRunResult
 	UPROPERTY(BlueprintReadOnly, Category = "Run")
 	ERunOutcome Outcome = ERunOutcome::None;
 
-	/** Iron in the bag when the run ended (before the multiplier). */
+	/** Wood in the bag when the run ended (before the multiplier). The fields keep their old Iron names. */
 	UPROPERTY(BlueprintReadOnly, Category = "Run")
 	int32 BagIron = 0;
 
@@ -56,6 +56,16 @@ struct GAME_01_API FRunResult
 	/** Died: Iron that was in the bag and is gone. */
 	UPROPERTY(BlueprintReadOnly, Category = "Run")
 	int32 IronLost = 0;
+
+	/** Stone: in the bag at the end, added to the camp (extracted), and lost (died). */
+	UPROPERTY(BlueprintReadOnly, Category = "Run")
+	int32 BagStone = 0;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Run")
+	int32 StoneGained = 0;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Run")
+	int32 StoneLost = 0;
 
 	/** Extracted: lost film reels carried out. */
 	UPROPERTY(BlueprintReadOnly, Category = "Run")
@@ -81,5 +91,5 @@ struct GAME_01_API FRunSettlement
 	 * Extracted: IronGained = floor(BagIron * EarningsMultiplier), all reels carried out.
 	 * Died: nothing gained, the whole bag reported as lost. None: empty result.
 	 */
-	static FRunResult Compute(int32 BagIron, const TArray<ERelicType>& BagRelics, float EarningsMultiplier, ERunOutcome Outcome);
+	static FRunResult Compute(int32 BagIron, int32 BagStone, const TArray<ERelicType>& BagRelics, float EarningsMultiplier, ERunOutcome Outcome);
 };

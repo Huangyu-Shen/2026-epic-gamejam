@@ -41,14 +41,14 @@ public:
 
 	/** Checks whether the loot would fit without adding it. */
 	UFUNCTION(BlueprintPure, Category = "Loot")
-	EBagAddResult CanAdd(int32 IronAmount, bool bWithRelic);
+	EBagAddResult CanAdd(int32 Amount, bool bWithRelic, ELootResource Resource = ELootResource::Wood);
 
 	/**
 	 * Atomically adds Iron and optionally one lost film reel. On failure nothing is added,
 	 * OnPickupRefused fires and a debug message is shown. A reel raises heat.
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Loot")
-	EBagAddResult TryAddLoot(int32 IronAmount, bool bAddRelic, ERelicType RelicType);
+	EBagAddResult TryAddLoot(int32 Amount, bool bAddRelic, ERelicType RelicType, ELootResource Resource = ELootResource::Wood);
 
 	UFUNCTION(BlueprintCallable, Category = "Loot")
 	EBagAddResult TryAddIron(int32 IronAmount) { return TryAddLoot(IronAmount, false, ERelicType::Swiftstep); }
@@ -64,6 +64,13 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Loot")
 	int32 GetIronCount() const { return IronCount; }
+
+	/** Wood in the bag (the field keeps its old name, IronCount, from when wood was Iron). */
+	UFUNCTION(BlueprintPure, Category = "Loot")
+	int32 GetWoodCount() const { return IronCount; }
+
+	UFUNCTION(BlueprintPure, Category = "Loot")
+	int32 GetStoneCount() const { return StoneCount; }
 
 	/** Lost film reels currently carried (copy). */
 	UFUNCTION(BlueprintPure, Category = "Loot")
@@ -95,6 +102,9 @@ private:
 
 	UPROPERTY(VisibleInstanceOnly, Transient, Category = "Loot", meta = (AllowPrivateAccess = "true"))
 	int32 IronCount = 0;
+
+	UPROPERTY(VisibleInstanceOnly, Transient, Category = "Loot", meta = (AllowPrivateAccess = "true"))
+	int32 StoneCount = 0;
 
 	UPROPERTY(VisibleInstanceOnly, Transient, Category = "Loot", meta = (AllowPrivateAccess = "true"))
 	TArray<ERelicType> Relics;

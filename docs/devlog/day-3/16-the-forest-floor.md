@@ -1,6 +1,6 @@
 # Day 3 (15 Nov, night) · The forest floor and the props
 
-[Dev log index](../README.md) · [← previous](15-the-first-real-models.md) · [next →](17-status-so-far.md)
+[Dev log index](../README.md) · [← previous](15-the-first-real-models.md) · [next →](17-wood-stone-and-the-camp.md)
 
 After the hero and the enemies, the floor, the loot containers and the extraction point were
 still grey shapes.

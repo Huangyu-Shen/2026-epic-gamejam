@@ -24,11 +24,30 @@ ACampWarehouse::ACampWarehouse()
 		Mesh->SetMaterial(0, DefaultMat.Object);
 	}
 	Mesh->SetRelativeScale3D(FVector(1.6f, 1.6f, 0.8f));
+
+	// A low mountain ridge from the "RPG Tiny Fantasy Forest" pack (Dungeon Mason, Fab) stands in for the warehouse cube.
+	Model = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Model"));
+	Model->SetupAttachment(Mesh);
+	Model->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	Model->SetUsingAbsoluteScale(true);
+	Model->SetUsingAbsoluteLocation(true);
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> RidgeFinder(TEXT("/Game/RPGTinyFantasyForest/Mesh/Mountain/SM_RockMountainE.SM_RockMountainE"));
+	if (RidgeFinder.Succeeded())
+	{
+		Model->SetStaticMesh(RidgeFinder.Object);
+		Model->SetWorldScale3D(FVector(0.4f));
+		Mesh->SetVisibility(false);
+	}
 }
 
 void ACampWarehouse::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if (Model->GetStaticMesh())
+	{
+		Model->SetWorldLocation(GetActorLocation() - FVector(0.0f, 0.0f, 40.0f));
+	}
 
 	if (UMaterialInstanceDynamic* Material = Mesh->CreateDynamicMaterialInstance(0))
 	{

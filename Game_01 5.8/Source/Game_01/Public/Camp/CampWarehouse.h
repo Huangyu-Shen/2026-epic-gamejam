@@ -5,6 +5,8 @@
 #include "GameFramework/Actor.h"
 #include "CampWarehouse.generated.h"
 
+class UStaticMeshComponent;
+
 UCLASS()
 class GAME_01_API ACampWarehouse : public AActor
 {
@@ -19,4 +21,7 @@ protected:
 private:
 	UPROPERTY(VisibleAnywhere, Category = "Camp")
 	TObjectPtr<UStaticMeshComponent> Mesh;
+
+	UPROPERTY(VisibleAnywhere, Category = "Camp")
+	TObjectPtr<UStaticMeshComponent> Model;
 };

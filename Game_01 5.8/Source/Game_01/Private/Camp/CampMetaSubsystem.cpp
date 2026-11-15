@@ -93,15 +93,16 @@ bool UCampMetaSubsystem::TryUpgrade(EBuildingType Type, FText& Reason)
 
 	const int32 Cost = GetUpgradeCost(Type);
 	UCampStockSubsystem* Stock = GetGameInstance()->GetSubsystem<UCampStockSubsystem>();
-	if (!Stock || !Stock->SpendIron(Cost))
+	const bool bStone = GetCostResource(Type) == ELootResource::Stone;
+	if (!Stock || !(bStone ? Stock->SpendStone(Cost) : Stock->SpendIron(Cost)))
 	{
-		Reason = FText::FromString(FString::Printf(TEXT("Not enough Iron (need %d)"), Cost));
+		Reason = FText::FromString(FString::Printf(TEXT("Not enough %s (need %d)"), bStone ? TEXT("stone") : TEXT("wood"), Cost));
 		return false;
 	}
 
 	int32& Level = Levels.FindOrAdd(Type);
 	++Level;
-	UE_LOG(LogCamp, Log, TEXT("%s upgraded to level %d for %d Iron"), *BuildingDisplayName(Type).ToString(), Level, Cost);
+	UE_LOG(LogCamp, Log, TEXT("%s upgraded to level %d for %d %s"), *BuildingDisplayName(Type).ToString(), Level, Cost, bStone ? TEXT("stone") : TEXT("wood"));
 	UGameAudioSubsystem::PlayIn(GetGameInstance(), EGameSound::Upgrade);
 	OnMetaChanged.Broadcast();
 	return true;

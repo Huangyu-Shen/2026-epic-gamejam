@@ -55,7 +55,8 @@ can read a day from top to bottom or open just the part you care about.
 | [14 Leaving a run: a button, then an Esc menu](day-3/14-esc-menu-and-leaving-a-run.md) | A button for leaving a run, replaced by the Esc menu the author described; two build problems |
 | [15 The first real models](day-3/15-the-first-real-models.md) | Hero and enemies swapped for Fab models; two packs dropped; frame rate checked |
 | [16 The forest floor and the props](day-3/16-the-forest-floor.md) | A grass land mass, rim of trees, stumps and boulders as containers, a portal; what the packs lacked |
-| [17 Status so far](day-3/17-status-so-far.md) | What is done, not done and not checked |
+| [17 Wood and stone, a forest camp, and sizes](day-3/17-wood-stone-and-the-camp.md) | Loot split into wood and stone, camp dressed like the run map, portal bigger, models smaller |
+| [18 Status so far](day-3/18-status-so-far.md) | What is done, not done and not checked |
 
 ### Day 4 — 15 Nov: package and submit (planned)
 

@@ -25,8 +25,13 @@ public:
 	UPROPERTY()
 	int32 SaveVersion = 1;
 
+	/** Wood. The field keeps its old name, Iron, so older saves still load: their Iron becomes wood. */
 	UPROPERTY()
 	int32 Iron = 0;
+
+	/** Stone. Missing in older saves, which read it back as 0. */
+	UPROPERTY()
+	int32 Stone = 0;
 
 	/** Read from a v1 save only (each relic becomes its unlocked option); never written. */
 	UPROPERTY()

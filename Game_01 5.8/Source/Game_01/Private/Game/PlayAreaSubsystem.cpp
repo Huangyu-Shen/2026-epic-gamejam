@@ -1,4 +1,5 @@
 #include "Game/PlayAreaSubsystem.h"
+#include "Camp/CampGameMode.h"
 #include "Game/DirectorGameMode.h"
 #include "Game/ForestDressing.h"
 #include "Enemies/EnemyTypes.h"
@@ -37,8 +38,8 @@ void UPlayAreaSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 	{
 		UE_LOG(LogEnemies, Display, TEXT("PLAYAREA floor x[%.0f..%.0f] y[%.0f..%.0f]"), Area.Min.X, Area.Max.X, Area.Min.Y, Area.Max.Y);
 
-		// Only the run map gets the forest look (the camp has its own scene).
-		if (Cast<ADirectorGameMode>(InWorld.GetAuthGameMode()))
+		// The run map and the camp get the forest look.
+		if (Cast<ADirectorGameMode>(InWorld.GetAuthGameMode()) || Cast<ACampGameMode>(InWorld.GetAuthGameMode()))
 		{
 			UE_LOG(LogEnemies, Display, TEXT("FOREST dressing %s"), AForestDressing::Build(&InWorld, Area, FloorTopZ, FloorActor) ? TEXT("built") : TEXT("skipped (pack missing)"));
 		}

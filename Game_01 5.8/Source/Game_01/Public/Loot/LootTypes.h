@@ -28,6 +28,14 @@ enum class ELootContainerType : uint8
 	Vault       UMETA(DisplayName = "Vault")
 };
 
+/** What a container yields and what the camp spends: crates (tree stumps) give wood, vaults (boulders) give stone. */
+UENUM(BlueprintType)
+enum class ELootResource : uint8
+{
+	Wood,
+	Stone
+};
+
 /** Outcome of a bag add. Anything other than Success means nothing was added. */
 UENUM(BlueprintType)
 enum class EBagAddResult : uint8

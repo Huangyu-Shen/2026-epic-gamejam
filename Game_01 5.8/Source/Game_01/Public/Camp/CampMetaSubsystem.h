@@ -4,6 +4,7 @@
 #include "CoreMinimal.h"
 #include "Subsystems/GameInstanceSubsystem.h"
 #include "Camp/CampTypes.h"
+#include "Loot/LootTypes.h"
 #include "CampMetaSubsystem.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnCampMetaChanged);
@@ -27,7 +28,10 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Camp")
 	int32 GetBuildingLevel(EBuildingType Type) const;
 
-	/** Iron cost of the next upgrade for Type. */
+	/** What upgrading Type costs: the smithy takes stone, the clinic takes wood. */
+	static ELootResource GetCostResource(EBuildingType Type) { return Type == EBuildingType::Smithy ? ELootResource::Stone : ELootResource::Wood; }
+
+	/** Cost (in GetCostResource) of the next upgrade for Type. */
 	UFUNCTION(BlueprintPure, Category = "Camp")
 	int32 GetUpgradeCost(EBuildingType Type) const;
 
