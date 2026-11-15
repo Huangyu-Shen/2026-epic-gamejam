@@ -1,12 +1,12 @@
 # Running, Testing and Releasing
 
-Paths are relative to the repository root. The engine path `D:/Game/EPIC/UE_5.8` is a path on this machine; adjust it to yours. Commands are written for Git Bash on Windows (`$(pwd -W)` and forward slashes). Checked against commit `bfe9e16` (2026-11-15). Commands were read from code, configs and recorded logs; nothing on this page was re-run while writing it, except where a line says so.
+Paths are relative to the repository root. The engine path `D:/Game/EPIC/UE_5.8` is a path on this machine; adjust it to yours. Commands are written for Git Bash on Windows (`$(pwd -W)` and forward slashes). Checked against commit `ad6174d` (2026-11-16). Commands were read from code, configs and recorded logs; nothing on this page was re-run while writing it, except where a line says so.
 
 ## 1. Environment setup
 
 | Tool | Requirement | Notes |
 |---|---|---|
-| Unreal Engine | 5.8 (5.8.4 on this machine; see [VERSION.md](../engine-reference/unreal/VERSION.md)) | `EngineAssociation` in `Game_01.uproject` is a GUID registered on this machine; elsewhere the editor asks for an engine version. C++20 is the minimum |
+| Unreal Engine | 5.8 (5.8.4 on this machine; see [VERSION.md](../engine-reference/unreal/VERSION.md)) | `EngineAssociation` in `Game_01.uproject` is `"5.8"` (a version string), so the editor picks any installed 5.8. C++20 is the minimum |
 | Visual Studio | "Game development with C++" workload | Compiles the C++; the author reads code in Rider |
 | Git + Git LFS | n/a | `.uasset`, `.umap`, `.fbx`, `.obj`, `.png`, `.tga`, `.psd`, `.exr`, `.wav`, `.mp3`, `.ogg`, `.mp4` go through LFS ([.gitattributes](../../.gitattributes)) |
 | Git Bash, jq | n/a | Used by Claude Code's hook scripts and by the commands here; not needed to run the game from the editor |
@@ -41,7 +41,7 @@ Open `Game_01 5.8/Game_01.uproject` with UE 5.8. The folder name carries "5.8" b
   "-Project=$(pwd -W)/Game_01 5.8/Game_01.uproject" -WaitMutex
 ```
 
-Run it from the repository root; success prints `Result: Succeeded`. For the non-editor target use `Game_01` (targets in `Source/Game_01.Target.cs` and `Source/Game_01Editor.Target.cs`, both `BuildSettingsVersion.V7`, include order 5.8). The module `Game_01` depends on Core, CoreUObject, Engine, InputCore, EnhancedInput, DeveloperSettings, UMG, Slate, SlateCore (`Game_01.Build.cs`).
+Run it from the repository root; success prints `Result: Succeeded`. For the non-editor target use `Game_01` (targets in `Source/Game_01.Target.cs` and `Source/Game_01Editor.Target.cs`, both `BuildSettingsVersion.V7`, include order 5.8). The module `Game_01` depends on Core, CoreUObject, Engine, InputCore, DeveloperSettings, UMG, Slate, SlateCore (`Game_01.Build.cs`).
 
 ### 3.2 In the editor
 
@@ -96,27 +96,27 @@ All keys are bound in code (`BindKey`, `IsInputKeyDown`); none can be remapped w
 | Camp | Left mouse button on a 3D building | Upgrade it (a toast shows the result or the reason it failed) |
 | Camp | Left panel, MENU button (top right), Esc | Upgrade, add or remove film cards (2 slots), START RUN; the menu has Resume, Settings, Quit game |
 
-The run HUD prints `WASD move   Space dodge   E search   1-3 take an upgrade   4-6 cut one   Esc menu`. The camp has no walkable character. The `N` key exists only in the unused stand-in code.
+The run HUD prints `WASD move   Space dodge   E search   1-3 take an upgrade   4-6 cut one   Esc menu`. The camp has no walkable character.
 
 ## 6. Performance probe `-PerfProbe`, and the other test probes
 
-Probes are command-line flags read in `BeginPlay` of the game modes. None does anything without its flag. The flags found in the source (`grep -rn "FParse::Param\|FParse::Value" "Game_01 5.8/Source/Game_01/Private"`):
+Probes are command-line flags read by `UDirectorProbeSubsystem` (`Source/Game_01/Private/Dev/DirectorProbeSubsystem.cpp`), a world subsystem that exists only when one of the flags is on the command line. None does anything without its flag. The flags found in the source (`grep -rn "FParse::Param\|FParse::Value" "Game_01 5.8/Source/Game_01/Private"`):
 
 | Flag | Read in | Map | Purpose |
 |---|---|---|---|
-| `-PerfProbe` | `DirectorGameMode.cpp:246` | run | 150-enemy frame-rate sample |
-| `-OfferProbe` | `:251` | run | Level-up panel, cuts, loadout, weapon visuals |
-| `-ReelProbe`, `-ReelProbe=die`, `-ReelCount=N` | `:263-264`, `:385` | run | Lost film reel in the bag, then extract or die |
-| `-PaceProbe`, `-PaceSpeed=N`, `-PaceSpawnBase=`, `-PaceSpawnRamp=`, `-PaceGruntHealth=`, `-PaceGruntContact=`, `-PaceHeroHealth=` | `:256`, `:308-317` | run | A bot plays up to 10 minutes; the overrides apply to that run only |
-| `-WeaponShowcase` | `:46` | run | Gun and Orbit at 3 copies against 30 grunts, 2 screenshots |
-| `-PauseProbe` | `:77` | run | Opens the Esc menu, Settings, volume, the two-step Return to camp |
-| `-EdgeProbe` | `:116` | run | Hero at the floor edge with a horde and a boss, logs the farthest enemy |
-| `-BossProbe` | `:152` | run | Spawns the boss, cuts options one by one, 3 screenshots |
-| `-ZoneShot` | `:202` | run | Screenshots of the extraction point and the bar filling |
-| `-CampShot` | `CampGameMode.cpp:93` | camp | Camp panel screenshot |
-| `-SaveSlot=Name` | `CampSaveSubsystem.cpp:18` | any | Use `Saved/SaveGames/Name.sav` instead of `CampSave.sav` |
+| `-PerfProbe`, `-PerfWeapons` | `DirectorProbeSubsystem.cpp` | run | 150-enemy frame-rate sample (`-PerfWeapons` also logs per-weapon fire times) |
+| `-OfferProbe` | `DirectorProbeSubsystem.cpp` | run | Level-up panel, cuts, loadout, weapon visuals |
+| `-ReelProbe`, `-ReelProbe=die`, `-ReelCount=N` | `DirectorProbeSubsystem.cpp` | run | Lost film reel in the bag, then extract or die |
+| `-PaceProbe`, `-PaceSpeed=N`, `-PaceSpawnBase=`, `-PaceSpawnRamp=`, `-PaceGruntHealth=`, `-PaceGruntContact=`, `-PaceHeroHealth=` | `DirectorProbeSubsystem.cpp` | run | A bot plays up to 10 minutes; the overrides apply to that run only |
+| `-WeaponShowcase` | `DirectorProbeSubsystem.cpp` | run | Gun and Orbit at 3 copies against 30 grunts, 2 screenshots |
+| `-PauseProbe` | `DirectorProbeSubsystem.cpp` | run | Opens the Esc menu, Settings, volume, the two-step Return to camp |
+| `-EdgeProbe` | `DirectorProbeSubsystem.cpp` | run | Hero at the floor edge with a horde and a boss, logs the farthest enemy |
+| `-BossProbe` | `DirectorProbeSubsystem.cpp` | run | Spawns the boss, cuts options one by one, 3 screenshots |
+| `-ZoneShot` | `DirectorProbeSubsystem.cpp` | run | Screenshots of the extraction point and the bar filling |
+| `-CampShot` | `CampGameMode.cpp` | camp | Camp panel screenshot |
+| `-SaveSlot=Name` | `CampSaveSubsystem.cpp` | any | Use `Saved/SaveGames/Name.sav` instead of `CampSave.sav` |
 
-The run-map flags are read only by `ADirectorGameMode`, so they need the map on the command line (the default map is the camp). Screenshots go to `Saved/<ProbeName>/` (`PerfProbe` has none). Most probes exit by themselves.
+The run-map flags are read only by `UDirectorProbeSubsystem` (in the run map), so they need the map on the command line (the default map is the camp). Screenshots go to `Saved/<ProbeName>/` (`PerfProbe` has none). Most probes exit by themselves.
 
 ### `-PerfProbe`
 
@@ -146,7 +146,7 @@ MSYS_NO_PATHCONV=1 "D:/Game/EPIC/UE_5.8/Engine/Binaries/Win64/UnrealEditor.exe" 
 MSYS_NO_PATHCONV=1 "D:/Game/EPIC/UE_5.8/Engine/Binaries/Win64/UnrealEditor.exe" "Game_01 5.8/Game_01.uproject" /Game/Maps/L_Greybox -game -ReelProbe -SaveSlot=ReelProbe
 ```
 
-(`StepReelProbe`; same delay and step as the offer probe.) God mode, scheduler off, 25 wood (`TryAddIron`) and N reels go into the bag (`-ReelCount=N`, clamped 1 to 3, default 1: Fast Cut / `Swiftstep`, Wide Shot / `Warbrand`, Chain Scene / `Aegis`); then the run ends by extraction, or by death with `-ReelProbe=die`. Screenshots: `Saved/ReelProbe/1-reel-in-bag.png`, then `2-result-extracted.png` or `3-result-died.png`. `REELPROBE` lines (`LogEnemies`) show `reelsInBag`, `heat`, `unlocked`, `anotherReelCanDrop`, `outcome` (0 None, 1 Extracted, 2 Died):
+(`StepReelProbe`; same delay and step as the offer probe.) God mode, scheduler off, 25 wood (`TryAddWood`) and N reels go into the bag (`-ReelCount=N`, clamped 1 to 3, default 1: Fast Cut / `Swiftstep`, Wide Shot / `Warbrand`, Chain Scene / `Aegis`); then the run ends by extraction, or by death with `-ReelProbe=die`. Screenshots: `Saved/ReelProbe/1-reel-in-bag.png`, then `2-result-extracted.png` or `3-result-died.png`. `REELPROBE` lines (`LogEnemies`) show `reelsInBag`, `heat`, `unlocked`, `anotherReelCanDrop`, `outcome` (0 None, 1 Extracted, 2 Died):
 
 ```text
 LogEnemies: Display: REELPROBE reel-in-bag reelsInBag=1 heat=15.0 unlocked=[] anotherReelCanDrop=0 outcome=0
@@ -169,26 +169,31 @@ After 4 s it logs `CAMPSHOT iron=... unlocked=[...]` (`LogTemp`; `iron` is the w
 
 ### Probes in a package
 
-The packaged exe accepts the same flags. A package writes log, saves and screenshots under `<package>/Windows/Game_01/Saved/`. The probes are not stripped from any build configuration ([known-issues.md](known-issues.md#3-legacy-and-dead-code)).
+The packaged exe accepts the same flags (in a Development build). A package writes log, saves and screenshots under `<package>/Windows/Game_01/Saved/`. The probe subsystem only exists when a flag is on the command line, and it never runs in a Shipping build (`GameDebug::CheatsEnabled()` is false in Shipping).
 
 ## 7. Testing
 
-**12 automated tests**, all `IMPLEMENT_SIMPLE_AUTOMATION_TEST`, flagged `EditorContext | ProductFilter` (editor only, not a package), in `Source/Game_01/Private/Tests/`:
+**46 automated tests** across eight files, all `IMPLEMENT_SIMPLE_AUTOMATION_TEST`, flagged `EditorContext | ProductFilter` (editor only, not a package), in `Source/Game_01/Private/Tests/`:
 
 | File | Test name |
 |---|---|
 | `StarTuningTest.cpp` (4) | `Game_01.Progression.StarsFollowCopyThresholds`, `CopiesToNextStarCountsDown`, `StarMultipliersGrowWithStars`, `PermanentCutsKeepTheMinimumPool` |
 | `ReelUnlockTest.cpp` (5) | `Game_01.Loot.UnlockedSetAddsOnceAndSkipsNone`, `ReelsMapToTheirOptions`, `OnlyUsefulReelsDrop`, `PickRandomSkipsUselessReels`, `V1SaveRelicsBecomeUnlockedOptions` |
 | `UnlockableOptionsTest.cpp` (3) | `Game_01.Progression.LockedOptionIsNeverOfferedUntilUnlocked`, `PoolAndPermanentCutsGrowWithEachUnlock`, `AnUnlockedIdThatMatchesNoOptionChangesNothing` |
+| `OfferTextTest.cpp` (5) | `Game_01.OfferText.OptionNamesAreTheDisplayNames`, `DescriptionShowsTheLevelStepAndTheStarNote`, `CardsShowTitleDetailAndNote`, `LoadoutLineHasOneAsteriskPerStar`, `AnEmptyLoadoutIsAnEmptyLine` |
+| `OfferRulesTest.cpp` (10) | `Game_01.Offer.PoolLeavesOutLockedCutAndMaxedOptions`, `AnUnownedWeaponIsMarkedNew`, `ThreeOptionsOpenAnOffer`, `TheSameSeedGivesTheSameOffer`, `FewerThanThreeOptionsAreAppliedAtOnce`, `ANewlyUnlockedOptionIsFirstInTheOffer`, `ACutRemovesTheOptionForTheRunAndSpendsACut`, `NoCutIsAllowedWhenNoPermanentCutsAreLeft`, `ChoosingClosesTheOfferAndKeepsTheOthersInThePool`, `AFreshRunClearsCutsAndTheOffer` |
+| `RunLoadoutTest.cpp` (7) | `Game_01.Progression.NoPassivesMeansNeutralEffects`, `PassiveEffectGrowsWithCopiesAndStars`, `ArmorAndCritAreCapped`, `MagnetAddsToTheBaseRadius`, `CopiesNeverPassTheCap`, `PoolSizeCountsOnlyAvailableOptions`, `WeaponStarMultipliersFollowTheStars` |
+| `RunSettlementTest.cpp` (7) | `Game_01.Extraction.ExtractedBagIsMultipliedAndRoundedDown`, `DeathLosesTheWholeBag`, `NoOutcomeSettlesNothing`, `NegativeMultiplierNeverGainsLessThanZero`, then `Game_01.Progression.NewUnlocksGoFirstAndAreMarked`, `NoNewUnlocksLeavesThePoolAlone`, `OptionIdsDifferPerOption` |
+| `CampSaveAndBuildingTest.cpp` (5) | `Game_01.Save.VersionDecidesWhetherToLoadMigrateOrRefuse`, `OnlyAFileThatStartsWithGVASIsHandedToTheLoader`, `TheClassDefaultVersionStaysOneSoOldFilesMigrate`, then `Game_01.Camp.UpgradeCostGrowsByTheGrowthFactorAndRoundsDown`, `SmithyAndClinicBonusesAreLinearInTheLevel` |
 
-They need no world: the star rules, the unlock rule, the reel-to-option mapping and the v1 migration helper are pure functions. `UnlockableOptionsTest.cpp` checks the rule on a 16-option table written inside the test (13 available at the start, 16 with all three unlocked, permanent cuts 9 to 12), not on the real `URunProgressionSubsystem`, so it does not catch a wrong `bStartsLocked` in the data.
+They need no world: the star rules, the unlock rule, the reel-to-option mapping, the v1 migration helper, `FRunLoadout`, `FOfferRules`, `FOfferText` and `FSaveVersionCheck` are plain C++ structs or pure functions. `UnlockableOptionsTest.cpp` checks the unlock rule on a 16-option table written inside the test (13 available at the start, 16 with all three unlocked, permanent cuts 9 to 12), not on the real data, so it does not catch a wrong `bStartsLocked` in a data table. `CampSaveAndBuildingTest.cpp` checks `FSaveVersionCheck` and the building cost/bonus helpers directly.
 
 ```bash
 "D:/Game/EPIC/UE_5.8/Engine/Binaries/Win64/UnrealEditor-Cmd.exe" "$(pwd -W)/Game_01 5.8/Game_01.uproject" \
   -ExecCmds="Automation RunTests Game_01; Quit" -unattended -nullrhi
 ```
 
-Reported by the maintainer on 2026-11-15: **12 of 12 pass** with this command (not re-run while writing this page). The filter `Game_01` matches every test whose name contains it; add `-stdout -FullStdOutLogOutput` to see the log. Or use the editor's Session Frontend (Automation tab), filter `Game_01.`. On a clone without the packs the run also prints the missing-asset errors from 1.1; they do not fail the tests.
+Reported by the maintainer on 2026-11-15: **12 of 12 pass** (the count then was 12; it has since grown to 46 across the eight files above). The newer tests were not re-run while updating this page. The filter `Game_01` matches every test whose name contains it; add `-stdout -FullStdOutLogOutput` to see the log. Or use the editor's Session Frontend (Automation tab), filter `Game_01.`. On a clone without the packs the run also prints the missing-asset errors from 1.1; they do not fail the tests.
 
 `project.yaml` has no `qa` key (only `modes.rigor: minimal`). Per `CLAUDE.md`, minimal waives the tests but not the screenshot rule: a player-visible change is launched and a screenshot kept in `production/qa/evidence/`.
 
@@ -233,8 +238,8 @@ The submission deadline is 2026-11-16 01:59 UK time and the user submits it pers
 
 Checks before release:
 
-- Restrict `ModelContextProtocol`, `AllToolsets` and `Terminal` to Editor ([dependencies.md](dependencies.md#3-engine-plugins)).
-- Decide about the `K` key, the probes and `DebugGrantWeapon` / `DebugCut`, which are in every build.
+- ~~Restrict `ModelContextProtocol`, `AllToolsets` and `Terminal` to Editor~~ (done: all three now carry `TargetAllowList: Editor` in `Game_01.uproject`; see [dependencies.md](dependencies.md#3-engine-plugins)).
+- Decide about `DebugGrantWeapon` / `DebugCut` (still in every build; the probes themselves moved to `UDirectorProbeSubsystem`, which never runs in Shipping, and the stand-in `N` key was deleted with the stand-in code).
 - Keep the CC BY credits (Esc menu) and the pack list in the dev log.
 - Packaged saves are in `<package>/Windows/Game_01/Saved/SaveGames/`, separate from the editor's.
 
@@ -251,10 +256,10 @@ MCP is only available while the editor is open; with the editor closed the conne
 
 | Item | Convention |
 |---|---|
-| Branches | Trunk-based on `main`; features go through a branch and a pull request (the latest commits are `... (#11)`) |
+| Branches | Trunk-based on `main`; features go through a branch and a pull request (the latest commits are `... (#17)`) |
 | Commits | Conventional Commits (`feat:`, `fix:`, `docs:`, `chore:`), story id in the body; **commit, push and tag only when the user asks** ([CLAUDE.md](../../CLAUDE.md)) |
 | Releases | One tag, `jam-start`, on the commit before the UE project existed; no game release is tagged |
-| Stories | 13 under [production/epics/directors-cut/](../../production/epics/directors-cut/); the status is in each file's header (001 to 010 and 012 Complete, 011 In Progress, 013 Ready; the table in `EPIC.md` is out of date) |
+| Stories | 13 under [production/epics/directors-cut/](../../production/epics/directors-cut/); the status is in each file's header (001 to 012 Complete, 013 In Progress; the table in `EPIC.md` is out of date) |
 | Process | `/dev-story` to implement, `/story-done` to accept (skills under `.claude/skills/`) |
 | Session state | `production/session-state/active.md` (git-ignored) |
 

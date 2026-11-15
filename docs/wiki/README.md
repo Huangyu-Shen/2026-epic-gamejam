@@ -4,13 +4,13 @@ Documentation for anyone who needs to read or modify this game's code. Every pag
 
 > The project in one sentence: a solo entry in the 2026 Epic AI MegaJam, an Unreal Engine 5.8 project themed **Director's Cut**, a fantasy angled-top-down "mow-down x search-and-extract x thin camp" game, built with Claude Code in 4 days.
 
-Corresponds to commit `bfe9e16` on `main` (2026-11-15; no tracked source file modified). Stories 001 to 010 and 012 are Complete, 011 is In Progress and 013 is Ready (status in the header of each story file in [the epic folder](../../production/epics/directors-cut/EPIC.md); the table in `EPIC.md` itself is out of date). Source root: [`Game_01 5.8/Source/Game_01/`](../../Game_01%205.8/Source/Game_01/).
+Corresponds to commit `ad6174d` on `main` (2026-11-16). Stories 001 to 012 are Complete and 013 is In Progress (status in the header of each story file in [the epic folder](../../production/epics/directors-cut/EPIC.md); the table in `EPIC.md` itself is out of date). Source root: [`Game_01 5.8/Source/Game_01/`](../../Game_01%205.8/Source/Game_01/).
 
 ## At a glance
 
 | Item | Content |
 |---|---|
-| Form | Single-player UE 5.8 game, one C++ module `Game_01`: 86 source files (45 headers, 41 `.cpp`) and 10,298 lines in 13 source directories, plus 3 test files (303 lines) and 3 build files. The biggest directories are UI (1,387 lines), Enemies (1,363), Progression (1,268) and Game (1,117); 235 lines are the unused `StandIn` placeholders |
+| Form | Single-player UE 5.8 game, one C++ module `Game_01`: 91 source files (47 headers, 42 `.cpp`, 2 module files) and 9,254 lines in 13 source directories, plus 8 test files (968 lines) and 3 build files. The biggest directories are Progression (1,313 lines), UI (1,249) and Enemies (1,210); the command-line probes now live in their own `Dev` directory (711) |
 | Language and framework | C++20; the UI is UMG built in C++; no Blueprint classes |
 | Two maps | `L_Camp` (camp, default startup map), `L_Greybox` (the run map) |
 | Core loop | Upgrade at camp (Smithy costs stone, Clinic costs wood) and slot film cards -> loot wood, stone and lost film reels, fight, level up (take one of three options, optionally cutting one first; three copies merge into a star) -> extract or die -> settle back at camp. A cut goes to the Cut Knight boss when the Cut Knight card is slotted |
@@ -19,7 +19,7 @@ Corresponds to commit `bfe9e16` on `main` (2026-11-15; no tracked source file mo
 | Save | Single slot `CampSave` (wood in the field named `Iron`, stone, unlocked options by name, NEW markers, building levels; save version 2, a version 1 file is migrated on load); `Game_01 5.8/Saved/SaveGames/` when run from the editor |
 | Assets | 3D models and audio come from Fab packs that are **not in git**; a fresh clone runs as greybox cubes with no sound. Credits: the assets table in [docs/devlog/README.md](../devlog/README.md#assets-and-credits) and the bottom of the Esc menu |
 | Command-line switches | Run map: `-PerfProbe`, `-OfferProbe`, `-ReelProbe[=die]` with `-ReelCount=N`, `-PaceProbe` (with `-PaceSpeed` and overrides), `-WeaponShowcase`, `-PauseProbe`, `-EdgeProbe`, `-BossProbe`, `-ZoneShot`; camp: `-CampShot`; any map: `-SaveSlot=Name`. See [build-and-run.md](build-and-run.md#6-performance-probe--perfprobe-and-the-other-test-probes) |
-| Automated tests | 12 UE automation tests in `Private/Tests/` (4 star-tuning, 5 lost-reel, 3 unlockable-option), pure helpers only; reported 12 of 12 passing on 2026-11-15. Player-visible changes are checked with screenshots in `production/qa/evidence/` |
+| Automated tests | 46 UE automation tests in 8 files under `Private/Tests/` (star tuning 4, reel unlock 5, unlockable options 3, offer text 5, offer rules 10, run loadout 7, run settlement 7, save/building 5), pure helpers only. Player-visible changes are checked with screenshots in `production/qa/evidence/` |
 | Packaging | Windows Development package via `RunUAT BuildCookRun`; about 1.1 GB (0.7 GB without the `.pdb`) |
 | Build status | `Game_01Editor Win64 Development` builds on this machine (the newest package in `Saved/Packages` is dated 2026-11-15 02:48; the last commits came later); the wiki pages were checked by reading, not by rebuilding |
 
@@ -52,7 +52,7 @@ Corresponds to commit `bfe9e16` on `main` (2026-11-15; no tracked source file mo
 
 | Term | Meaning | Where |
 |---|---|---|
-| Wood / stone | The two loot resources. Crates (tree stumps) give wood, vaults (boulders) give stone. The Clinic costs wood, the Smithy costs stone. Wood still carries the old name Iron in many fields (`Iron`, `IronCount`, `BagIron`, `IronMin`) | `ELootResource`, `UCampStockSubsystem`, [known-issues 1.8](known-issues.md#18-fields-named-iron-now-hold-wood-and-vault-yields-hold-stone) |
+| Wood / stone | The two loot resources. Crates (tree stumps) give wood, vaults (boulders) give stone. The Clinic costs wood, the Smithy costs stone. The API was renamed from Iron to Wood (`UCampStockSubsystem::Wood`/`AddWood`/`SpendWood`, `ULootBagComponent::WoodCount`); only the save field `Iron` and the DataTable columns `IronMin`/`IronMax`/`IronPerSlot` keep the old name for compatibility | `ELootResource`, `UCampStockSubsystem`, [data-and-storage.md](data-and-storage.md#2-tuning-data-tables) |
 | Lost film reel (code name: relic) | Fast Cut, Wide Shot and Chain Scene (`Swiftstep`, `Warbrand`, `Aegis` in code; names kept for save compatibility). A reel takes one bag slot and cannot be used in a run; carry it out alive and the option its row names (`FRelicRow::UnlocksOption`) is unlocked for every later run. Dying loses the reels. Fast Cut unlocks `Haste`, Wide Shot `Magnet`, Chain Scene `Chain` | `ERelicType`, `FRelicRow`, [known-issues 1.4](known-issues.md#14-the-unlock-loop-has-three-leftovers) |
 | Unlocked option | An option name saved in the camp stock: the table row name of a weapon or passive that starts locked (`Chain`, `Haste`, `Magnet`). It enters the level-up pool once unlocked; the first offer of the next run shows it first, marked `NEW!` | `UCampStockSubsystem::UnlockOption`, `TakeNewOptions`, `FOptionUnlock::IsAvailable` |
 | Heat | Rises when a lost film reel is picked up, resets when a run starts and ends; raises spawn pressure | `ULootHeatSubsystem` |

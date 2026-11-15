@@ -1,25 +1,20 @@
 # Known Issues and Technical Debt
 
-Only issues confirmed by reading the current code are listed (checked at commit `bfe9e16`, 2026-11-15, with no tracked source file modified). Paths omit the prefix `Game_01 5.8/Source/Game_01/` (the source folder is [here](../../Game_01%205.8/Source/Game_01/)); `file:line` numbers are for that commit. Nothing was run to confirm a symptom unless the entry says so: each entry says what the code does. When you fix one, delete its entry.
+Only issues confirmed by reading the current code are listed (checked at commit `ad6174d`, 2026-11-16). Paths omit the prefix `Game_01 5.8/Source/Game_01/` (the source folder is [here](../../Game_01%205.8/Source/Game_01/)); `file:line` numbers are for that commit. Nothing was run to confirm a symptom unless the entry says so: each entry says what the code does. When you fix one, delete its entry.
 
 ## 1. Data and Save Game
 
 ### 1.1 The save version is checked only against 2
-- **Location**: `Public/Flow/CampSaveGame.h:18-26` (`CurrentSaveVersion`, `SaveVersion`), `Private/Flow/CampSaveSubsystem.cpp:43` (the only migration branch), `:65-68` (cast failure), `:103-124` (`SaveNow`).
-- **What happens**: A save with `SaveVersion < 2` has its `WarehouseRelics` migrated into `UnlockedOptions`; `SaveNow` writes version 2. See [data-and-storage.md](data-and-storage.md#13-version-compatibility).
+- **Location**: `Public/Flow/CampSaveGame.h` (`CurrentSaveVersion`, `FSaveVersionCheck`), `Private/Flow/CampSaveSubsystem.cpp` (the `Classify` handling, the migration branch, `SaveNow`).
+- **What happens**: `FSaveVersionCheck::Classify` returns `Current` (2), `NeedsMigration` (< 2) or `TooNew` (> 2). A `< 2` save has its `WarehouseRelics` migrated into `UnlockedOptions` after a `.before-migration.bak` backup; `SaveNow` writes version 2. A `> 2` save is backed up as `.newer-version.bak` and skipped, and the camp starts fresh. A file that does not start with the `GVAS` magic is backed up as `.unreadable.bak` and skipped. See [data-and-storage.md](data-and-storage.md#13-version-compatibility).
 - **What is left**:
-  - A file with a version above 2, or a later layout change that does not bump `CurrentSaveVersion`, is read as version 2 and the next change rewrites it as version 2. `NewOptions` was already added to version 2 without a bump (`CampSaveGame.h:44`).
-  - The class default of `SaveVersion` must stay 1 or old files skip the migration (comment at `CampSaveGame.h:20-24`).
-  - The migration is one-way: `WarehouseRelics` is never written back, and `FReelUnlocks::OptionsForReels` (`Public/Loot/LootTypes.h:97`) skips a reel whose row has no `UnlocksOption`.
-  - If the slot exists but cannot be cast to `UCampSaveGame`, `Initialize` logs a warning and starts a fresh camp; the next change overwrites the slot.
+  - The class default of `SaveVersion` must stay 1 or old files skip the migration.
+  - The migration is one-way: `WarehouseRelics` is never written back, and `FReelUnlocks::OptionsForReels` (`Public/Loot/LootTypes.h`) skips a reel whose row has no `UnlocksOption`.
   - Enums are stored by name (`ERelicType`, `EBuildingType` keys), so renaming an enumerator silently drops old data.
-- **Suggestion**: When the layout changes again, bump `CurrentSaveVersion`, add a migration branch, and refuse or back up a file with a higher version.
+- **Suggestion**: When the layout changes again, bump `CurrentSaveVersion` and add a migration branch (the `TooNew` and `GVAS` backup paths already exist).
 
-### 1.2 A save is written several times per event, and an early write can be an intermediate state
-- **Location**: `Private/Camp/CampMetaSubsystem.cpp:97` and `:107` (`TryUpgrade`), `Private/Extraction/RunOutcomeSubsystem.cpp:46-66` (`EndRun`), `Private/Flow/CampSaveSubsystem.cpp:75-76,95-101` (listeners).
-- **Symptom**: Every `OnStockChanged` / `OnMetaChanged` triggers `SaveNow`. An upgrade writes once after the cost is spent (resource gone, level not raised) and again after the level rises. A run settlement writes after `AddIron` (if wood > 0), after `AddStone` (if stone > 0), after each newly unlocked option, and once more explicitly (1 to 3+N writes for N new options); the first write holds the new wood without the unlocks.
-- **Impact**: A kill between two writes leaves an intermediate state. The window is within one frame, but the file is rewritten needlessly.
-- **Suggestion**: Finish changing all state, then save once (suppress the listener during `EndRun` and `TryUpgrade`).
+### 1.2 A save is written several times per event (fixed)
+- **Status**: fixed. `Private/Flow/CampSaveSubsystem.cpp` now only sets `bSavePending` on `OnStockChanged` / `OnMetaChanged`, and the next tick writes the slot once, so a burst of changes (an upgrade, a settlement) is a single write. The heading is kept so older links work.
 
 ### 1.3 A missing data table or row falls back to C++ defaults silently
 - **Location**: `FindRow(..., false)` lookups at `Private/Enemies/EnemySpawnSubsystem.cpp:73-94`, `Private/Enemies/EnemyManagerSubsystem.cpp:18-24`, `Private/Combat/HealthComponent.cpp:17-23`, `Private/Progression/RunProgressionSubsystem.cpp:116-152`, `Private/Camp/CampMetaSubsystem.cpp:49-58`, `Private/Editing/FilmCardSubsystem.cpp:18-22`, `Private/Loot/LootConfig.cpp` (whole file).
@@ -29,10 +24,10 @@ Only issues confirmed by reading the current code are listed (checked at commit 
 - **Suggestion**: Log a warning when a table is set but a row is missing, or unset in a non-editor build.
 - Not verified: the row values inside the `.uasset` tables (binary, not read here).
 
-### 1.4 The unlock loop has three leftovers
-- **Location**: `Public/Extraction/CampStockSubsystem.h:39` (`IsOptionUnlocked`, no caller), `Public/Loot/LootTypes.h:76-79` (`IsDroppable`), `Private/Progression/RunProgressionSubsystem.cpp:336-415` (`GenerateOffer`).
+### 1.4 The unlock loop has leftovers
+- **Location**: `Public/Loot/LootTypes.h` (`IsDroppable`), `Private/Progression/OfferRules.cpp` (`Generate`; the availability check is in `FRunLoadout`).
 - **What is left**:
-  - `IsOptionUnlocked` has no caller; the progression subsystem copies the whole list through `GetUnlockedOptions` (`RunProgressionSubsystem.cpp:261`), also once per `GetPoolSize` call.
+  - `IsOptionUnlocked` was removed. The progression subsystem still copies the whole unlocked list through `GetUnlockedOptions` once per `GetPoolSize` call.
   - Once all three options are unlocked, `PickRandomRelic` finds nothing droppable, so no container drops a reel, even a vault with `RelicChance` 1.0. Carrying reels out earns nothing after that.
   - The NEW markers are taken (`TakeNewOptions`, `:392`) only by an offer that shows three options. When the pool has fewer than three options the auto-apply path (`:378-385`) returns before that.
   - `TakeNewOptions` clears all markers although only three can be shown; with more than three new unlocks the extra ones lose their NEW mark (today there are only three lockable options).
@@ -58,11 +53,11 @@ The project rule is that values live in data ([master PRD section 5](../../desig
 - **Symptom**: All four commands use `Game_Jam_01/Game_Jam_01.uproject` (not in the repository), and `engine.language` is `"Blueprint"` for a C++ project. The build command has no staging or packaging options.
 - **Impact**: Skills that run these commands (`/smoke-check`, `/perf-profile`) point at the wrong project. Changing `project.yaml` needs user approval.
 
-### 1.8 Fields named Iron now hold wood (and vault yields hold stone)
-- **Location**: `Public/Extraction/CampStockSubsystem.h:68,79` (`Iron`, `GetIron`, `AddIron`, `SpendIron`, `GetWood` returns `Iron`), `Public/Loot/LootBagComponent.h:54,98,104` (`IronCount`, `TryAddIron`, `SlotsForIron`), `Public/Flow/CampSaveGame.h:30` (`Iron`), `Public/Extraction/ExtractionTypes.h:50-58` (`BagIron`, `IronGained`, `IronLost`), `Public/Loot/LootTypes.h:128,131,153` (`IronMin`, `IronMax`, `IronPerSlot`), log text `CAMPSHOT iron=`, `LOOTCFG ironPerSlot=` (`CampGameMode.cpp:101`, `LootBagComponent.cpp:26`).
-- **Symptom**: Wood kept its old name. `IronMin` / `IronMax` are the yield range of a vault in stone too, and `TryAddLoot` passes the resource separately. Several comments still say Iron (`CampMetaSubsystem.h:41`, `CampTypes.h:31`, `RunOutcomeSubsystem.h:39,46`).
-- **Impact**: Readers and table editors are misled; the save field name cannot change without a migration.
-- **Suggestion**: Rename in code (`Wood`) behind a `UPROPERTY` redirect / save migration, or at least keep the aliases documented in one place.
+### 1.8 The wood API was renamed, but a few `Iron` names remain
+- **Location**: the save field `Public/Flow/CampSaveGame.h` (`Iron`), the DataTable columns `Public/Loot/LootTypes.h` (`IronMin`, `IronMax`, `IronPerSlot`), and the log text `CAMPSHOT iron=` (`CampGameMode.cpp`).
+- **Symptom**: The API was renamed Iron -> Wood (`UCampStockSubsystem::Wood`/`AddWood`/`SpendWood`, `ULootBagComponent::WoodCount`/`GetWoodCount`/`TryAddWood`, `FRunResult::BagWood`/`WoodGained`/`WoodLost`). The old name survives only where compatibility requires it: the save field `Iron` and the DataTable columns `IronMin`/`IronMax`/`IronPerSlot` (a vault's stone yield uses the same `IronMin`/`IronMax` range). The `CAMPSHOT iron=` log line reads the wood stock.
+- **Impact**: Table editors and save readers are slightly misled; the save field and columns cannot change without a migration.
+- **Suggestion**: Keep the compatibility names documented in one place (already in [data-and-storage.md](data-and-storage.md)), and rename the columns when the tables are next edited.
 
 ## 2. Visuals and Assets
 
@@ -90,36 +85,34 @@ The project rule is that values live in data ([master PRD section 5](../../desig
 
 | Item | Location | Description |
 |---|---|---|
-| Stand-in character and game mode | `Public/StandIn/`, `Private/StandIn/` (4 files, 235 lines) | Throwaway from story 001 ("replaced by story 003"). No map references it (checked by searching both `.umap` files for the name), but it is compiled. Its `N` key and debug text are the only users of `GetIronCount` and `StartNewRun` from a key |
-| `EnhancedInput` module | `Game_01.Build.cs:10` | Declared, but no source file includes it; input is raw keys |
+| Stand-in character and game mode | `Public/StandIn/`, `Private/StandIn/` | Deleted in commit `12121d3` together with the whole `StandIn/` directory; its `N` key and debug text (the only users of `GetIronCount` and the key-bound `StartNewRun`) are gone |
+| `EnhancedInput` module | `Game_01.Build.cs` | Removed; the module list is now Core, CoreUObject, Engine, InputCore, DeveloperSettings, UMG, Slate, SlateCore |
 | Clearing of old debug text | `RunProgressionSubsystem.cpp:179-186,504-511` | `AddOnScreenDebugMessage(..., TEXT(""))` for keys 2200 to 2203; the text they clear was removed long ago |
 | Debug kill key | `HeroCharacter.cpp:194,255` | `K` kills the hero (`Health->Kill()`) in every build, including a package; nothing strips it |
-| Probes and test hooks in all builds | `Private/Game/DirectorGameMode.cpp:46-268`, `RunProgressionSubsystem.h:168-171` (`DebugGrantWeapon`, `DebugCut`) | No `UE_BUILD_SHIPPING` / `WITH_EDITOR` guard anywhere in the source (searched); the nine probes (god mode, time dilation, forced XP) work in any build if the flag is passed |
+| Probes and test hooks in all builds | `Private/Dev/DirectorProbeSubsystem.cpp`, `RunProgressionSubsystem.h` (`DebugGrantWeapon`, `DebugCut`) | No `UE_BUILD_SHIPPING` / `WITH_EDITOR` guard anywhere in the source (searched); the probes (god mode, time dilation, forced XP) work in any build if the flag is passed. The probes moved out of `DirectorGameMode` into `Dev/` |
 | `DeleteSaveAndReset()` | `Private/Flow/CampSaveSubsystem.cpp:126` | No caller, so `UCampMetaSubsystem::ResetCamp` (`CampMetaSubsystem.cpp:134`) has none either |
 | Written but never read | `AutoWeaponComponent.h:59` `OwnerBag` (assigned at `.cpp:23`); `CampBuilding.h:61` `CachedLevel` (`.cpp:96`); `GameAudioSubsystem.cpp:126` `Played[]` | Dead state |
-| No caller | `GetPassiveStars` (`RunProgressionSubsystem.h:124`), `IsOptionUnlocked`, `FindRelicRow`, `GetKillCount` (`EnemyManagerSubsystem.h:54`), `GetRunTime` (`EnemySpawnSubsystem.h:71`), `GetRequestCount`, `GetCappedCount` (`GameAudioSubsystem.h:78,81`), `GetAttackCount` (`BossRejectsSubsystem.h:125`), `ShowOffer` (only logs, `RunProgressionSubsystem.cpp:516`) | |
+| No caller | `GetPassiveStars` (`RunProgressionSubsystem.h`), `FindRelicRow`, `GetKillCount` (`EnemyManagerSubsystem.h`), `GetRunTime` (`EnemySpawnSubsystem.h`), `GetRequestCount`, `GetCappedCount` (`GameAudioSubsystem.h`), `GetAttackCount` (`BossRejectsSubsystem.h`), `ShowOffer` (only logs) | |
 | Delegates without a C++ listener | `OnBagChanged`, `OnPickupRefused`, `OnHeatChanged`, `OnSearched`, `OnDamaged`, `OnExtractionProgress`, `OnExtractionInterrupted` | Broadcast, never bound; the HUD polls |
 | The warehouse | `CampWarehouse.cpp`, `CampGameMode.cpp:76-81` | Decorative only (relics cannot be dismantled), but still spawned and it takes clicks (`BlockAll`, 6 m cube) |
-| Fixed since the last check | | `DrawDebugLine` weapon feedback is gone (replaced by `AWeaponEffect`, drawn in Shipping too); `DirectorUi::TextColor` is now used (`RunHudWidget.cpp:109,117`); `GetCuttingRoomFloor` is now read by `UBossRejectsSubsystem` (`BossRejectsSubsystem.cpp:212`) |
+| Fixed since the last check | | `DrawDebugLine` weapon feedback is gone (replaced by `AWeaponEffect`, drawn in Shipping too); `DirectorUi::TextColor` is now used; `GetCuttingRoomFloor` is now read by `UBossRejectsSubsystem`; the wood API was renamed Iron -> Wood; `StandIn/` was deleted; the probes moved to `Dev/DirectorProbeSubsystem.cpp`; `EnhancedInput` was removed from `Build.cs`; the save is now written once per batch (1.2) |
 
 ### 3.1 Stale comments
-- `Public/Player/HeroCharacter.h:44` ("1-3 cut a level-up option": 1-3 take, 4-6 cut) and `:97` (`ReceiveEnemyDamage` "bag's damage-taken multiplier": it applies the Armor passive, `HeroCharacter.cpp:288`).
-- `Public/Game/DirectorGameMode.h:51-63`: the `-OfferProbe` "cuts the first option each time" (it keeps the option containing "Chain" and cuts another, `DirectorGameMode.cpp:435-455`); the list of probes omits `-WeaponShowcase`, `-PauseProbe`, `-EdgeProbe`, `-BossProbe`, `-ZoneShot`.
-- `Public/Game/DirectorTuningSettings.h:13` ("every gameplay number", see 1.6) and `:92` ("There is no settings screen": the Esc menu has one).
-- `Public/Extraction/CampStockSubsystem.h:12,22,26,50,59-60` (Iron, "or the warehouse") and `CampSaveSubsystem.h:10-11`, `CampWidget.h:1,12,36`, `CampPawn.cpp:54` ("warehouse dismantle").
-- `Public/Camp/CampTypes.h:31` and `CampMetaSubsystem.h:41` ("Iron cost").
-- `Public/Progression/RunProgressionSubsystem.h:43-46` ("the player CUTS one option and keeps the other two": the rule is now take one of three, with an optional cut).
-- `Public/Editing/FilmCardSubsystem.h:14` ("driven by debug keys": there are none); `Public/Enemies/EnemyTypes.h:37` ("hero's damage-taken multiplier": none); `Public/Loot/LootConfig.h:11` ("Create a Data Asset": the tables are used); `Public/Enemies/BossRejectsSubsystem.h:121` ("Starts with no cuts applied": `Processed = 0` applies every earlier cut on the next tick).
+Most old stale comments were cleared in the refactor. What remains says "Iron" where the code now reads wood:
+- `Public/UI/HudMessageSubsystem.h:1` (the sample message "Searched: +3 Iron").
+- `Public/Game/DirectorTuningSettings.h:68` ("Iron range and reel chance").
+- `Private/Dev/DirectorProbeSubsystem.cpp:406` ("some Iron in the bag").
+- `Private/Camp/CampPawn.cpp:55` ("The camp screen: Iron, ...").
 
 ## 4. Architecture and Robustness
 
-- **Few automated tests**: 12 (4 star-tuning, 5 lost-reel, 3 unlockable-option) in `Private/Tests/`. They cover pure helpers only. Nothing tests `GenerateOffer`, the NEW marker, settlement math (`FRunSettlement::Compute`), save load, building costs or the boss subsystem. `UnlockableOptionsTest` uses its own 16-option table, so a wrong `bStartsLocked` in the real data is not caught. Under `modes.rigor: minimal` tests are optional; this is a permitted gap.
-- **No guard against "a world without a GameInstance"**: `GetWorld()->GetGameInstance()->GetSubsystem<...>()` dereferences null in an editor preview world. `UFilmCardSubsystem::Initialize` was fixed after crashing once; the old pattern remains at `AutoWeaponComponent.cpp:98,326`, `RunOutcomeSubsystem.cpp:46,64`, `LootContainer.cpp:108`, `CampBuilding.cpp:79,88`, `CampPawn.cpp:114`, `HeroCharacter.cpp:273` and in the probes (`DirectorGameMode.cpp:276,349`). Safe while the game runs.
+- **Automated tests**: 46 across 8 files in `Private/Tests/` — star tuning (4), reel unlock (5), unlockable options (3), offer text (5), offer rules (10), run loadout (7), run settlement (7), save/building (5). They cover the pure logic (the offer rules, the run loadout, the settlement math, the save and building costs, the offer wording). Nothing tests the boss subsystem, the XP/level-up world side of `URunProgressionSubsystem`, or a real `DT_Containers` table (`UnlockableOptionsTest` uses its own table, so a wrong `bStartsLocked` in the real data is not caught). Under `modes.rigor: minimal` tests are optional; this is a permitted gap.
+- **No guard against "a world without a GameInstance"**: `GetWorld()->GetGameInstance()->GetSubsystem<...>()` dereferences null in an editor preview world. `UFilmCardSubsystem::Initialize` was fixed after crashing once; the old pattern remains at `AutoWeaponComponent.cpp:98,326`, `RunOutcomeSubsystem.cpp:46,64`, `LootContainer.cpp:108`, `CampBuilding.cpp:79,88`, `CampPawn.cpp:114`, `HeroCharacter.cpp:273` and in the probes (`DirectorProbeSubsystem.cpp`). Safe while the game runs.
 - **`EndRun` does not null-check the bag**: `RunOutcomeSubsystem.cpp:44` calls `Bag->GetWoodCount()` first.
 - **Progression binds to the enemy manager without declaring the dependency**: `RunProgressionSubsystem.cpp:154` uses `GetSubsystem<>` and no `Collection.InitializeDependency`, unlike `UFilmCardSubsystem` and the camp subsystems. If the manager initialized later, the `OnEnemyKilled` binding would be skipped silently and no XP gem would drop. It works today.
 - **The auto-apply path of `GenerateOffer` does not re-check the level**: `RunProgressionSubsystem.cpp:378-385` returns without `CheckLevelUp`; `ChooseOption` does call it (`:513`). Only reachable late in a run.
 - **Soft pause is not complete**: while a level-up offer is shown (`IsOfferPending`), `AExtractionZone::Tick` (`ExtractionZone.cpp:175-217`) keeps filling the bar, so a hero standing in the zone can extract behind the panel (the HUD hides the offer once the run is inactive). The dodge branch of `AHeroCharacter::Tick` (`HeroCharacter.cpp:365-370`) does not test `CanAct()`: a dash keeps moving the hero for up to 0.18 s after the panel opens, after death or after the run ended. `AWeaponEffect` (a boss slam warning) keeps ticking while `UBossRejectsSubsystem` is frozen, so the red ring can vanish before its slam lands (`BossRejectsSubsystem.cpp:178-181` against `:217,270`). Engine time is not stopped, so absolute-time timers run on: hit and dodge invulnerability expire, enemy `NextContactTime` and the boss `NextUse` times pass, and after the offer closes overdue attacks fire at once.
-- **The Esc menu is a hard pause, not the soft pause**: `UPauseMenuWidget::Open` (`PauseMenuWidget.cpp:115`) calls `SetGamePaused(true)` in a run. That stops all world timers, so probes cannot use `FTimerManager` while it is open (`DirectorGameMode.cpp:99-112` works around it with `FTSTicker`), and `Close` / `PressReturnToCamp` call `SetGamePaused(false)` (`:127,175`), also in the camp where `Open` never paused. Esc is blocked while an offer is pending (`HeroCharacter.cpp` `QuitKey`). Quitting from the menu (`:202`) ends the process without ending the run. Whether the music keeps playing while paused was not checked.
+- **The Esc menu is a hard pause, not the soft pause**: `UPauseMenuWidget::Open` (`PauseMenuWidget.cpp:115`) calls `SetGamePaused(true)` in a run. That stops all world timers, so probes cannot use `FTimerManager` while it is open (`DirectorProbeSubsystem.cpp` works around it with `FTSTicker`), and `Close` / `PressReturnToCamp` call `SetGamePaused(false)` (`:127,175`), also in the camp where `Open` never paused. Esc is blocked while an offer is pending (`HeroCharacter.cpp` `QuitKey`). Quitting from the menu (`:202`) ends the process without ending the run. Whether the music keeps playing while paused was not checked.
 - **`UPlayAreaSubsystem` finds the floor by shape**: `PlayAreaSubsystem.cpp:15-36` takes every `AStaticMeshActor` whose bounds (all components, colliding or not) are at least 1000 cm half-size and thinner than 20 percent. The play area is the bounding box of all of them, so two separate floor pieces make the gap between them walkable, and only the last piece is hidden by the forest dressing and gives its top height to it (`:33-34`, `ForestDressing.cpp:87-91`). With no match it only logs a warning and nothing keeps the hero or enemies on the map. One `PLAYAREA candidate` log line is written for every static mesh actor. The clamp is not used in the camp (the camp pawn does not move) and the camp does not need it.
 - **Cuts feed a boss only when the Cut Knight card is slotted**: `SpawnBoss` has callers only in `FilmCardSubsystem.cpp:131` (the `ForceBoss` card) and probes. Without that card there is no boss, yet the level-up text says the cut "gives it to the Boss" (`RunHudWidget.cpp:109`) and a toast says "CUT: X now belongs to the Boss" (`RunProgressionSubsystem.cpp:488`). A boss registered later receives all earlier cuts at once and a burst of toasts. `SetBoss` replaces the previous boss.
 - **`UBossRejectsSubsystem::Tick` returns early when the run is inactive** (`BossRejectsSubsystem.cpp:206`) without `ClearAttacks`; balls in flight stay frozen on the result screen (cleared only when the world ends or when the boss dies).
@@ -129,10 +122,10 @@ The project rule is that values live in data ([master PRD section 5](../../desig
 - **`CampBuilding` binds and never unbinds**: `CampBuilding.cpp:80` adds `OnMetaChanged` and there is no `EndPlay` removal; safe today because the subsystem outlives the building only within one session (dynamic delegates drop dead objects).
 - **`HeroModelScale` and `HeroModelYaw` are read only in the constructor** (`HeroCharacter.cpp:61-63`), so an override on a placed instance or in `Config` has no effect on the model.
 - **Per-frame work in the UI**: `URunHudWidget::NativeTick` rebuilds the loadout string and iterates every actor for the extraction zones each frame (`RunHudWidget.cpp:172,195`); `UCampWidget::MakeSignature` builds a string every frame (`CampWidget.cpp:60-94`). Not measured; the 150-enemy probe does not include the HUD cost separately.
-- **The probes touch the real save and share timing**: `-ReelProbe` settles a real run (unlocks, wood, `CampSave`) unless `-SaveSlot=Name` is passed (`CampSaveSubsystem.cpp:12-21`). It reads its delay and step from `OfferProbe` (`DirectorGameMode.cpp:267`), so changing those changes both. `-PaceProbe` sets global time dilation and does not reset it (`:309`).
+- **The probes touch the real save and share timing**: `-ReelProbe` settles a real run (unlocks, wood, `CampSave`) unless `-SaveSlot=Name` is passed (`CampSaveSubsystem.cpp:12-21`). It reads its delay and step from `OfferProbe` (`DirectorProbeSubsystem.cpp`), so changing those changes both. `-PaceProbe` sets global time dilation and does not reset it.
 - **Hardcoded map names**: `L_Camp` and `L_Greybox` are strings in `CampWidget.cpp:233`, `PauseMenuWidget.cpp:176` and `RunHudWidget.cpp:285`.
 - **Dependency cycles, unchecked**: see [dependencies.md](dependencies.md#1-how-modules-depend-on-each-other).
-- **Development plugins are enabled for all targets**: `ModelContextProtocol`, `AllToolsets` and `Terminal` have no `TargetAllowList` in `Game_01.uproject`, so they go into the package. Restrict them to Editor before release.
+- **Development plugins are restricted to the Editor**: `ModelContextProtocol`, `AllToolsets` and `Terminal` now carry `TargetAllowList: Editor` in `Game_01.uproject`, so the packager no longer treats them as runtime dependencies. `GameFeatures` is enabled for all targets but unused (no feature plugin references it yet); `ModelingToolsEditorMode` is Editor-only.
 - **The camp panel is rebuilt wholesale** when its signature changes, so hover state is lost after a click.
 - **Checked and fine**: every handler bound with `AddDynamic` (`HandleDied`, `HandleMetaChanged`, `HandleRunEnded`, `HandleEnemyKilled`, `HandleCampChanged`, zone overlaps, `HandleClicked`, the three `HandleAction`) is a `UFUNCTION`.
 

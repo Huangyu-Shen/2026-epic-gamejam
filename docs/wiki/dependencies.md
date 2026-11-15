@@ -1,28 +1,28 @@
 # Dependencies
 
-Checked against the source on 2026-11-15 (HEAD `bfe9e16`). The project has no releases: the only git tag is `jam-start` (commit `44589d2`, which predates the Unreal project), so "versions" below means the engine version and the plugin descriptors installed on this machine.
+Checked against the source on 2026-11-16 (HEAD `ad6174d`). The project has no releases: the only git tag is `jam-start` (commit `44589d2`, which predates the Unreal project), so "versions" below means the engine version and the plugin descriptors installed on this machine.
 
 ## 1. How Modules Depend on Each Other
 
-For the overall dependency graph see [section 3 of architecture.md](architecture.md#3-layers-and-dependency-graph). Here is a per-directory summary of "who references whom", compiled from the `#include "<Directory>/..."` lines of the headers and implementation files under `Source/Game_01/Public` and `Source/Game_01/Private` (recomputed 2026-11-15).
+For the overall dependency graph see [section 3 of architecture.md](architecture.md#3-layers-and-dependency-graph). Here is a per-directory summary of "who references whom", compiled from the `#include "<Directory>/..."` lines of the headers and implementation files under `Source/Game_01/Public` and `Source/Game_01/Private` (recomputed 2026-11-16).
 
 | Directory | References (`#include`) | Referenced by |
 |---|---|---|
 | `Audio/` | Game | Camp, Combat, Enemies, Extraction, Game, Loot, Progression, UI |
 | `Camp/` | Audio, Extraction, Game, Loot, UI | Combat, Editing, Flow, Game, Player, UI |
 | `Combat/` | Audio, Camp, Enemies, Extraction, Game, Loot, Progression | Enemies, Game, Player, Progression, UI |
+| `Dev/` | Audio, Camp, Combat, Enemies, Extraction, Game, Loot, Player, Progression, UI | nobody (the probe subsystem creates itself from a command-line flag) |
 | `Editing/` | Camp, Enemies, Extraction, Game | Player, UI |
 | `Enemies/` | Audio, Combat, Extraction, Game, Loot, Player, Progression, UI | Combat, Editing, Game, Player, Progression |
-| `Extraction/` | Audio, Flow, Loot, UI | Camp, Combat, Editing, Enemies, Flow, Game, Loot, Player, Progression, StandIn, UI |
+| `Extraction/` | Audio, Flow, Loot, UI | Camp, Combat, Editing, Enemies, Flow, Game, Loot, Player, Progression, UI |
 | `Flow/` | Camp, Extraction, Loot | Extraction |
 | `Game/` | Audio, Camp, Combat, Enemies, Extraction, Loot, Player, Progression, UI | Audio, Camp, Combat, Editing, Enemies, Loot, Player, Progression |
-| `Loot/` | Audio, Extraction (`ALootContainer` reads the unlocked options from `UCampStockSubsystem`), Game (`ULootConfig` reads `UDirectorTuningSettings`), UI (calls `UHudMessageSubsystem::Post`) | Camp, Combat, Enemies, Extraction, Flow, Game, Player, StandIn, UI |
+| `Loot/` | Audio, Extraction (`ALootContainer` reads the unlocked options from `UCampStockSubsystem`), Game (`ULootConfig` reads `UDirectorTuningSettings`), UI (calls `UHudMessageSubsystem::Post`) | Camp, Combat, Enemies, Extraction, Flow, Game, Player, UI |
 | `Player/` | Camp, Combat, Editing, Enemies, Extraction, Game, Loot, Progression, UI | Enemies, Game, Progression, UI |
 | `Progression/` | Audio, Combat, Enemies, Extraction, Game, Player, UI | Combat, Enemies, Game, Player, UI |
-| `StandIn/` | Extraction, Loot | nobody (see section 5) |
 | `UI/` | Audio, Camp, Combat, Editing, Extraction, Loot, Player, Progression | Camp, Enemies, Extraction, Game, Loot, Player, Progression |
 
-Counting method: for each directory, the set of other directories pulled in by an `#include "<other directory>/..."` in its headers and `.cpp` files. `Tests/` was left out. `Game/` is both a hub (`ADirectorGameMode` references the hero, enemies, loot, extraction and progression) and a leaf that everything reads (`UDirectorTuningSettings`). The counts come from `#include` lines only; `GetSubsystem<>` calls always have a matching include, so they add nothing.
+Counting method: for each directory, the set of other directories pulled in by an `#include "<other directory>/..."` in its headers and `.cpp` files. `Tests/` was left out. `Game/` is now mostly a leaf that everything reads (`UDirectorTuningSettings`); the run game mode shrank to a constructor and `BeginPlay` after the probes moved to `Dev/` (TD-001), and `Dev/` is the hub that references almost every other directory. The counts come from `#include` lines only; `GetSubsystem<>` calls always have a matching include, so they add nothing.
 
 `Audio/` is the newest directory (commit `a5f6c32`): `UGameAudioSubsystem` is called by gameplay code through `Play(EGameSound)` and reads its assets and volumes from `UDirectorTuningSettings`. The settings header in turn includes three project headers for its member types: `Audio/GameAudioSubsystem.h` (`EGameSound`), `Enemies/BossRejectsSubsystem.h` (`FBossRejectTuning`) and `Progression/ProgressionTypes.h` (`FStarTuning`). So every file that reads Director Tuning compiles those headers too, and a change to the boss header rebuilds all of them.
 
@@ -36,7 +36,6 @@ The project has one game module, `Game_01` (`Runtime`, loading phase `Default`, 
 |---|---|---|
 | Public | `Core`, `CoreUObject`, `Engine` | Basics: actors, components, subsystems, `USaveGame`, `UDataTable`, `UGameplayStatics`, sound (`USoundBase`, `UAudioComponent`) and the skeletal and static mesh classes |
 | Public | `InputCore` | `EKeys`, raw key bindings (`InputCoreTypes.h`) |
-| Public | `EnhancedInput` | **No source file includes an Enhanced Input header.** The module is still loaded at runtime, because [DefaultInput.ini](../../Game_01%205.8/Config/DefaultInput.ini) sets `DefaultPlayerInputClass` and `DefaultInputComponentClass` to the Enhanced Input classes; `BindKey` works on them as on the base input component |
 | Public | `DeveloperSettings` | `UDirectorTuningSettings` (the project settings page) |
 | Public | `UMG` | UI widgets (`UUserWidget`, `UTextBlock`, `UButton`, `UProgressBar`, `UScrollBox`, ...) and `UWidgetTree` |
 | Public | `Slate`, `SlateCore` | `FSlateFontInfo`, `FSlateBrush`, `FButtonStyle`, `FSlateApplication::SetAllUserFocusToGameViewport` in `DirectorUi.cpp` |
@@ -44,22 +43,23 @@ The project has one game module, `Game_01` (`Runtime`, loading phase `Default`, 
 
 Everything the source includes comes from these modules. No source file includes anything from `CommonUI`, `GameplayAbilities`, `AIModule`, `Niagara` or the Online subsystems, so none of those modules is needed. `PCHUsage = UseExplicitOrSharedPCHs`. The target files [Game_01.Target.cs](../../Game_01%205.8/Source/Game_01.Target.cs) (`TargetType.Game`) and [Game_01Editor.Target.cs](../../Game_01%205.8/Source/Game_01Editor.Target.cs) (`TargetType.Editor`) both use `BuildSettingsVersion.V7` and `EngineIncludeOrderVersion.Unreal5_8`, and add the module `Game_01` as an extra module. There is no `Server` or `Client` target.
 
-The automation tests in `Source/Game_01/Private/Tests/` are part of the same module, guarded by `WITH_DEV_AUTOMATION_TESTS`; there is no separate test module. There are 12 tests: five loot and save tests (`ReelUnlockTest.cpp`), four star tests (`StarTuningTest.cpp`) and three unlockable-option tests (`UnlockableOptionsTest.cpp`).
+The automation tests in `Source/Game_01/Private/Tests/` are part of the same module, guarded by `WITH_DEV_AUTOMATION_TESTS`; there is no separate test module. There are 46 tests across eight files: star tuning (`StarTuningTest.cpp`, 4), reel unlock (`ReelUnlockTest.cpp`, 5), unlockable options (`UnlockableOptionsTest.cpp`, 3), offer text (`OfferTextTest.cpp`, 5), offer rules (`OfferRulesTest.cpp`, 10), run loadout (`RunLoadoutTest.cpp`, 7), run settlement (`RunSettlementTest.cpp`, 7) and save/building (`CampSaveAndBuildingTest.cpp`, 5). See [build-and-run.md](build-and-run.md#7-testing).
 
 **Unity build pitfall**: UBT merges several `.cpp` files into one compilation unit. Helper functions with the same name in anonymous namespaces will collide (error C2084). It happened with a `RelicName` helper that existed in both `RunHudWidget.cpp` and `CampWidget.cpp`. The remaining relic helpers in `RunHudWidget.cpp` are called `HudRelicLabel`, `HudRelicNames` and `HudOptionNames`, and `CampWidget.cpp` has only `CampBuildingName`. When adding new files, give internal functions names that are specific to the file.
 
 ## 3. Engine Plugins
 
-[Game_01.uproject](../../Game_01%205.8/Game_01.uproject) enables four plugins. The engine on this machine is `UE_5.8` build 5.8.4 (changelist 58902052, read from `D:/Game/EPIC/UE_5.8/Engine/Build/Build.version`); the project's `EngineAssociation` is a GUID of that installation, not a version string. The descriptors below were read from `Engine/Plugins` of that install.
+[Game_01.uproject](../../Game_01%205.8/Game_01.uproject) enables five plugins. The engine on this machine is `UE_5.8` build 5.8.4 (changelist 58902052, read from `D:/Game/EPIC/UE_5.8/Engine/Build/Build.version`); the project's `EngineAssociation` is the version string `"5.8"`, so the editor picks any installed 5.8, not a specific installation GUID. The descriptors below were read from `Engine/Plugins` of that install.
 
 | Plugin | Scope in the `.uproject` | Descriptor (engine 5.8.4) | Purpose |
 |---|---|---|---|
+| `GameFeatures` | All targets | Built-in runtime plugin (no version), enabled with no `TargetAllowList` | Unreal's modular gameplay framework plugin; enabled but no `UGameFeatureAction` or `.uplugin` feature is used yet |
 | `ModelingToolsEditorMode` | Editor target only (`TargetAllowList: Editor`) | `Engine/Plugins/Editor/ModelingToolsEditorMode`, Beta | Editor modeling mode (template default) |
-| `ModelContextProtocol` | All targets | `Engine/Plugins/Experimental/ModelContextProtocol`, version 1.0, Experimental, NoRedist, not enabled by default. Modules: `ModelContextProtocol` and `ModelContextProtocolEngine` (Runtime), `ModelContextProtocolEditor` (Editor), plus test modules | Lets AIs such as Claude connect to the editor through MCP. Settings (path `/mcp`, port 8000, auto-start) are in the git-ignored `DefaultEditorPerProjectUserSettings.ini`; see [build-and-run.md](build-and-run.md#9-unreal-mcp-ai-collaboration) |
-| `AllToolsets` | All targets | `Engine/Plugins/Experimental/Toolsets/AllToolsets`, version 1.0, Experimental, EditorOnly, NoRedist, no modules of its own; it depends on 21 toolset plugins (for example `EditorToolset`, `AutomationTestToolset`, `PluginToolset`, `ConfigSettingsToolset`, `UMGToolSet`) | MCP toolsets |
-| `Terminal` | All targets | `Engine/Plugins/Experimental/Terminal`, version 1.0, Experimental, EditorOnly, NoRedist; its module is `Editor` type | In-editor terminal |
+| `ModelContextProtocol` | Editor target only (`TargetAllowList: Editor`) | `Engine/Plugins/Experimental/ModelContextProtocol`, version 1.0, Experimental, NoRedist, not enabled by default. Modules: `ModelContextProtocol` and `ModelContextProtocolEngine` (Runtime), `ModelContextProtocolEditor` (Editor), plus test modules | Lets AIs such as Claude connect to the editor through MCP. Settings (path `/mcp`, port 8000, auto-start) are in the git-ignored `DefaultEditorPerProjectUserSettings.ini`; see [build-and-run.md](build-and-run.md#9-unreal-mcp-ai-collaboration) |
+| `AllToolsets` | Editor target only (`TargetAllowList: Editor`) | `Engine/Plugins/Experimental/Toolsets/AllToolsets`, version 1.0, Experimental, EditorOnly, NoRedist, no modules of its own; it depends on 21 toolset plugins (for example `EditorToolset`, `AutomationTestToolset`, `PluginToolset`, `ConfigSettingsToolset`, `UMGToolSet`) | MCP toolsets |
+| `Terminal` | Editor target only (`TargetAllowList: Editor`) | `Engine/Plugins/Experimental/Terminal`, version 1.0, Experimental, EditorOnly, NoRedist; its module is `Editor` type | In-editor terminal |
 
-`ModelContextProtocol` and `AllToolsets` are development-time tools and are not needed to run the game. They are enabled for all targets, so the packager treats them as dependencies. What the packaged build actually contains from them: the staged package `Saved/Packages/story-012e` (15 November) lists only `Engine/Plugins/Experimental/ModelContextProtocol/ModelContextProtocol.uplugin` (the descriptor file) in its manifest, and no `AllToolsets` or `Terminal` files. Whether the runtime modules of `ModelContextProtocol` are linked into the monolithic `Game_01.exe` was not checked. Before a release, restricting both plugins to the Editor target (`TargetAllowList`, as `ModelingToolsEditorMode` already does) removes the question.
+`ModelContextProtocol`, `AllToolsets` and `Terminal` are development-time tools and are not needed to run the game. They are now restricted to the Editor target (`TargetAllowList: Editor`), so the packager no longer treats them as runtime dependencies. Only `GameFeatures` and `ModelingToolsEditorMode` remain: `GameFeatures` is enabled for all targets (a runtime plugin, unused for now), and `ModelingToolsEditorMode` is Editor-only. The staged package `Saved/Packages/story-012e` (15 November) predates this restriction and still listed only `Engine/Plugins/Experimental/ModelContextProtocol/ModelContextProtocol.uplugin` (the descriptor file) in its manifest, with no `AllToolsets` or `Terminal` files.
 
 `DefaultGame.ini` carries a `[/Script/CommonUI.CommonUISettings]` section and three `CommonUI.*` console variables, but the CommonUI plugin is not in the `.uproject` and no game code uses it. `DefaultEngine.ini` contains a plugin-written `AndroidFileServerRuntimeSettings` block (with a `SecurityToken`) that the game does not use.
 
@@ -83,11 +83,11 @@ Imported but referenced by no code, map or setting, so never cooked: `BattleWiza
 
 ## 5. Things Deliberately Not Done
 
-- **No Enhanced Input assets**: input uses `BindKey` to bind raw keys. The source comments and the stories both state "no input assets", to move fast during the greybox phase. The `EnhancedInput` module entry in `Game_01.Build.cs` is a leftover from the project template.
+- **No Enhanced Input assets**: input uses `BindKey` to bind raw keys. The source comments and the stories both state "no input assets", to move fast during the greybox phase. The `EnhancedInput` module entry in `Game_01.Build.cs` has been removed (the module list is now Core, CoreUObject, Engine, InputCore, DeveloperSettings, UMG, Slate, SlateCore).
 - **No GAS**: abilities, damage and status are all self-written components and subsystems. [`.claude/agents`](../../.claude/agents/) has a `ue-gas-specialist`, but the project does not use GAS (no `GameplayAbilities` module, no ability system code).
 - **No physics collision for enemies**: enemies have no collision and do not Tick (`AEnemy` sets `NoCollision` and `bCanEverTick = false`), to protect the frame rate with 150 enemies. `UEnemyManagerSubsystem` moves them all in one loop.
 - **No widget blueprints**: every screen is built in C++ ([ui.md](ui.md)); the `UMG` module is used as a C++ widget library only.
-- **Legacy stand-in code is still compiled**: `Source/Game_01/Private/StandIn/` (`AStandInCharacter`, `AStandInGameMode`, the story 001/002 greybox) is referenced by no map and no other source file (`L_Camp.umap` and `L_Greybox.umap` name `CampGameMode` and `DirectorGameMode`). It still compiles and still binds the keys E, K and N, but no level uses it.
+- **Legacy stand-in code was deleted**: `Source/Game_01/Private/StandIn/` (`AStandInCharacter`, `AStandInGameMode`, the story 001/002 greybox) was removed (commit `12121d3`), along with its key bindings E, K and N. No level references it anymore.
 
 ## 6. Directories in the Repository That Do Not Take Part in the Build
 

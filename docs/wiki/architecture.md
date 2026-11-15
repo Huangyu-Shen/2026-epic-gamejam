@@ -1,6 +1,6 @@
 # Overall Architecture
 
-Corresponds to commit `bfe9e16` on the `main` branch (2026-11-15, stories 001-012 and the later look-and-feel work: Fab art, audio, the Esc menu, wood and stone, the camp layout). Source root: [`Game_01 5.8/Source/Game_01/`](../../Game_01%205.8/Source/Game_01/), referred to below as `Source/`. It holds about 10,300 lines of C++ in 13 directories, plus 303 lines of automation tests in `Private/Tests`.
+Corresponds to commit `ad6174d` on the `main` branch (2026-11-16, stories 001-012 complete and 013 in progress, the later look-and-feel work: Fab art, audio, the Esc menu, wood and stone, the camp layout, the command-line probes moved to `Dev/`, the progression split into pure structs). Source root: [`Game_01 5.8/Source/Game_01/`](../../Game_01%205.8/Source/Game_01/), referred to below as `Source/`. It holds 9,254 lines of C++ in 13 directories (47 headers, 42 `.cpp`, 2 module files), plus 968 lines of automation tests in `Private/Tests` (8 files).
 
 ## 1. Tech stack
 
@@ -8,14 +8,14 @@ Corresponds to commit `bfe9e16` on the `main` branch (2026-11-15, stories 001-01
 |---|---|---|
 | Engine | Unreal Engine 5.8 (5.8.4 on this machine, see [VERSION.md](../engine-reference/unreal/VERSION.md)) | [Game_01.uproject](../../Game_01%205.8/Game_01.uproject) |
 | Language | C++ (UE 5.8 builds with C++20). All gameplay and UI are C++; the tracked `Content/` holds only data tables, two maps and one material, so there are no Blueprint classes in git | [Source/](../../Game_01%205.8/Source/Game_01/) |
-| Module | One runtime module `Game_01`. Dependencies in [Game_01.Build.cs](../../Game_01%205.8/Source/Game_01/Game_01.Build.cs): `Core`, `CoreUObject`, `Engine`, `InputCore`, `EnhancedInput`, `DeveloperSettings`, `UMG`, `Slate`, `SlateCore` | |
+| Module | One runtime module `Game_01`. Dependencies in [Game_01.Build.cs](../../Game_01%205.8/Source/Game_01/Game_01.Build.cs): `Core`, `CoreUObject`, `Engine`, `InputCore`, `DeveloperSettings`, `UMG`, `Slate`, `SlateCore` | |
 | UI | UMG; every widget tree is built in C++ inside `RebuildWidget`, no widget Blueprints | [Public/UI](../../Game_01%205.8/Source/Game_01/Public/UI/) |
 | Data | 12 DataTables (`Content/Data/DT_*.uasset`) set in the project settings page `Director Tuning`. The same page also holds `StarTuning` and `BossRejects` (structs, not tables), the sound map, the two music tracks and the volume levels. `DefaultGame.ini` sets the 12 tables, `Sounds`, `CampMusic` and `RunMusic`; it has no entry for `StarTuning`, `BossRejects` or the volumes, so their C++ defaults apply | [DirectorTuningSettings.h](../../Game_01%205.8/Source/Game_01/Public/Game/DirectorTuningSettings.h), [DefaultGame.ini](../../Game_01%205.8/Config/DefaultGame.ini) |
 | Save | `USaveGame`, single slot `CampSave` (another slot name with `-SaveSlot=Name`) | [CampSaveGame.h](../../Game_01%205.8/Source/Game_01/Public/Flow/CampSaveGame.h) |
-| Input | Raw key bindings (`BindKey`, `IsInputKeyDown`), no input assets. `EnhancedInput` is in `Build.cs` but no source file includes it | [HeroCharacter.cpp](../../Game_01%205.8/Source/Game_01/Private/Player/HeroCharacter.cpp) |
+| Input | Raw key bindings (`BindKey`, `IsInputKeyDown`), no input assets. `EnhancedInput` is no longer in `Build.cs` and no source file includes it | [HeroCharacter.cpp](../../Game_01%205.8/Source/Game_01/Private/Player/HeroCharacter.cpp) |
 | Audio | One entry point, `UGameAudioSubsystem`; the sound cues (`Free_Sounds_Pack`) and the two music loops (`PathOfAdventure`) are assigned in `Director Tuning`. `DefaultGame.ini` always cooks those two cue folders because they are only soft references | [GameAudioSubsystem.h](../../Game_01%205.8/Source/Game_01/Public/Audio/GameAudioSubsystem.h) |
 | Art | Fab packs under `Content/`, loaded by hard-coded asset paths (see below). They are **not in git**: only `Data`, `Maps` and `Materials` are tracked, the pack folders show up as untracked | |
-| AI collaboration | Plugins `ModelContextProtocol`, `AllToolsets`, `Terminal` have no target allow list in the `.uproject`; `ModelingToolsEditorMode` is editor-only | [.uproject](../../Game_01%205.8/Game_01.uproject) |
+| AI collaboration | Plugins `ModelContextProtocol`, `AllToolsets`, `Terminal` are restricted to the Editor target (`TargetAllowList: Editor`); `ModelingToolsEditorMode` is editor-only; `GameFeatures` is enabled for all targets but unused | [.uproject](../../Game_01%205.8/Game_01.uproject) |
 
 **The Fab packs and their fallbacks.** Every model is looked up with `ConstructorHelpers::FObjectFinder` in a constructor. If the pack is missing, the lookup fails and the code keeps the engine cube or cylinder, so the game still runs (greybox). A fresh clone has no packs and therefore looks grey.
 
@@ -30,7 +30,7 @@ Corresponds to commit `bfe9e16` on the `main` branch (2026-11-15, stories 001-01
 
 Other folders in `Content/` (`BattleWizard*`, `FourEvilDragons*`, `FreeAtmosGameMusic`, `Free_5_Samples`, `SmallSoundKit`, `ZenUV_SciFi_TrimSheet`) are referenced by no source file.
 
-The game is a fantasy angled-top-down "mow-down x search-and-extract x thin camp" game: on the run map you loot, fight and level up (at each level-up you take one of three options, and may first cut one so it goes to the boss), then extract with your bag; extracted **wood and stone** go into camp, where buildings are upgraded (the smithy costs stone, the clinic costs wood) and take effect from the next run. Lost film reels carried out alive unlock upgrade options by name for every later run (the options are Chain, Haste and Magnet, which start locked in the level-up pool). A note on names: wood is still stored in fields and functions called `Iron` (`UCampStockSubsystem::Iron`, `ULootBagComponent::IronCount`, `FRunResult::IronGained`, `AddIron`, `SpendIron`, the save field `Iron`). `GetWood()` and `GetWoodCount()` are the readable aliases; stone has its own names.
+The game is a fantasy angled-top-down "mow-down x search-and-extract x thin camp" game: on the run map you loot, fight and level up (at each level-up you take one of three options, and may first cut one so it goes to the boss), then extract with your bag; extracted **wood and stone** go into camp, where buildings are upgraded (the smithy costs stone, the clinic costs wood) and take effect from the next run. Lost film reels carried out alive unlock upgrade options by name for every later run (the options are Chain, Haste and Magnet, which start locked in the level-up pool). A note on names: the code was renamed from Iron to Wood, so the API now reads `UCampStockSubsystem::Wood`/`AddWood`/`SpendWood` and `ULootBagComponent::WoodCount`/`GetWoodCount`/`TryAddWood`; only the save field `Iron` and the DataTable columns `IronMin`/`IronMax`/`IronPerSlot` keep the old name for compatibility, and stone has its own names.
 
 ## 2. Two maps, two game modes
 
@@ -39,7 +39,7 @@ The game is a fantasy angled-top-down "mow-down x search-and-extract x thin camp
 | `L_Camp` (default startup map, also the editor startup map) | [`ACampGameMode`](../../Game_01%205.8/Source/Game_01/Private/Camp/CampGameMode.cpp) | [`ACampPawn`](../../Game_01%205.8/Source/Game_01/Private/Camp/CampPawn.cpp) | Camp: not walkable. The game mode starts the camp music and spawns three buildings on an equilateral triangle (radius 700 cm) for each kind the level does not already contain: the clinic, the smithy and a decorative warehouse. Click a building or use the left panel |
 | `L_Greybox` | [`ADirectorGameMode`](../../Game_01%205.8/Source/Game_01/Private/Game/DirectorGameMode.cpp) | [`AHeroCharacter`](../../Game_01%205.8/Source/Game_01/Private/Player/HeroCharacter.cpp) | Run: starts the run music; move, auto-attack, loot, extract |
 
-The game mode is not set in an ini; it is stored in each map's World Settings. The binary `.umap` files contain the class names `CampGameMode` and `DirectorGameMode` (one each) and no `StandInGameMode`, so `AStandInGameMode` is referenced by no map. `DefaultEngine.ini` sets `GameDefaultMap` and `EditorStartupMap` to `L_Camp`; `DefaultGame.ini` cooks both maps and always cooks `/Game/Data`, `/Game/Free_Sounds_Pack/cue` and `/Game/PathOfAdventure/Loop/CUE`.
+The game mode is not set in an ini; it is stored in each map's World Settings. The binary `.umap` files contain the class names `CampGameMode` and `DirectorGameMode` (one each). The old `StandIn/` directory was deleted. `DefaultEngine.ini` sets `GameDefaultMap` and `EditorStartupMap` to `L_Camp`; `DefaultGame.ini` cooks both maps and always cooks `/Game/Data`, `/Game/Free_Sounds_Pack/cue` and `/Game/PathOfAdventure/Loop/CUE`.
 
 The map names `L_Camp` and `L_Greybox` are hardcoded in three places: the `Start` action of [`CampWidget.cpp`](../../Game_01%205.8/Source/Game_01/Private/UI/CampWidget.cpp), the `Camp` action of [`RunHudWidget.cpp`](../../Game_01%205.8/Source/Game_01/Private/UI/RunHudWidget.cpp), and `PressReturnToCamp` in [`PauseMenuWidget.cpp`](../../Game_01%205.8/Source/Game_01/Private/UI/PauseMenuWidget.cpp).
 
@@ -47,7 +47,7 @@ What the map files contain beyond that (placed actors, the floor) cannot be read
 
 ## 3. Layers and dependency graph
 
-The graph is by class and shows only edges that exist in the code (an arrow means "calls or reads", checked against the `#include`s and the `GetSubsystem<>` calls). Dotted arrows mean "creates". Audio is drawn once: every class that plays a sound calls `UGameAudioSubsystem::PlayIn` (or `Play`), which is listed in the arrow group `... --> Audio`.
+The graph is by class and shows only edges that exist in the code (an arrow means "calls or reads", checked against the `#include`s and the `GetSubsystem<>` calls). Dotted arrows mean "creates". Audio is drawn once: every class that plays a sound calls `UGameAudioSubsystem::PlayIn` (or `Play`), which is listed in the arrow group `... --> Audio`. `UDirectorProbeSubsystem` is drawn once, isolated, because it is a world subsystem that creates itself only when a probe flag is on the command line and then reads almost every other subsystem (the probes moved out of the game mode into `Dev/`).
 
 ```mermaid
 graph TD
@@ -60,13 +60,14 @@ graph TD
   subgraph WS["World subsystems: rebuilt with every map, the camp map included"]
     Run["URunOutcomeSubsystem<br/>start and end of a run"]
     Heat["ULootHeatSubsystem"]
-    Prog["URunProgressionSubsystem<br/>XP, level-up, cuts, stars"]
+    Prog["URunProgressionSubsystem<br/>XP, level-up, cuts, stars<br/>(pure logic in FRunLoadout,<br/>FOfferRules, FOfferText)"]
     Spawn["UEnemySpawnSubsystem"]
     Mgr["UEnemyManagerSubsystem"]
     Boss["UBossRejectsSubsystem<br/>cuts become boss attacks"]
     Cards["UFilmCardSubsystem"]
     Area["UPlayAreaSubsystem<br/>keeps units on the floor"]
     Audio["UGameAudioSubsystem<br/>game worlds only"]
+    Probe["UDirectorProbeSubsystem<br/>command-line probes, Dev/ only"]
   end
   subgraph AC["Run-map actors and components"]
     Hero["AHeroCharacter"]
@@ -91,7 +92,7 @@ graph TD
     Pause["UPauseMenuWidget"]
   end
   subgraph GM["Game modes"]
-    DirMode["ADirectorGameMode<br/>run map, probes"]
+    DirMode["ADirectorGameMode<br/>run map"]
     CampMode["ACampGameMode"]
   end
   Cfg["ULootConfig"]
@@ -245,7 +246,7 @@ sequenceDiagram
   PM->>R: Return to camp (second click) calls ReportPlayerDied(Bag)
   R->>R: EndRun, ignored if the run is no longer active
   R->>R: FRunSettlement.Compute(bag wood, bag stone, reels, multiplier, outcome)
-  R->>S: AddIron (wood) and AddStone, 0 on death
+  R->>S: AddWood and AddStone, 0 on death
   S-->>V: OnStockChanged, SaveNow for each one that grew
   R->>S: UnlockOption for each banked reel's option, extraction only
   S-->>V: OnStockChanged for each new option, SaveNow
@@ -275,7 +276,7 @@ sequenceDiagram
   participant V as UCampSaveSubsystem
   P->>W: Click Upgrade
   W->>M: TryUpgrade(type, reason)
-  M->>S: SpendStone (smithy) or SpendIron = wood (clinic)
+  M->>S: SpendStone (smithy) or SpendWood (clinic)
   S-->>M: if enough, deduct and broadcast OnStockChanged
   S-->>V: OnStockChanged, SaveNow (resource spent, level not raised yet)
   M->>M: level + 1, play Upgrade sound, OnMetaChanged
@@ -338,9 +339,10 @@ sequenceDiagram
 │   └── Source/
 │       ├── Game_01.Target.cs, Game_01Editor.Target.cs
 │       └── Game_01/             # Game_01.Build.cs, Game_01.cpp/.h, then {Public,Private}/
-│           ├── Audio/ Camp/ Combat/ Editing/ Enemies/ Extraction/ Flow/ Game/
-│           ├── Loot/ Player/ Progression/ StandIn/ UI/   (13 directories, each with Public/ and Private/ halves)
-│           └── Private/Tests/   # 12 automation tests (StarTuningTest.cpp, ReelUnlockTest.cpp, UnlockableOptionsTest.cpp)
+│           ├── Audio/ Camp/ Combat/ Dev/ Editing/ Enemies/ Extraction/ Flow/ Game/
+│           ├── Loot/ Player/ Progression/ UI/   (13 directories, each with Public/ and Private/ halves)
+│           └── Private/Tests/   # 46 automation tests in 8 files (StarTuningTest, ReelUnlockTest, UnlockableOptionsTest,
+│                                #   OfferTextTest, OfferRulesTest, RunLoadoutTest, RunSettlementTest, CampSaveAndBuildingTest)
 ├── design/                      # game-brief.md (v2), prd/master-prd.md (scope gate), gdd/ (per-system docs, partly still v1)
 ├── docs/                        # wiki/ (this wiki), devlog/ (one folder per day), plans/, architecture/, registry/, engine-reference/, workflow guides
 ├── production/                  # epics/directors-cut (stories 001-013), qa/evidence (screenshots, probe logs), stage.txt

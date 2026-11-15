@@ -1,6 +1,6 @@
 # UI
 
-Everything is written in C++ with no widget blueprints: each widget builds its tree in `RebuildWidget()` using `WidgetTree->ConstructWidget<T>()`, guarded by `!WidgetTree->RootWidget` so the tree is built only once. This way the UI and the code are reviewed in one place, at the cost that changing the look requires recompiling. Checked against the source on 2026-11-15 (HEAD `bfe9e16`). Paths omit the prefix `Game_01 5.8/Source/Game_01/`.
+Everything is written in C++ with no widget blueprints: each widget builds its tree in `RebuildWidget()` using `WidgetTree->ConstructWidget<T>()`, guarded by `!WidgetTree->RootWidget` so the tree is built only once. This way the UI and the code are reviewed in one place, at the cost that changing the look requires recompiling. Checked against the source on 2026-11-16 (HEAD `ad6174d`). Paths omit the prefix `Game_01 5.8/Source/Game_01/`.
 
 There are four screens: the run HUD with the level-up panel and the result page (`URunHudWidget`), the camp screen (`UCampWidget`), the Esc menu (`UPauseMenuWidget`, used in both), and the toast area that the first two share (`FToastPanel`, fed by `UHudMessageSubsystem`).
 
