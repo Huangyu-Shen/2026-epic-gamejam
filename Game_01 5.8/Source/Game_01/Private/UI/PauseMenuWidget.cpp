@@ -70,6 +70,12 @@ TSharedRef<SWidget> UPauseMenuWidget::RebuildWidget()
 			? TEXT("WASD move   Space dodge   E search\n1-3 take an upgrade   4-6 cut one   Esc menu")
 			: TEXT("Click a building to upgrade it\nPick film cards, then START RUN   Esc menu"), 14, DirectorUi::DimColor);
 
+		// Credits. Two of the packs are CC BY: music by Kounine, and the WW2 buildings by Winyunq (scaled for the game).
+		DirectorUi::AddText(WidgetTree, Panel, TEXT("\nCredits"), 12, DirectorUi::DimColor);
+		UTextBlock* Credits = DirectorUi::AddText(WidgetTree, Panel,
+			TEXT("Music: \"Path of Adventure\" by Kounine (CC BY). Buildings: WW2 RTS & SLG Production Buildings Pack by Winyunq (CC BY 4.0, scaled). House: Cozy Low Poly House by Demolition Studios. Heroes, monsters and forest: Dungeon Mason. Sounds: 50 Free Game Sounds Pack by PlaceHolder Inc. All via Fab."), 11, DirectorUi::DimColor);
+		Credits->SetAutoWrapText(true);
+
 		PanelRoot->SetVisibility(ESlateVisibility::Collapsed);
 		ShowSettings(false);
 		RefreshVolumeTexts();

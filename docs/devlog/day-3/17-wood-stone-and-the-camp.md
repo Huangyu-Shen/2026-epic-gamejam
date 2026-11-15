@@ -1,6 +1,6 @@
 # Day 3 (15 Nov, night) · Wood and stone, a forest camp, and sizes
 
-[Dev log index](../README.md) · [← previous](16-the-forest-floor.md) · [next →](18-status-so-far.md)
+[Dev log index](../README.md) · [← previous](16-the-forest-floor.md) · [next →](18-camp-buildings-and-credits.md)
 
 The author played the forest build and sent screenshots of the camp, a tree stump, a boulder
 and the portal, with four requests.

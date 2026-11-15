@@ -25,17 +25,17 @@ ACampWarehouse::ACampWarehouse()
 	}
 	Mesh->SetRelativeScale3D(FVector(1.6f, 1.6f, 0.8f));
 
-	// A low mountain ridge from the "RPG Tiny Fantasy Forest" pack (Dungeon Mason, Fab) stands in for the warehouse cube.
+	// The barracks from the "WW2 RTS & SLG Production Buildings" pack (Winyunq, Fab, CC BY 4.0) stands in for the warehouse cube.
 	Model = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Model"));
 	Model->SetupAttachment(Mesh);
 	Model->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	Model->SetUsingAbsoluteScale(true);
 	Model->SetUsingAbsoluteLocation(true);
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> RidgeFinder(TEXT("/Game/RPGTinyFantasyForest/Mesh/Mountain/SM_RockMountainE.SM_RockMountainE"));
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> RidgeFinder(TEXT("/Game/WW2Generic/ProductionBuildings/barracks/Rig/barracks_static/StaticMeshes/barracks_static.barracks_static"));
 	if (RidgeFinder.Succeeded())
 	{
 		Model->SetStaticMesh(RidgeFinder.Object);
-		Model->SetWorldScale3D(FVector(0.4f));
+		Model->SetWorldScale3D(FVector(0.3f));
 		Mesh->SetVisibility(false);
 	}
 }
