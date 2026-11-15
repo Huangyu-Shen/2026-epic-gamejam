@@ -1,6 +1,6 @@
 # Day 3 (14 Nov, night) · Leaving a run: a button, then an Esc menu
 
-[Dev log index](../README.md) · [← previous](13-story-012-boss-and-the-void.md) · [next →](15-status-so-far.md)
+[Dev log index](../README.md) · [← previous](13-story-012-boss-and-the-void.md) · [next →](15-the-first-real-models.md)
 
 ## The problem
 

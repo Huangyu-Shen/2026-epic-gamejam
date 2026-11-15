@@ -7,6 +7,9 @@
 #include "Enemy.generated.h"
 
 class UStaticMeshComponent;
+class USkeletalMesh;
+class USkeletalMeshComponent;
+class UAnimSequence;
 class UMaterialInstanceDynamic;
 
 /**
@@ -37,6 +40,12 @@ public:
 	/** Adds health, above the starting value too (the boss gains health from the player's cuts). */
 	void AddHealth(float Amount) { Health += Amount; }
 
+	/**
+	 * Replaces the grey cube with an animated skeletal mesh that loops one animation. The cube stays as the invisible
+	 * root, so scale, hit punch and the swarm's body radius work as before. A null mesh keeps the cube.
+	 */
+	void SetVisual(USkeletalMesh* Mesh, UAnimSequence* MoveAnimation, float YawOffset, float ModelScale);
+
 	/** Reduces health. At 0 the kill is reported to the manager and the enemy is destroyed. */
 	UFUNCTION(BlueprintCallable, Category = "Enemy")
 	void ApplyDamage(float Amount);
@@ -52,6 +61,10 @@ public:
 private:
 	UPROPERTY(VisibleAnywhere, Category = "Enemy")
 	TObjectPtr<UStaticMeshComponent> Body;
+
+	/** The animated model, a child of Body. Empty until SetVisual. */
+	UPROPERTY(VisibleAnywhere, Category = "Enemy")
+	TObjectPtr<USkeletalMeshComponent> Visual;
 
 	float Health = 0.0f;
 

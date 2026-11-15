@@ -15,7 +15,10 @@
 #include "UI/HudMessageSubsystem.h"
 #include "UI/RunHudWidget.h"
 #include "Blueprint/UserWidget.h"
+#include "Animation/AnimSequence.h"
 #include "Camera/CameraComponent.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Engine/SkeletalMesh.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
 #include "Components/StaticMeshComponent.h"
@@ -55,6 +58,46 @@ AHeroCharacter::AHeroCharacter()
 		BodyMesh->SetMaterial(0, FlatFinder.Object);
 	}
 
+	// The model from the "RPG Hero Squad" pack (Polyart style, Dungeon Mason, Fab). Without the pack the cylinder stays.
+	SwordMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("SwordMesh"));
+	ShieldMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ShieldMesh"));
+	static ConstructorHelpers::FObjectFinder<USkeletalMesh> HeroFinder(TEXT("/Game/RPGHeroSquad/Mesh/Character/SK_RPGHeroPolyart.SK_RPGHeroPolyart"));
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> SwordFinder(TEXT("/Game/RPGHeroSquad/Mesh/Weapon/SM_RPGHero_Sword01_Polyart.SM_RPGHero_Sword01_Polyart"));
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> ShieldFinder(TEXT("/Game/RPGHeroSquad/Mesh/Weapon/SM_RPGHero_Shield01_Polyart.SM_RPGHero_Shield01_Polyart"));
+	static ConstructorHelpers::FObjectFinder<UAnimSequence> RunFinder(TEXT("/Game/RPGHeroSquad/Animation/RPGHero/InPlace/Anim_Run_IP_RPGHero.Anim_Run_IP_RPGHero"));
+	static ConstructorHelpers::FObjectFinder<UAnimSequence> WalkFinder(TEXT("/Game/RPGHeroSquad/Animation/RPGHero/InPlace/Anim_Walk_IP_RPGHero.Anim_Walk_IP_RPGHero"));
+	bHasModel = HeroFinder.Succeeded() && RunFinder.Succeeded() && WalkFinder.Succeeded();
+	if (bHasModel)
+	{
+		USkeletalMeshComponent* Model = GetMesh();
+		Model->SetSkeletalMesh(HeroFinder.Object);
+		// The capsule's origin is its centre; the model's origin is at its feet. Scaled up so it reads from the camera.
+		Model->SetRelativeLocation(FVector(0.0f, 0.0f, -GetCapsuleComponent()->GetScaledCapsuleHalfHeight()));
+		Model->SetRelativeRotation(FRotator(0.0f, HeroModelYaw, 0.0f));
+		Model->SetRelativeScale3D(FVector(HeroModelScale));
+		Model->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		Model->SetCastShadow(false);
+		RunAnimation = RunFinder.Object;
+		IdleAnimation = WalkFinder.Object;
+		BodyMesh->SetStaticMesh(nullptr);
+		if (SwordFinder.Succeeded())
+		{
+			SwordMesh->SetStaticMesh(SwordFinder.Object);
+		}
+		if (ShieldFinder.Succeeded())
+		{
+			ShieldMesh->SetStaticMesh(ShieldFinder.Object);
+		}
+	}
+	SwordMesh->SetupAttachment(GetMesh(), TEXT("Sword"));
+	ShieldMesh->SetupAttachment(GetMesh(), TEXT("Shield"));
+	for (UStaticMeshComponent* Gear : { SwordMesh.Get(), ShieldMesh.Get() })
+	{
+		Gear->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		Gear->SetGenerateOverlapEvents(false);
+		Gear->SetCastShadow(false);
+	}
+
 	// Fixed top-down camera that does not turn with the pawn.
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(GetCapsuleComponent());
@@ -76,6 +119,14 @@ void AHeroCharacter::BeginPlay()
 	Super::BeginPlay();
 	CameraBoom->TargetArmLength = CameraDistance;
 	Health->OnDied.AddDynamic(this, &AHeroCharacter::HandleDied);
+
+	if (bHasModel)
+	{
+		GetMesh()->SetAnimationMode(EAnimationMode::AnimationSingleNode);
+		GetMesh()->SetAnimation(IdleAnimation);
+		GetMesh()->Play(true);
+		GetMesh()->SetPlayRate(0.0f);
+	}
 
 	// Greybox readability: the hero is blue so it stands out from the grey floor and the red enemies.
 	if (UMaterialInstanceDynamic* Material = BodyMesh->CreateDynamicMaterialInstance(0))
@@ -321,6 +372,20 @@ void AHeroCharacter::Tick(float DeltaSeconds)
 	else
 	{
 		AddMovementInput(MoveInput);
+	}
+
+	// Run while the hero actually moves (the dash too); a frozen walk pose when standing still.
+	if (bHasModel)
+	{
+		const float Speed = GetVelocity().Size2D();
+		const bool bMoving = Speed > 20.0f || DodgeTimeRemaining > 0.0f;
+		if (bMoving != bShowingRun)
+		{
+			bShowingRun = bMoving;
+			GetMesh()->SetAnimation(bMoving ? RunAnimation : IdleAnimation);
+			GetMesh()->Play(true);
+		}
+		GetMesh()->SetPlayRate(bMoving ? FMath::Clamp(Speed / BaseWalkSpeed, 0.6f, 1.6f) : 0.0f);
 	}
 
 	const float ProgressionSpeed = GetWorld()->GetSubsystem<URunProgressionSubsystem>()->GetMoveSpeedMultiplier();

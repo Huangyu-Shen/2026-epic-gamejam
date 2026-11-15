@@ -1,6 +1,6 @@
 # Day 3 (14 Nov) · Status so far
 
-[Dev log index](../README.md) · [← previous](14-esc-menu-and-leaving-a-run.md)
+[Dev log index](../README.md) · [← previous](15-the-first-real-models.md)
 
 This entry is a snapshot. It replaces the earlier one, written after story 010, and it
 will be rewritten as the work goes on.
@@ -19,6 +19,9 @@ will be rewritten as the work goes on.
   package.
 - The boss, the void fix, the design and wiki corrections and the dev log are merged to
   main (pull requests 4 and 5).
+- The hero, the five grunt types and the boss use Fab models ([entry 15](15-the-first-real-models.md)).
+  Checked in the editor and in a package with the 150-enemy test (about 130 FPS on warm runs, weapons off).
+  **Not committed**; the model packs are deliberately not in git.
 - Leaving a run: an Esc menu in the camp and in a run (Resume, Settings with three
   volume levels, Return to camp in a run, Quit game). Built after the author described it
   ([entry 14](14-esc-menu-and-leaving-a-run.md)). Checked in the editor with a test flag;
@@ -26,7 +29,7 @@ will be rewritten as the work goes on.
 
 ## Not done
 
-- Story 011 is still In Progress: the boss, vault, extraction and map are still
+- Story 011 is still In Progress: the floor, vault, extraction point and camp are still
   plain shapes, and star-ups only make beams thicker.
 - Story 013 (package, texts, video, final checks).
 - The design docs do not yet mention the Esc menu and its settings (a PRD Should item the

@@ -53,7 +53,8 @@ can read a day from top to bottom or open just the part you care about.
 | [12 Sound, free assets, and a bar that never showed](day-3/12-extraction-sound-and-the-two-zones.md) | Audio from free packs, visible weapon effects, the two-zone extraction bug |
 | [13 The boss takes what you cut, and the void](day-3/13-story-012-boss-and-the-void.md) | Story 012 built after its cut-off; the floor edge fix; what was left out of git |
 | [14 Leaving a run: a button, then an Esc menu](day-3/14-esc-menu-and-leaving-a-run.md) | A button for leaving a run, replaced by the Esc menu the author described; two build problems |
-| [15 Status so far](day-3/15-status-so-far.md) | What is done, not done and not checked |
+| [15 The first real models](day-3/15-the-first-real-models.md) | Hero and enemies swapped for Fab models; two packs dropped; frame rate checked |
+| [16 Status so far](day-3/16-status-so-far.md) | What is done, not done and not checked |
 
 ### Day 4 — 15 Nov: package and submit (planned)
 
@@ -201,8 +202,9 @@ The rules allow preparing tools and ask us to declare what was made earlier.
 
 ## Assets and credits
 
-Visuals are Unreal Engine primitive shapes (cubes, cylinders) with one flat-colour
-material made for this project. The open-source game catalogue
+The hero and the enemies use 3D models from Fab, imported on 15 November (table below);
+the floor, the loot containers, the extraction point and the camp are still Unreal Engine
+primitive shapes with one flat-colour material made for this project. The open-source game catalogue
 (github.com/Trilarion/opensourcegames) was read for research and not used as a
 code base (Day 2 explains why).
 
@@ -216,6 +218,18 @@ licence texts, and I am not giving legal advice.
 | 50 Free Game Sounds Pack | PlaceHolder Inc | Fab standard licence, personal tier (free) | The nine sound effects |
 | Atmospheric Worlds - FREE Game Music Pack | Marika Schanz | Fab standard licence; the page says free for commercial and non-commercial use | Imported, not used so far |
 | Small Sound Kit | Sound Works 12 | Fab standard licence | Imported, not used so far |
+
+3D models, from Fab, imported on 15 November. The licence is shown on each Fab page; I did not
+open the licence text of these two, and I am not giving legal advice. The packs themselves are not
+in the repository (see Day 3, entry 13 for why).
+
+| Pack | Author | Fab page says | Used for |
+|---|---|---|---|
+| RPG Hero Squad PBR Polyart | Dungeon Mason | Free; Unreal format only | The hero: the RPG Hero model (Polyart version), its sword and shield, and the Run and Walk animations |
+| Monster for Survival Game PBR Polyart | Dungeon Mason | Free; Unreal format only; 1273 to 7523 triangles per monster | Enemies: slime, mushroom, cactus, turtle shell and beholder for the grunts, the chest monster for the boss |
+
+Two other packs I looked at (Creative Characters FREE and Animals FREE, by ithappy) were
+dropped: the author found they do not support Unreal 5.
 
 **Credit (CC-BY):** music by Kounine, "Path of Adventure - Free Music Pack for JRPG",
 Creative Commons CC-BY, via Fab.

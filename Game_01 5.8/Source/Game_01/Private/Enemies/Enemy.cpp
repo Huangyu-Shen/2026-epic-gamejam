@@ -1,7 +1,10 @@
 #include "Enemies/Enemy.h"
 #include "Audio/GameAudioSubsystem.h"
 #include "Enemies/EnemyManagerSubsystem.h"
+#include "Animation/AnimSequence.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Engine/SkeletalMesh.h"
 #include "Engine/StaticMesh.h"
 #include "Engine/World.h"
 #include "Materials/MaterialInstanceDynamic.h"
@@ -27,6 +30,37 @@ AEnemy::AEnemy()
 	if (FlatFinder.Succeeded())
 	{
 		Body->SetMaterial(0, FlatFinder.Object);
+	}
+
+	Visual = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Visual"));
+	Visual->SetupAttachment(Body);
+	Visual->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	Visual->SetGenerateOverlapEvents(false);
+	Visual->SetCastShadow(false);
+	// 150 animated bodies: skip the pose work for any that are off screen, and update far ones less often.
+	Visual->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::OnlyTickPoseWhenRendered;
+	Visual->bEnableUpdateRateOptimizations = true;
+}
+
+void AEnemy::SetVisual(USkeletalMesh* Mesh, UAnimSequence* MoveAnimation, float YawOffset, float ModelScale)
+{
+	if (!Mesh)
+	{
+		return;
+	}
+	// The cube's origin is its centre; the model's origin is at its feet, so it hangs half a cube lower.
+	Body->SetStaticMesh(nullptr);
+	Visual->SetSkeletalMesh(Mesh);
+	Visual->SetRelativeLocation(FVector(0.0f, 0.0f, -EngineCubeSize * 0.5f));
+	Visual->SetRelativeRotation(FRotator(0.0f, YawOffset, 0.0f));
+	Visual->SetRelativeScale3D(FVector(ModelScale));
+	if (MoveAnimation)
+	{
+		Visual->SetAnimationMode(EAnimationMode::AnimationSingleNode);
+		Visual->SetAnimation(MoveAnimation);
+		Visual->Play(true);
+		// A random start so a crowd does not step in unison.
+		Visual->SetPosition(FMath::FRand() * MoveAnimation->GetPlayLength());
 	}
 }
 
