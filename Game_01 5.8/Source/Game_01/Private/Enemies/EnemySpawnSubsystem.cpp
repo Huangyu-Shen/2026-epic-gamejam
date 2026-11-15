@@ -8,10 +8,13 @@
 #include "Loot/LootHeatSubsystem.h"
 #include "Player/HeroCharacter.h"
 #include "Progression/RunProgressionSubsystem.h"
+#include "Animation/AnimSequence.h"
 #include "Components/CapsuleComponent.h"
+#include "Engine/SkeletalMesh.h"
 #include "Engine/DataTable.h"
 #include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
+#include "UObject/ConstructorHelpers.h"
 
 UEnemySpawnSubsystem::UEnemySpawnSubsystem()
 {
@@ -23,6 +26,40 @@ UEnemySpawnSubsystem::UEnemySpawnSubsystem()
 	BossTuning.ContactRange = 220.0f;
 	BossTuning.ContactCooldown = 1.2f;
 	BossTuning.Scale = 2.5f;
+
+	// Models from the "Monster for Survival Game" pack (Polyart style, Dungeon Mason, Fab). If the pack is not
+	// in Content, every lookup fails and the enemies stay grey cubes.
+	const TCHAR* MeshRoot = TEXT("/Game/MonsterForSurvivalGame/Mesh/Polyart/");
+	const TCHAR* AnimRoot = TEXT("/Game/MonsterForSurvivalGame/Animation/Polyart/");
+	auto Find = [&](const FString& Monster, const FString& AnimFolder, const FString& AnimName, float Yaw, float ModelScale) -> FEnemyVisualAsset
+	{
+		FEnemyVisualAsset Visual;
+		Visual.YawOffset = Yaw;
+		Visual.Scale = ModelScale;
+		ConstructorHelpers::FObjectFinder<USkeletalMesh> MeshFinder(*FString::Printf(TEXT("%s%s_SK.%s_SK"), MeshRoot, *Monster, *Monster));
+		ConstructorHelpers::FObjectFinder<UAnimSequence> AnimFinder(*FString::Printf(TEXT("%s%s/%s.%s"), AnimRoot, *AnimFolder, *AnimName, *AnimName));
+		if (MeshFinder.Succeeded())
+		{
+			Visual.Mesh = MeshFinder.Object;
+			Visual.Move = AnimFinder.Succeeded() ? AnimFinder.Object : nullptr;
+		}
+		return Visual;
+	};
+	const TArray<FEnemyVisualAsset> Candidates = {
+		Find(TEXT("Slime"), TEXT("Slime"), TEXT("Slime_Run_ANIM"), 0.0f, 1.8f),
+		Find(TEXT("Mushroom"), TEXT("Mushroom/SmileVersion"), TEXT("Mushroom_runFWDSmile_ANIM"), 0.0f, 1.8f),
+		Find(TEXT("Cactus"), TEXT("Cactus"), TEXT("Cactus_RunFWD_ANIM"), 0.0f, 1.8f),
+		Find(TEXT("TurtleShell"), TEXT("TurtleShell"), TEXT("TurtleShell_Run_ANIM"), 0.0f, 1.8f),
+		Find(TEXT("Beholder"), TEXT("Beholder"), TEXT("Beholder_Run_ANIM"), 0.0f, 1.8f),
+	};
+	for (const FEnemyVisualAsset& Candidate : Candidates)
+	{
+		if (Candidate.Mesh)
+		{
+			GruntVisuals.Add(Candidate);
+		}
+	}
+	BossVisual = Find(TEXT("ChestMonster"), TEXT("ChestMonster"), TEXT("ChestMonster_Run_ANIM"), 0.0f, 1.0f);
 }
 
 void UEnemySpawnSubsystem::Initialize(FSubsystemCollectionBase& Collection)
@@ -161,6 +198,19 @@ AEnemy* UEnemySpawnSubsystem::SpawnOnRing(const AHeroCharacter& Hero, const FEne
 	if (Enemy)
 	{
 		Enemy->Init(Row);
+		const FEnemyVisualAsset* Visual = nullptr;
+		if (Row.Kind == EEnemyKind::Boss)
+		{
+			Visual = BossVisual.Mesh ? &BossVisual : nullptr;
+		}
+		else if (!GruntVisuals.IsEmpty())
+		{
+			Visual = &GruntVisuals[FMath::RandRange(0, GruntVisuals.Num() - 1)];
+		}
+		if (Visual)
+		{
+			Enemy->SetVisual(Visual->Mesh, Visual->Move, Visual->YawOffset, Visual->Scale);
+		}
 		GetWorld()->GetSubsystem<UEnemyManagerSubsystem>()->RegisterEnemy(Enemy);
 	}
 	return Enemy;

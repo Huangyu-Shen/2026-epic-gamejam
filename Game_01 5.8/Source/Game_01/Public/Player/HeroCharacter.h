@@ -10,6 +10,7 @@ class UCameraComponent;
 class UHealthComponent;
 class ULootBagComponent;
 class URunHudWidget;
+class UAnimSequence;
 class UPauseMenuWidget;
 class USpringArmComponent;
 class UStaticMeshComponent;
@@ -64,6 +65,14 @@ public:
 	/** Camera distance above the pawn (cm). */
 	UPROPERTY(EditAnywhere, Category = "Hero")
 	float CameraDistance = 1400.0f;
+
+	/** Size of the hero model against its natural size (the pack's hero is small). */
+	UPROPERTY(EditAnywhere, Category = "Hero|Model", meta = (ClampMin = "0.1"))
+	float HeroModelScale = 1.6f;
+
+	/** Degrees added to the model's facing so it looks where it walks. */
+	UPROPERTY(EditAnywhere, Category = "Hero|Model")
+	float HeroModelYaw = 0.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Hero")
 	FDodgeTuning Dodge;
@@ -122,6 +131,23 @@ private:
 
 	UPROPERTY(VisibleAnywhere, Category = "Hero")
 	TObjectPtr<UStaticMeshComponent> BodyMesh;
+
+	/** Sword and shield of the "RPG Hero Squad" model, attached to its Sword and Shield sockets. Unused when the pack is missing. */
+	UPROPERTY(VisibleAnywhere, Category = "Hero")
+	TObjectPtr<UStaticMeshComponent> SwordMesh;
+
+	UPROPERTY(VisibleAnywhere, Category = "Hero")
+	TObjectPtr<UStaticMeshComponent> ShieldMesh;
+
+	/** The hero's two animations: run while moving, a frozen walk pose when standing still. */
+	UPROPERTY()
+	TObjectPtr<UAnimSequence> RunAnimation;
+
+	UPROPERTY()
+	TObjectPtr<UAnimSequence> IdleAnimation;
+
+	bool bHasModel = false;
+	bool bShowingRun = false;
 
 	UPROPERTY(VisibleAnywhere, Category = "Hero")
 	TObjectPtr<USpringArmComponent> CameraBoom;
