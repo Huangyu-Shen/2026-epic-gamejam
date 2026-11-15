@@ -17,7 +17,7 @@
 
 ## ✨ Features
 
-- **Cut one, keep two.** Each level-up offers three options. You cut one and take the other two. Three copies of an option merge into a 2-star version, nine into a 3-star one. Cut items leave the pool for the run, down to a floor of four options.
+- **Pick one, or cut one first.** Each level-up offers three options. You take one, and you may first cut one of the three: it leaves your pool for the run and goes to the boss. Options you neither take nor cut stay in the pool. Three copies of an option merge into a 2-star version, nine into a 3-star one. The pool never shrinks below four options.
 - **Film cards.** Before a run, slot film cards that force a horde or a boss in exchange for a bigger payout.
 - **Heat and extraction.** Rare loot in the bag raises heat, which makes enemies stronger. Reach the extraction zone alive to bank what you carry; die and you lose the bag.
 - **Camp.** Iron from successful runs upgrades the Smithy, Clinic and Warehouse. Progress is auto-saved.
