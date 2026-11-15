@@ -167,6 +167,9 @@ public:
 	/** Test harness only (-WeaponShowcase): gives the run Copies copies of a weapon without an offer. */
 	void DebugGrantWeapon(EWeaponType Weapon, int32 Copies);
 
+	/** Test harness only (-BossProbe): puts an option on the cutting-room floor as if the player had cut it. */
+	void DebugCut(const FOfferOption& Option) { CuttingRoomFloor.Add(Option); }
+
 	/** Adds XP and opens the level-up offer once the threshold is reached. Used by pickups and by the -OfferProbe harness. */
 	void GrantXp(float Amount);
 

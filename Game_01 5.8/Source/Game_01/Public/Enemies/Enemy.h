@@ -34,6 +34,9 @@ public:
 	/** Applies a tuning row: scale, health. Call right after spawning. */
 	void Init(const FEnemyTuning& InTuning);
 
+	/** Adds health, above the starting value too (the boss gains health from the player's cuts). */
+	void AddHealth(float Amount) { Health += Amount; }
+
 	/** Reduces health. At 0 the kill is reported to the manager and the enemy is destroyed. */
 	UFUNCTION(BlueprintCallable, Category = "Enemy")
 	void ApplyDamage(float Amount);

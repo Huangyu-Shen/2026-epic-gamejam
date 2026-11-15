@@ -72,14 +72,14 @@ The `commands` in [project.yaml](../../project.yaml) (build, test, run, smoke) s
 
 ## 5. Game controls
 
-All keys are bound in code (`BindKey` and `IsInputKeyDown`), so they cannot be remapped without editing source. The run HUD prints `WASD move   Space dodge   E search   1-3 cut an option`.
+All keys are bound in code (`BindKey` and `IsInputKeyDown`), so they cannot be remapped without editing source. The run HUD prints `WASD move   Space dodge   E search   1-3 take an upgrade   4-6 cut one   Esc quit`.
 
 | Scene | Input | Behavior |
 |---|---|---|
 | Run | W A S D | Move (read each tick with `IsInputKeyDown`; ignored while the run is not active, the hero is dead, or the level-up panel is open) |
 | Run | Space | Dodge (dash, invulnerability, cooldown) |
 | Run | E | Loot the nearest unsearched container within interact range |
-| Run | 1 to 3 | Cut one of the three level-up options while the level-up panel is shown (lost film reels cannot be used) |
+| Run | 1 to 3 / 4 to 6 | Take (1-3) or cut (4-6) one of the three level-up options while the panel is shown; Esc quits (lost film reels cannot be used) |
 | Run | K | Debug: the hero dies immediately (also available in packaged builds) |
 | Run | Mouse | Click level-up panel buttons, click Return to Camp on the settlement page |
 | Camp | Left mouse button on a 3D building | Upgrade that building (a toast shows the result or the reason it failed) |

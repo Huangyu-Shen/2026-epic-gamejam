@@ -5,6 +5,7 @@
 #include "Engine/DataTable.h"
 #include "Engine/DeveloperSettings.h"
 #include "Audio/GameAudioSubsystem.h"
+#include "Enemies/BossRejectsSubsystem.h"
 #include "Progression/ProgressionTypes.h"
 #include "DirectorTuningSettings.generated.h"
 
@@ -55,6 +56,10 @@ public:
 	/** Star-merge thresholds and multipliers, and how small the level-up pool may be cut (brief v2). */
 	UPROPERTY(EditAnywhere, Config, Category = "Tuning")
 	FStarTuning StarTuning;
+
+	/** What the player's cuts give the Cut Knight boss: attacks for weapons, stat bonuses for passives. */
+	UPROPERTY(EditAnywhere, Config, Category = "Boss")
+	FBossRejectTuning BossRejects;
 
 	/** Table of FLootTuning. Row "Default" sets bag size, heat per reel and the heat/spawn-pressure curve. */
 	UPROPERTY(EditAnywhere, Config, Category = "Tuning", meta = (RequiredAssetDataTags = "RowStructure=/Script/Game_01.LootTuning"))

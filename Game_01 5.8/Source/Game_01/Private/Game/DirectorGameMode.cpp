@@ -72,6 +72,92 @@ void ADirectorGameMode::BeginPlay()
 		}), 3.0f, false);
 	}
 
+	if (FParse::Param(FCommandLine::Get(), TEXT("EdgeProbe")))
+	{
+		// Void fix check: push the hero past the floor edge, spawn a horde there, and see where everyone ends up.
+		FTimerHandle Handle;
+		GetWorldTimerManager().SetTimer(Handle, FTimerDelegate::CreateWeakLambda(this, [this]()
+		{
+			AHeroCharacter* Hero = Cast<AHeroCharacter>(UGameplayStatics::GetPlayerPawn(this, 0));
+			UEnemySpawnSubsystem* Spawner = GetWorld()->GetSubsystem<UEnemySpawnSubsystem>();
+			if (!Hero || !Spawner)
+			{
+				FPlatformMisc::RequestExit(false);
+				return;
+			}
+			Hero->Health->bGodMode = true;
+			Hero->SetActorLocation(FVector(6000.0f, 3900.0f, Hero->GetActorLocation().Z), false, nullptr, ETeleportType::TeleportPhysics);
+			Spawner->SpawnHorde(40, true);
+			Spawner->SpawnBoss();
+			FTimerHandle Report, Shot, Quit;
+			GetWorldTimerManager().SetTimer(Report, FTimerDelegate::CreateWeakLambda(this, [this]()
+			{
+				const AHeroCharacter* H = Cast<AHeroCharacter>(UGameplayStatics::GetPlayerPawn(this, 0));
+				float MaxAbs = 0.0f;
+				for (TActorIterator<AEnemy> It(GetWorld()); It; ++It)
+				{
+					MaxAbs = FMath::Max(MaxAbs, FMath::Max(FMath::Abs(It->GetActorLocation().X), FMath::Abs(It->GetActorLocation().Y)));
+				}
+				UE_LOG(LogEnemies, Display, TEXT("EDGEPROBE hero=%s farthest enemy=%.0f"), *H->GetActorLocation().ToString(), MaxAbs);
+			}), 2.0f, false);
+			GetWorldTimerManager().SetTimer(Shot, FTimerDelegate::CreateWeakLambda(this, [this]()
+			{
+				FScreenshotRequest::RequestScreenshot(FPaths::ProjectSavedDir() / TEXT("EdgeProbe") / TEXT("hero-at-edge.png"), true, false);
+			}), 2.2f, false);
+			GetWorldTimerManager().SetTimer(Quit, FTimerDelegate::CreateLambda([]() { FPlatformMisc::RequestExit(false); }), 3.5f, false);
+		}), 3.0f, false);
+	}
+
+	if (FParse::Param(FCommandLine::Get(), TEXT("BossProbe")))
+	{
+		// Story 012 check: a boss with no cuts, then cuts one by one; photograph its attacks.
+		FTimerHandle Handle;
+		GetWorldTimerManager().SetTimer(Handle, FTimerDelegate::CreateWeakLambda(this, [this]()
+		{
+			AHeroCharacter* Hero = Cast<AHeroCharacter>(UGameplayStatics::GetPlayerPawn(this, 0));
+			URunProgressionSubsystem* Progression = GetWorld()->GetSubsystem<URunProgressionSubsystem>();
+			UEnemySpawnSubsystem* Spawner = GetWorld()->GetSubsystem<UEnemySpawnSubsystem>();
+			if (!Hero || !Progression || !Spawner)
+			{
+				FPlatformMisc::RequestExit(false);
+				return;
+			}
+			Hero->Health->bGodMode = true;
+			AEnemy* Boss = Spawner->SpawnBoss();
+			if (Boss)
+			{
+				Boss->SetActorLocation(Hero->GetActorLocation() + FVector(900.0f, 0.0f, 0.0f));
+			}
+			UE_LOG(LogEnemies, Display, TEXT("BOSSPROBE boss=%d"), Boss != nullptr);
+
+			auto Cut = [Progression](bool bWeapon, EWeaponType W, EPassiveType P)
+			{
+				FOfferOption Option;
+				Option.bIsWeapon = bWeapon;
+				Option.Weapon = W;
+				Option.Passive = P;
+				Progression->DebugCut(Option);
+			};
+			FTimerHandle C1, C2, C3, S1, S2, S3, Quit;
+			GetWorldTimerManager().SetTimer(C1, FTimerDelegate::CreateWeakLambda(this, [Cut]() { Cut(true, EWeaponType::Gun, EPassiveType::Might); }), 1.0f, false);
+			GetWorldTimerManager().SetTimer(C2, FTimerDelegate::CreateWeakLambda(this, [Cut]() { Cut(true, EWeaponType::Nova, EPassiveType::Might); }), 2.0f, false);
+			GetWorldTimerManager().SetTimer(C3, FTimerDelegate::CreateWeakLambda(this, [Cut]() { Cut(false, EWeaponType::Blade, EPassiveType::Greed); Cut(true, EWeaponType::Orbit, EPassiveType::Might); }), 3.0f, false);
+			GetWorldTimerManager().SetTimer(S1, FTimerDelegate::CreateWeakLambda(this, [this]()
+			{
+				FScreenshotRequest::RequestScreenshot(FPaths::ProjectSavedDir() / TEXT("BossProbe") / TEXT("1-gun-balls.png"), true, false);
+			}), 3.9f, false);
+			GetWorldTimerManager().SetTimer(S2, FTimerDelegate::CreateWeakLambda(this, [this]()
+			{
+				FScreenshotRequest::RequestScreenshot(FPaths::ProjectSavedDir() / TEXT("BossProbe") / TEXT("2-slam-warning.png"), true, false);
+			}), 7.4f, false);
+			GetWorldTimerManager().SetTimer(S3, FTimerDelegate::CreateWeakLambda(this, [this]()
+			{
+				FScreenshotRequest::RequestScreenshot(FPaths::ProjectSavedDir() / TEXT("BossProbe") / TEXT("3-ring-of-balls.png"), true, false);
+			}), 9.5f, false);
+			GetWorldTimerManager().SetTimer(Quit, FTimerDelegate::CreateLambda([]() { FPlatformMisc::RequestExit(false); }), 11.0f, false);
+		}), 3.0f, false);
+	}
+
 	if (FParse::Param(FCommandLine::Get(), TEXT("ZoneShot")))
 	{
 		// Story 011 check: photograph the extraction point from nearby, then while the bar is filling.

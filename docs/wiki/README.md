@@ -13,7 +13,7 @@ Corresponds to commit `3177f1d` on the `main` branch (2026-11-14) plus the story
 | Form | Single-player UE 5.8 game, one C++ module `Game_01` (about 7000 lines in 12 source directories, of which 962 are UI and 235 are the legacy StandIn placeholders; plus 302 lines of tests) |
 | Language and framework | C++20; the UI is UMG built in C++; no Blueprint classes |
 | Two maps | `L_Camp` (camp, the default startup map), `L_Greybox` (the run map) |
-| Core loop | Upgrade at camp and pick film cards -> loot, fight and level up (cut one of three options, keep two; three copies merge into a star) on the run map -> extract or die -> settle back at camp |
+| Core loop | Upgrade at camp and pick film cards -> loot, fight and level up (take one of three options, optionally cutting one first so it goes to the boss; three copies merge into a star) on the run map -> extract or die -> settle back at camp |
 | State storage | Camp state lives in GameInstance subsystems (persists across levels); per-run state lives in World subsystems (cleared on map change) |
 | Data | 12 DataTables (referenced by `Director Tuning`, including the three loot tables added in story 008) plus the `StarTuning` struct on the same page; when a table is missing, defaults in code are used silently |
 | Save | Single slot `CampSave`, storing Iron, unlocked upgrade options (by name) and building levels (save version 2; a version 1 save is migrated on load; the class default of the version is 1 on purpose); located at `Game_01 5.8/Saved/SaveGames/` when run from the editor |
@@ -55,7 +55,7 @@ Corresponds to commit `3177f1d` on the `main` branch (2026-11-14) plus the story
 | Unlocked option | An upgrade-option name saved in the camp stock (save version 2): the table row name of a weapon or passive that starts locked (`Chain`, `Haste`, `Magnet`). A locked option is in the level-up pool only once it is unlocked; the first offer of the next run shows it first, marked `NEW!` | `UCampStockSubsystem::UnlockOption`, `TakeNewOptions`, `FOptionUnlock::IsAvailable` |
 | Heat | Rises each time a lost film reel is picked up and is reset when a run starts and when it ends; raises spawn pressure | `ULootHeatSubsystem` |
 | Extraction | Stand in the extraction zone until the progress bar fills; the bag is settled into camp | `AExtractionZone` |
-| Cut one, keep two | At each level-up the player cuts one of three options and keeps the other two; while permanent cuts remain (pool size minus 4) the cut option leaves the pool for the run | `URunProgressionSubsystem::CutOffer` |
+| Pick one, optional cut | At each level-up the player takes one of three options and may first cut one; a cut option leaves the pool for the run while permanent cuts remain (pool size minus 4) and goes to the boss | `URunProgressionSubsystem::ChooseOption`, `CutFromOffer` |
 | Star | Copies of a weapon or passive are its level; 3 copies make two stars, 9 make three, which multiplies its effect (`FStarTuning`) | `FStarTuning`, `ApplyOption` |
 | Film card | A difficulty card picked before a run; forces a horde or a Boss in exchange for a higher earnings multiplier | `UFilmCardSubsystem` |
 | Editing room | The section of the camp panel where film cards are slotted (2 slots) | [CampWidget](ui.md#4-camp-ui-ucampwidget) |

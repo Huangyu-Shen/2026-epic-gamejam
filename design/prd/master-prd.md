@@ -12,7 +12,7 @@ This file is the **single gate on scope**. The details of every sub-PRD (`design
 
 ## 1. Sticky Note
 
-> Fantasy top-down mower. On level-up, cut one of three cards and take the other two; three identical copies merge into a star upgrade. Carry a lost film out alive and the upgrade pool permanently gains one item.
+> Fantasy top-down mower. On level-up, pick one of three cards, with an optional cut that sends one to the boss; three identical copies merge into a star upgrade. Carry a lost film out alive and the upgrade pool permanently gains one item.
 
 Any idea that does not fit on this sticky note goes into Section 9, "Later".
 
@@ -20,7 +20,7 @@ Any idea that does not fit on this sticky note goes into Section 9, "Later".
 
 | # | Pillar | Meaning | What it vetoes |
 |---|---|---|---|
-| P1 | **Every level-up is a cut** | On level-up, cut one and keep two; the cut card leaves the pool permanently, which makes it easier to gather three copies for a star upgrade | Upgrades with no trade-off, pickups unrelated to the build |
+| P1 | **Every level-up is a cut** | On level-up, pick one of three and optionally cut one (v3); the cut card leaves the pool permanently and goes to the boss, which makes it easier to gather three copies for a star upgrade | Upgrades with no trade-off, pickups unrelated to the build |
 | P2 | **You direct the cut** | Difficulty and variation come from the player's cut choices before departure, not from randomness | Pure random events, difficulty jumps the player cannot foresee |
 | P3 | **Short takes, visible growth** | A run lasts 3-10 minutes, and every successful extraction makes the camp visibly stronger | Long runs, growth that takes many runs to feel |
 
@@ -31,7 +31,7 @@ flowchart TB
   A[Camp: salvage/hoard, upgrade buildings] --> B[Editing Room: slot clip cards, see the payout multiplier]
   B --> C[In-run: mow and level up, search supply points, heat rises]
   C --> D{Level-up: which card to cut?}
-  D -->|cut one keep two, three-into-one star| C
+  D -->|pick one, optional cut, three-into-one star| C
   C -->|carrying a lost film| E[Go to an open extraction point, stand for the full time]
   E -->|success| F[Settlement: materials x payout multiplier; film unlocks a new upgrade item]
   C -->|death/timeout| G[NG: backpack lost, gain NG film]
@@ -49,7 +49,7 @@ One full loop (from leaving camp to returning to camp) targets 4-11 minutes, wit
   2. At least once, a pre-run cut changes the Boss / elite / horde.
   3. At least one star upgrade and at least one permanent cut; after carrying out a film, see the new upgrade item in the next run.
   4. See at least one camp building change.
-- Of the seven scoring categories, this design aims hardest at **Theme** (two layers of cutting), **Innovation Ambition** (cut one keep two + three-into-one star upgrade + film unlocks), and **Fun/Gameplay** (the mowing feel). Visuals, level design and audio rely on free assets in a unified style plus dedicated polish time.
+- Of the seven scoring categories, this design aims hardest at **Theme** (two layers of cutting), **Innovation Ambition** (optional cut that feeds the boss + three-into-one star upgrade + film unlocks), and **Fun/Gameplay** (the mowing feel). Visuals, level design and audio rely on free assets in a unified style plus dedicated polish time.
 
 ## 5. Global Constraints
 
@@ -77,7 +77,7 @@ Tier definitions:
 |---|---|---|---|---|---|
 | 1 | Game flow and save | `design/gdd/game-flow.md` | Camp -> Editing -> In-run -> Settlement -> Camp; single save slot with autosave | Title screen, new game/reset save, pause menu | Opening "title card" subtitles |
 | 2 | Character control and combat | `design/gdd/player-combat.md` | WASD, dodge, interact key, 1 starting weapon, taking damage and death | 5 weapons total | Gamepad |
-| 3 | In-run progression | `design/gdd/run-progression.md` | XP, level-up **cut one keep two** (permanent cuts available = pool size - 4), **three-into-one star upgrade** (3 copies for two stars, 9 for three stars), 3 weapons + 4 passives | 3 film-unlocked upgrade items (2 passives + 1 weapon) | Cutting Knight uses what was cut this run |
+| 3 | In-run progression | `design/gdd/run-progression.md` | XP, level-up **pick one of three with an optional cut** (v3; permanent cuts available = pool size - 4), **three-into-one star upgrade** (3 copies for two stars, 9 for three stars), 5 weapons + 8 passives (13 options) | 3 film-unlocked upgrade items (2 passives + 1 weapon) | Cutting Knight uses what was cut this run |
 | 4 | Enemies and spawning | `design/gdd/enemies-spawning.md` | 1 grunt type, spawn scheduling, heat influence, horde, Boss | 3 grunt types total, elite | Boss second phase |
 | 5 | Loot, backpack and heat | `design/gdd/loot-inventory-heat.md` | 1 material (Iron), supply crates and vault, backpack limit, heat; relics become **lost film** (no use in-run; carrying it out permanently unlocks one upgrade item; cannot be used or salvaged) | — | Backpack organizing |
 | 6 | Extraction and death | `design/gdd/extraction-death.md` | 2 extraction points, point channeling, settlement on success, lose everything on death | 3 extraction points, NG film, timeout | Boss chases during extraction |
@@ -101,9 +101,9 @@ Tier definitions:
 
 Check in order; execute when triggered, no haggling:
 
-1. **Evening of Day 1**: (Expired. v1's "keep it or use it" was replaced on Day 2 by v2's cut one keep two.)
+1. **Evening of Day 1**: (Expired. v1's "keep it or use it" was replaced on Day 2 by v2's cut one keep two; v3 on Day 3 changed it again to pick one of three with an optional cut.)
 2. **Evening of Day 2**: if Must still cannot run a whole loop, cut all "new content" in the Should tier (cards, enemies, materials, buildings); Day 3 only completes Must and art.
-3. **Day 3 18:00**: cut every Should item that has not started; Could items no longer begin.
+3. **Day 3 18:00**: cut every Should item that has not started; Could items no longer begin. (Story 012, a Could item, was started after this time on the author's decision on Day 3 night; recorded in the dev log, Day 3 entry 13.)
 4. **Day 3 23:00**: feature freeze. After that, only fix bugs, tune values and replace assets.
 5. **At any time**: if a single feature takes 2x the estimated time, drop it to the next tier or cut it.
 
@@ -124,7 +124,7 @@ Check in order; execute when triggered, no haggling:
 
 | Risk | Response |
 |---|---|
-| Cut one keep two doubles growth speed and star upgrades multiply it again, so values can easily run away | Retune the XP curve, monster health and heat together; star multipliers live in Director Tuning's StarTuning, not hardcoded |
+| Taking one of three plus star upgrades multiplies growth, so values can easily run away | Retune the XP curve, monster health and heat together; star multipliers live in Director Tuning's StarTuning, not hardcoded |
 | The upgrade pool has only 7 items, so cutting too much permanently leaves nothing to choose | Permanent cuts available = pool size - 4; each film unlocked adds 1 to both the pool and the permanent cuts available |
 | Spawn counts blow the performance budget | On-screen cap + simple meshes + no complex per-enemy AI (see `enemies-spawning.md`) |
 | Free assets are unavailable or inconsistent in style | Verify availability on Day 2; backup packs are listed in `art-audio-direction.md` |

@@ -1,0 +1,2 @@
+Reviewed-Content-Hash: Game_01 5.8/Source/Game_01/Private/Enemies/BossRejectsSubsystem.cpp d8fe374d5ab652606fb623ac5220cd4412237781
+Reviewed-Content-Hash: Game_01 5.8/Source/Game_01/Public/Enemies/BossRejectsSubsystem.h 3baa801275be3b474e804908c08a77f9c5527f07

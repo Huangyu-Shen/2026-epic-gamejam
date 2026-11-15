@@ -6,6 +6,7 @@
 #include "Enemies/EnemyManagerSubsystem.h"
 #include "Enemies/EnemySpawnSubsystem.h"
 #include "Extraction/RunOutcomeSubsystem.h"
+#include "Game/PlayAreaSubsystem.h"
 #include "Loot/LootBagComponent.h"
 #include "Loot/LootContainer.h"
 #include "Loot/LootHeatSubsystem.h"
@@ -261,6 +262,17 @@ bool AHeroCharacter::SearchNearestContainer()
 void AHeroCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
+
+	// The map has no walls and a void around it: the hero stops at the edge of the floor instead of falling.
+	if (const UPlayAreaSubsystem* PlayArea = GetWorld()->GetSubsystem<UPlayAreaSubsystem>())
+	{
+		const FVector Here = GetActorLocation();
+		const FVector Inside = PlayArea->ClampToArea(Here, GetCapsuleComponent()->GetScaledCapsuleRadius());
+		if (!Inside.Equals(Here, 0.1f))
+		{
+			SetActorLocation(Inside, false, nullptr, ETeleportType::TeleportPhysics);
+		}
+	}
 
 	// Regen passive: health back while a run is on and no level-up offer has the game paused.
 	if (const URunProgressionSubsystem* Progression = GetWorld()->GetSubsystem<URunProgressionSubsystem>())

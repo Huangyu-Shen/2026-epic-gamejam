@@ -14,7 +14,7 @@ Corresponds to commit `3177f1d` on the `main` branch (2026-11-14, stories 001-00
 | Input | Raw key bindings (`BindKey`, `IsInputKeyDown`), no input assets; the `EnhancedInput` module is declared but unused | [HeroCharacter.cpp](../../Game_01%205.8/Source/Game_01/Private/Player/HeroCharacter.cpp) |
 | AI collaboration | Editor/engine plugins `ModelContextProtocol`, `AllToolsets`, `Terminal` (enabled for all targets) | [.uproject](../../Game_01%205.8/Game_01.uproject) |
 
-The game is a fantasy angled-top-down "mow-down x search-and-extract x thin camp" game: on the run map you loot, fight and level up (at each level-up you cut one of three options and keep the other two), then extract with your bag; extracted Iron goes into camp, where buildings are upgraded and take effect from the next run. Lost film reels carried out alive unlock upgrade options by name for every later run (story 009: the options are Chain, Haste and Magnet, which start locked in the level-up pool).
+The game is a fantasy angled-top-down "mow-down x search-and-extract x thin camp" game: on the run map you loot, fight and level up (at each level-up you take one of three options, and may first cut one so it goes to the boss), then extract with your bag; extracted Iron goes into camp, where buildings are upgraded and take effect from the next run. Lost film reels carried out alive unlock upgrade options by name for every later run (story 009: the options are Chain, Haste and Magnet, which start locked in the level-up pool).
 
 ## 2. Two maps, two game modes
 
@@ -103,7 +103,7 @@ graph TD
 Dependencies are not checked automatically (there are no architecture tests and no lint rules); the direction is kept by convention:
 
 - `Loot/` is close to the bottom layer but not a pure one: besides sending messages to `UHudMessageSubsystem` (`LootBagComponent`, `LootContainer`) and reading the loot tables from `UDirectorTuningSettings` (`ULootConfig`), `ALootContainer` reads the unlocked options from `UCampStockSubsystem` (to decide which reels can still drop), and `Extraction/` includes `Loot/LootTypes.h` in return. `Combat/` is not a bottom layer: the weapon component reads progression, the enemy manager, the run state and camp bonuses (see the tally in [dependencies.md](dependencies.md#1-how-modules-depend-on-each-other)).
-- The UI only reads subsystems and components; all state changes go through the subsystems' public functions (`TryUpgrade`, `AddCard`/`RemoveCard`, `CutOffer`) and `OpenLevel`.
+- The UI only reads subsystems and components; all state changes go through the subsystems' public functions (`TryUpgrade`, `AddCard`/`RemoveCard`, `ChooseOption`, `CutFromOffer`) and `OpenLevel`.
 - Camp state (Iron, unlocked upgrade options, building levels, the slotted film cards) lives in a GameInstance subsystem because `OpenLevel` destroys the whole World; per-run state (enemies, heat, XP, the run result) lives in World subsystems and is naturally cleared on a map change.
 - Most events are not listened to. The C++ listeners that exist are: `UCampStockSubsystem::OnStockChanged` and `UCampMetaSubsystem::OnMetaChanged` (the save subsystem; `OnMetaChanged` also drives `ACampBuilding`), `UEnemyManagerSubsystem::OnEnemyKilled` (progression), `URunOutcomeSubsystem::OnRunEnded` (film cards) and `UHealthComponent::OnDied` (the hero). The other delegates (`OnBagChanged`, `OnPickupRefused`, `OnHeatChanged`, `OnSearched`, `OnDamaged`, `OnExtractionProgress`, `OnExtractionInterrupted`) have no listener; the HUD polls the state every frame instead.
 
@@ -155,7 +155,7 @@ sequenceDiagram
 - Camp bonuses do not accumulate: every `StartRun` sets max health to `GetBaseMaxHealth() + Clinic bonus` (the base is captured once from the tuning table in `UHealthComponent::BeginPlay`); the Smithy bonus is read live on every shot (`UAutoWeaponComponent::FireWeapon`) and is added to the weapon damage before the multipliers.
 - If a card id is no longer in the card table it is dropped on restore; if the table is unset there are no cards at all (silently).
 
-### 5.2 Kill to level-up: cut one, keep two
+### 5.2 Kill to level-up: take one of three, optional cut
 
 ```mermaid
 sequenceDiagram
@@ -175,13 +175,13 @@ sequenceDiagram
   G->>G: GrantXp(value x Greed), CheckLevelUp
   G->>G: GenerateOffer, bOfferPending = true (soft pause)
   HUD->>G: polls GetOfferDescriptions and shows 3 buttons
-  P->>G: press 1-3 or click, CutOffer(Index)
-  G->>G: record the cut, then ApplyOption for the other two, then CheckLevelUp again
+  P->>G: press 1-3 (take) or 4-6 (cut), ChooseOption / CutFromOffer
+  G->>G: a cut only records the option and removes it from the pool; ChooseOption applies the taken one, then CheckLevelUp again
 ```
 
 - `CheckLevelUp`: when `Xp >= XpToNext` it subtracts the threshold, increments the level and sets `XpToNext = BaseXp * Growth^(Level-1)`.
-- `GenerateOffer` builds the pool from the 4 weapons and 6 passives, leaving out options that are still locked (`bStartsLocked` and the camp has not unlocked the id equal to the row name: Chain, Haste, Magnet), options that were cut for good and options that already hold the maximum number of copies; it shuffles (Fisher-Yates). With fewer than three left there is nothing to cut: the remaining options are applied at once and no panel is shown. Otherwise it asks `UCampStockSubsystem::TakeNewOptions()` for the options unlocked since the player last saw an offer, marks those in the pool `bIsNewUnlock` and swaps them to the front, then takes three: a freshly unlocked option is always in the first offer of the next run, and the panel prefixes it `NEW! `.
-- `CutOffer`: the cut option is appended to `CuttingRoomFloor`; while `PermanentCutsLeft > 0` (set at run start to pool size minus `MinPoolSize`: 7 - 4 = 3 on a new save, one more for each unlocked option, 6 at most) it is also removed from the pool for the rest of the run. Afterwards the cut is only skipped this time and can be offered again.
+- `GenerateOffer` builds the pool from the 5 weapons and 8 passives of the base pool plus the three unlockable ones (Chain, Haste, Magnet), leaving out options that are still locked (`bStartsLocked` and the camp has not unlocked the id equal to the row name: Chain, Haste, Magnet), options that were cut for good and options that already hold the maximum number of copies; it shuffles (Fisher-Yates). With fewer than three left there is nothing to cut: the remaining options are applied at once and no panel is shown. Otherwise it asks `UCampStockSubsystem::TakeNewOptions()` for the options unlocked since the player last saw an offer, marks those in the pool `bIsNewUnlock` and swaps them to the front, then takes three: a freshly unlocked option is always in the first offer of the next run, and the panel prefixes it `NEW! `.
+- `CutFromOffer`: the cut option is appended to `CuttingRoomFloor`; `PermanentCutsLeft` (set at run start to pool size minus `MinPoolSize`: 13 - 4 = 9 on a new save, one more for each unlocked option, 12 at most) goes down by one and the option is removed from the pool for the rest of the run. One cut per level-up. `UBossRejectsSubsystem` reads the floor and gives the cut to the Cut Knight boss. `ChooseOption` applies the taken option and leaves the other offered options in the pool.
 - The weapons and passives read their results from this subsystem: `UAutoWeaponComponent` divides each weapon interval by `GetAttackSpeedMultiplier()` (Haste) and the gem pull in `Tick` uses `GetMagnetRadius()` (Magnet). The Chain weapon picks its whole path before it deals damage.
 - `ApplyOption` adds one copy. Copies are the level; two stars at 3 copies and three stars at 9 (`FStarTuning`, damage and reach multipliers for weapons, a total-effect multiplier for passives). A Vitality pick raises the hero's max health and heals by however much the passive total grew, including the jump from a star-up. A star-up posts a toast.
 - Kills while an offer is pending drop no gem (`HandleEnemyKilled` returns early), but nothing can be killed then anyway.
