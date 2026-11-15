@@ -10,7 +10,7 @@ class ULootConfig;
 class UStaticMesh;
 class UStaticMeshComponent;
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FOnContainerSearched, ALootContainer*, Container, int32, IronGained, bool, bGotRelic, ERelicType, RelicType);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FOnContainerSearched, ALootContainer*, Container, int32, WoodGained, bool, bGotRelic, ERelicType, RelicType);
 
 /**
  * A supply crate or vault. One search per container; the yield comes from the
@@ -51,6 +51,15 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Loot")
 	bool Interact(AActor* InInstigator);
 
+private:
+	/** The bag of the actor that interacts: on the actor itself, or on the pawn of a controller. */
+	static ULootBagComponent* FindBag(AActor* InInstigator);
+
+	/** Rolls what this container holds, once. Returns false when no row is set up for its type. */
+	bool RollContents(const ULootBagComponent& Bag, ULootConfig& Config);
+
+public:
+
 	UFUNCTION(BlueprintPure, Category = "Loot")
 	bool HasBeenSearched() const { return bSearched; }
 
@@ -72,7 +81,7 @@ private:
 	bool bUsesModel = false;
 
 	bool bRolled = false;
-	int32 RolledIron = 0;
+	int32 RolledAmount = 0;
 	bool bRolledRelic = false;
 	ERelicType RolledRelicType = ERelicType::Swiftstep;
 };

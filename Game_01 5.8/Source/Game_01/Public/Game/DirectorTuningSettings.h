@@ -89,7 +89,7 @@ public:
 	UPROPERTY(EditAnywhere, Config, Category = "Audio")
 	TSoftObjectPtr<USoundBase> RunMusic;
 
-	/** Overall level, 0 to 1. There is no settings screen, so these are set once here. */
+	/** Overall level, 0 to 1. These are the defaults; the Esc menu lets the player change them for the session. */
 	UPROPERTY(EditAnywhere, Config, Category = "Audio", meta = (ClampMin = "0.0", ClampMax = "1.0"))
 	float MasterVolume = 0.8f;
 

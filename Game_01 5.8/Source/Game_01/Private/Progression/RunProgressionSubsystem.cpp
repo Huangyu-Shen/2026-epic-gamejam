@@ -134,7 +134,7 @@ void URunProgressionSubsystem::HandleEnemyKilled(EEnemyKind Kind, FVector Locati
 	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 	if (AXpPickup* Pickup = GetWorld()->SpawnActor<AXpPickup>(AXpPickup::StaticClass(), Location, FRotator::ZeroRotator, Params))
 	{
-		Pickup->Value = XpCurve.XpPerKill * (Kind == EEnemyKind::Boss ? 10.0f : 1.0f);
+		Pickup->Value = XpCurve.XpPerKill * (Kind == EEnemyKind::Boss ? XpCurve.BossXpMultiplier : 1.0f);
 	}
 }
 
@@ -331,7 +331,7 @@ void URunProgressionSubsystem::Tick(float DeltaTime)
 
 		const FVector ToHero = HeroLocation - Pickup->GetActorLocation();
 		const float Dist = ToHero.Size();
-		if (Dist <= CollectRadius)
+		if (Dist <= XpCurve.CollectRadius)
 		{
 			GrantXp(Pickup->Value * GetXpGainMultiplier());
 			UGameAudioSubsystem::PlayIn(this, EGameSound::Pickup);
@@ -340,7 +340,7 @@ void URunProgressionSubsystem::Tick(float DeltaTime)
 		}
 		else if (Dist <= GetMagnetRadius())
 		{
-			Pickup->SetActorLocation(Pickup->GetActorLocation() + (ToHero / Dist) * MagnetSpeed * DeltaTime);
+			Pickup->SetActorLocation(Pickup->GetActorLocation() + (ToHero / Dist) * XpCurve.MagnetSpeed * DeltaTime);
 		}
 	}
 }

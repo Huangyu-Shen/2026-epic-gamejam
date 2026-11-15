@@ -62,6 +62,18 @@ struct GAME_01_API FXpCurveRow : public FTableRowBase
 	/** Distance (cm) within which XP pickups fly to the hero, before the Magnet passive. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Progression", meta = (ClampMin = "0.0"))
 	float BaseMagnetRadius = 600.0f;
+
+	/** A boss drop is worth this many normal drops. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Progression", meta = (ClampMin = "0.0"))
+	float BossXpMultiplier = 10.0f;
+
+	/** Distance (cm) at which the hero picks an XP drop up. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Progression", meta = (ClampMin = "0.0"))
+	float CollectRadius = 80.0f;
+
+	/** Speed (cm/s) at which a drop in the magnet radius flies to the hero. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Progression", meta = (ClampMin = "0.0"))
+	float MagnetSpeed = 900.0f;
 };
 
 /** One weapon's stats and level cap. Usable as a DataTable row; defaults are the Blade. */

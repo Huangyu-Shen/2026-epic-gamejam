@@ -32,7 +32,7 @@ project:
 engine:
   name: "Unreal"
   version: "5.8"
-  language: "Blueprint"
+  language: "C++"
   rendering: "Lumen + Nanite (deferred)"
   physics: "Chaos"
   path: "D:/Game/EPIC/UE_5.8"

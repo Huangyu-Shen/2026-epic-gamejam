@@ -89,15 +89,25 @@ void UEnemyManagerSubsystem::Tick(float DeltaTime)
 		return;
 	}
 
-	const URunOutcomeSubsystem* Run = GetWorld()->GetSubsystem<URunOutcomeSubsystem>();
-	const bool bCanHurt = Run && Run->IsRunActive();
-	const FVector HeroLocation = Hero->GetActorLocation();
 	const double Now = GetWorld()->GetTimeSeconds();
 	const int32 Num = Enemies.Num();
 
 	Positions.SetNumUninitialized(Num);
 	Yaws.SetNumUninitialized(Num);
 	Pushes.SetNumZeroed(Num);
+
+	ChaseHero(*Hero, DeltaTime, Now);
+	BuildGrid();
+	SeparateBodies();
+	ApplyMovement(DeltaTime, Now);
+}
+
+void UEnemyManagerSubsystem::ChaseHero(AHeroCharacter& Hero, float DeltaTime, double Now)
+{
+	const URunOutcomeSubsystem* Run = GetWorld()->GetSubsystem<URunOutcomeSubsystem>();
+	const bool bCanHurt = Run && Run->IsRunActive();
+	const FVector HeroLocation = Hero.GetActorLocation();
+	const int32 Num = Enemies.Num();
 
 	// Pass 1: chase the hero, face the movement, apply contact damage.
 	for (int32 Index = 0; Index < Num; ++Index)
@@ -121,11 +131,15 @@ void UEnemyManagerSubsystem::Tick(float DeltaTime)
 
 		if (bCanHurt && Dist <= Row.ContactRange && Now >= Enemy->NextContactTime)
 		{
-			Hero->ReceiveEnemyDamage(Row.ContactDamage);
+			Hero.ReceiveEnemyDamage(Row.ContactDamage);
 			Enemy->NextContactTime = Now + Row.ContactCooldown;
 		}
 	}
+}
 
+void UEnemyManagerSubsystem::BuildGrid()
+{
+	const int32 Num = Enemies.Num();
 	// Pass 2: bucket enemies into a uniform grid.
 	Grid.Reset();
 	for (int32 Index = 0; Index < Num; ++Index)
@@ -133,7 +147,11 @@ void UEnemyManagerSubsystem::Tick(float DeltaTime)
 		const FIntPoint Cell(FMath::FloorToInt(Positions[Index].X / Tuning.SeparationCellSize), FMath::FloorToInt(Positions[Index].Y / Tuning.SeparationCellSize));
 		Grid.FindOrAdd(Cell).Add(Index);
 	}
+}
 
+void UEnemyManagerSubsystem::SeparateBodies()
+{
+	const int32 Num = Enemies.Num();
 	// Pass 3: push overlapping bodies apart (each enemy only looks at the 3x3 cells around it).
 	for (int32 Index = 0; Index < Num; ++Index)
 	{
@@ -169,7 +187,11 @@ void UEnemyManagerSubsystem::Tick(float DeltaTime)
 			}
 		}
 	}
+}
 
+void UEnemyManagerSubsystem::ApplyMovement(float DeltaTime, double Now)
+{
+	const int32 Num = Enemies.Num();
 	// Apply. Enemies never leave the floor: the map has a void around it.
 	const UPlayAreaSubsystem* PlayArea = GetWorld()->GetSubsystem<UPlayAreaSubsystem>();
 	for (int32 Index = 0; Index < Num; ++Index)

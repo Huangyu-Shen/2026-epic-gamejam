@@ -64,7 +64,7 @@ FString UCampWidget::MakeSignature() const
 	{
 		if (const UCampStockSubsystem* Stock = GI->GetSubsystem<UCampStockSubsystem>())
 		{
-			Sig += FString::Printf(TEXT("|I%d|S%d"), Stock->GetIron(), Stock->GetStone());
+			Sig += FString::Printf(TEXT("|I%d|S%d"), Stock->GetWood(), Stock->GetStone());
 			for (const FName Option : Stock->GetUnlockedOptions())
 			{
 				Sig += TEXT(",") + Option.ToString();

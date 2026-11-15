@@ -41,8 +41,8 @@ struct GAME_01_API FDodgeTuning
 /**
  * The player: top-down camera, raw-key controls, health, the bag and the auto weapon.
  *
- * Controls: WASD move, Space dodge, E search the nearest container, 1-3 cut a level-up option
- * while the offer shows. A lost film reel in the bag cannot be used. Film cards are slotted
+ * Controls: WASD move, Space dodge, E search the nearest container, 1-3 take a level-up option
+ * and 4-6 cut one while the offer shows. A lost film reel in the bag cannot be used. Film cards are slotted
  * in the camp editing room; the run starts from the camp (StartRun applies the cards and the
  * camp bonuses). Debug: K die. The HUD is URunHudWidget (story 007).
  */
@@ -94,7 +94,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Hero")
 	bool TryDodge();
 
-	/** Contact damage from an enemy: applies the bag's damage-taken multiplier, then health. Returns damage applied. */
+	/** Contact damage from an enemy: applies the Armor passive, then health. Returns damage applied. */
 	UFUNCTION(BlueprintCallable, Category = "Hero")
 	float ReceiveEnemyDamage(float Amount);
 
@@ -111,6 +111,13 @@ private:
 
 	void SearchNearestContainerKey();
 	void DodgeKey();
+	/** The parts of one tick: stay on the floor, regenerate, read WASD, walk or dash (true while dashing), pick the model's animation. */
+	void KeepOnFloor();
+	void Regenerate(float DeltaSeconds);
+	void ReadMoveInput();
+	bool MoveOrDash(float DeltaSeconds);
+	void UpdateModelAnimation(bool bDashing);
+
 	void DebugDieKey();
 
 	/** Esc opens or closes the pause menu (not while a level-up offer is showing). */

@@ -66,10 +66,6 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Spawn")
 	float GetCurrentSpawnRate() const;
 
-	/** Seconds of active run time the ramp has seen. */
-	UFUNCTION(BlueprintPure, Category = "Spawn")
-	float GetRunTime() const { return RunTime; }
-
 	/** Turns the scheduled spawning on or off (hordes and bosses still work). Used by the performance probe. */
 	UFUNCTION(BlueprintCallable, Category = "Spawn")
 	void SetSchedulerEnabled(bool bEnabled) { bSchedulerEnabled = bEnabled; }

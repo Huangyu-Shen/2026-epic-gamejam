@@ -46,11 +46,11 @@ void URunOutcomeSubsystem::EndRun(ULootBagComponent* Bag, ERunOutcome NewOutcome
 	bRunActive = false;
 	Outcome = NewOutcome;
 
-	LastResult =FRunSettlement::Compute(Bag->GetWoodCount(), Bag->GetStoneCount(), Bag->GetRelics(), EarningsMultiplier, NewOutcome);
+	LastResult = FRunSettlement::Compute(Bag->GetWoodCount(), Bag->GetStoneCount(), Bag->GetRelics(), EarningsMultiplier, NewOutcome);
 
 	if (UCampStockSubsystem* Camp = UGameInstance::GetSubsystem<UCampStockSubsystem>(GetWorld()->GetGameInstance()))
 	{
-		Camp->AddIron(LastResult.IronGained);
+		Camp->AddWood(LastResult.WoodGained);
 		Camp->AddStone(LastResult.StoneGained);
 		// Carrying a lost film reel out alive unlocks the option it names, for every later run.
 		if (NewOutcome == ERunOutcome::Extracted)
@@ -79,8 +79,8 @@ void URunOutcomeSubsystem::EndRun(ULootBagComponent* Bag, ERunOutcome NewOutcome
 	const bool bExtracted = NewOutcome == ERunOutcome::Extracted;
 	const FString Summary = bExtracted
 		? FString::Printf(TEXT("EXTRACTED: bag wood %d stone %d x %.2f = +%d wood +%d stone to camp, %d lost reels carried out, %d options unlocked"),
-			LastResult.BagIron, LastResult.BagStone, LastResult.MultiplierUsed, LastResult.IronGained, LastResult.StoneGained, LastResult.RelicsBanked.Num(), LastResult.OptionsUnlocked.Num())
-		: FString::Printf(TEXT("DIED: lost %d wood, %d stone and %d lost reels"), LastResult.IronLost, LastResult.StoneLost, LastResult.RelicsLost.Num());
+			LastResult.BagWood, LastResult.BagStone, LastResult.MultiplierUsed, LastResult.WoodGained, LastResult.StoneGained, LastResult.RelicsBanked.Num(), LastResult.OptionsUnlocked.Num())
+		: FString::Printf(TEXT("DIED: lost %d wood, %d stone and %d lost reels"), LastResult.WoodLost, LastResult.StoneLost, LastResult.RelicsLost.Num());
 	UE_LOG(LogExtraction, Log, TEXT("%s"), *Summary);
 
 	UGameAudioSubsystem::PlayIn(this, bExtracted ? EGameSound::Extraction : EGameSound::PlayerDeath);

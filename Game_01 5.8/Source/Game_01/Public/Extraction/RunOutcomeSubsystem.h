@@ -36,14 +36,14 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Run")
 	FRunResult GetLastResult() const { return LastResult; }
 
-	/** Multiplier on extracted Iron. 1.0 unless run cards change it (story 005). */
+	/** Multiplier on extracted wood and stone. 1.0 unless run cards change it (story 005). */
 	UFUNCTION(BlueprintPure, Category = "Run")
 	float GetEarningsMultiplier() const { return EarningsMultiplier; }
 
 	UFUNCTION(BlueprintCallable, Category = "Run")
 	void SetEarningsMultiplier(float NewMultiplier);
 
-	/** Success: bag Iron x multiplier to camp, lost film reels unlock their options. Ignored if the run already ended. */
+	/** Success: bag wood and stone x multiplier to camp, lost film reels unlock their options. Ignored if the run already ended. */
 	UFUNCTION(BlueprintCallable, Category = "Run")
 	void ReportExtracted(ULootBagComponent* Bag);
 

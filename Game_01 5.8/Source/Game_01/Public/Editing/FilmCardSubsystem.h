@@ -10,8 +10,8 @@
 /**
  * Holds the player's pre-run film-card selection (two slots), applies the active cards when a run
  * starts (forcing horde/boss and setting the earnings multiplier), and clears them when a run ends
- * so the choice never leaks into the next run. The editing-room UI itself is story 007; here the
- * slots are driven by debug keys.
+ * so the choice never leaks into the next run. The camp's editing room (stories 006 and 007) slots the
+ * cards.
  */
 UCLASS()
 class GAME_01_API UFilmCardSubsystem : public UWorldSubsystem

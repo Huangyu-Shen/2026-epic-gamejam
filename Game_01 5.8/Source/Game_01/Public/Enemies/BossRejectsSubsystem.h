@@ -118,17 +118,20 @@ class GAME_01_API UBossRejectsSubsystem : public UTickableWorldSubsystem
 	GENERATED_BODY()
 
 public:
-	/** Called by the spawner when the boss appears. Starts with no cuts applied. */
+	/** Called by the spawner when the boss appears. Every cut already on the cutting-room floor is applied on the next tick. */
 	void SetBoss(AEnemy* InBoss);
 
-	/** How many attacks the boss currently has (for the test probe and the log). */
-	int32 GetAttackCount() const { return Copies.Num(); }
 
 	virtual void Tick(float DeltaTime) override;
 	virtual TStatId GetStatId() const override { RETURN_QUICK_DECLARE_CYCLE_STAT(UBossRejectsSubsystem, STATGROUP_Tickables); }
 	virtual void Deinitialize() override;
 
 private:
+	/** The three parts of a tick: start the attacks that are due, fly the balls, count down the slams. */
+	void FireDueAttacks(const FBossRejectTuning& Tuning, AHeroCharacter& Hero);
+	void MoveShots(const FBossRejectTuning& Tuning, AHeroCharacter& Hero, float DeltaTime);
+	void CountDownSlams(AHeroCharacter& Hero, float DeltaTime);
+
 	struct FShot
 	{
 		TWeakObjectPtr<AActor> Visual;
