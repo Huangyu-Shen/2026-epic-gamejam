@@ -198,8 +198,17 @@ private:
 	void ShowOffer() const;
 	FString DescribeOption(const FOfferOption& Option) const;
 	FString OptionName(const FOfferOption& Option) const;
+public:
 	/** The option's stable id: its data-table row name, which is also what a lost film reel unlocks. */
-	FName OptionId(const FOfferOption& Option) const;
+	static FName OptionId(const FOfferOption& Option);
+
+	/**
+	 * Marks every option whose id is in NewIds as a NEW unlock and moves those options to the front of the pool
+	 * (their relative order is not kept). Pure: used by GenerateOffer, and testable without a world.
+	 */
+	static void MoveNewUnlocksToFront(TArray<FOfferOption>& Pool, const TArray<FName>& NewIds);
+
+private:
 	int32 MaxCopies(int32 RowMaxLevel) const { return FMath::Max(RowMaxLevel, Stars.CopiesForThreeStar); }
 	/** A passive's total effect: stacks x per-stack amount x its star multiplier. */
 	float PassiveTotal(EPassiveType Passive, float PerStack) const;
