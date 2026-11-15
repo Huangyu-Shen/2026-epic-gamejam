@@ -69,6 +69,7 @@ void URunProgressionSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 		Manager->OnEnemyKilled.AddDynamic(this, &URunProgressionSubsystem::HandleEnemyKilled);
 	}
 
+	Random.GenerateNewSeed();
 	ResetProgression();
 }
 
@@ -78,13 +79,8 @@ void URunProgressionSubsystem::ResetProgression()
 	Xp = 0.0f;
 	XpToNext = XpCurve.BaseXp;
 	Loadout.ResetOwnership();
-	bOfferPending = false;
-	Offer.Reset();
-	CutWeapons.Reset();
-	CutPassives.Reset();
-	CuttingRoomFloor.Reset();
-	PermanentCutsLeft = Loadout.Stars.PermanentCutsForPool(GetPoolSize());
-	UE_LOG(LogTemp, Log, TEXT("PROGRESSION pool=%d permanentCuts=%d"), GetPoolSize(), PermanentCutsLeft);
+	Rules.Reset(Loadout.Stars.PermanentCutsForPool(GetPoolSize()));
+	UE_LOG(LogTemp, Log, TEXT("PROGRESSION pool=%d permanentCuts=%d"), GetPoolSize(), Rules.PermanentCutsLeft);
 
 	// Destroy leftover pickups from the previous run (Destroy() unregisters them).
 	TArray<TObjectPtr<AXpPickup>> Doomed = MoveTemp(Pickups);
@@ -129,7 +125,7 @@ int32 URunProgressionSubsystem::GetPoolSize() const
 
 void URunProgressionSubsystem::HandleEnemyKilled(EEnemyKind Kind, FVector Location)
 {
-	if (bOfferPending)
+	if (Rules.bPending)
 	{
 		return;
 	}
@@ -155,7 +151,7 @@ void URunProgressionSubsystem::GrantXp(float Amount)
 
 void URunProgressionSubsystem::CheckLevelUp()
 {
-	if (bOfferPending || Xp < XpToNext)
+	if (Rules.bPending || Xp < XpToNext)
 	{
 		return;
 	}
@@ -167,71 +163,24 @@ void URunProgressionSubsystem::CheckLevelUp()
 
 void URunProgressionSubsystem::GenerateOffer()
 {
-	Offer.Reset();
-
-	// The pool: everything unlocked, not cut for good and not yet at the copy cap.
 	const TArray<FName> Unlocked = GetUnlockedOptions();
-	TArray<FOfferOption> Pool;
-	for (uint8 W = 0; W < static_cast<uint8>(EWeaponType::Count); ++W)
+	const FOfferRules::FGenerated Generated = Rules.Generate(Loadout, Unlocked, Random, [this]() -> TArray<FName>
 	{
-		const EWeaponType Type = static_cast<EWeaponType>(W);
-		const int32 Copies = Loadout.WeaponCopies(Type);
-		if (Loadout.IsWeaponAvailable(Type, Unlocked) && !CutWeapons.Contains(Type) && Copies < Loadout.MaxCopies(Loadout.Weapons.FindChecked(Type).MaxLevel))
-		{
-			FOfferOption Opt;
-			Opt.bIsWeapon = true;
-			Opt.Weapon = Type;
-			Opt.bIsNewWeapon = (Copies == 0);
-			Opt.CurrentLevel = Copies;
-			Pool.Add(Opt);
-		}
-	}
-	for (uint8 P = 0; P < static_cast<uint8>(EPassiveType::Count); ++P)
-	{
-		const EPassiveType Type = static_cast<EPassiveType>(P);
-		const int32 Copies = Loadout.PassiveCopies(Type);
-		if (Loadout.IsPassiveAvailable(Type, Unlocked) && !CutPassives.Contains(Type) && Copies < Loadout.MaxCopies(Loadout.Passives.FindChecked(Type).MaxLevel))
-		{
-			FOfferOption Opt;
-			Opt.bIsWeapon = false;
-			Opt.Passive = Type;
-			Opt.CurrentLevel = Copies;
-			Pool.Add(Opt);
-		}
-	}
+		// The camp's NEW markers: options a lost film reel unlocked since the player last saw an offer.
+		UGameInstance* GameInstance = GetWorld()->GetGameInstance();
+		UCampStockSubsystem* Stock = GameInstance ? GameInstance->GetSubsystem<UCampStockSubsystem>() : nullptr;
+		return Stock ? Stock->TakeNewOptions() : TArray<FName>();
+	});
 
-	// Fisher-Yates shuffle, then take up to three.
-	for (int32 i = Pool.Num() - 1; i > 0; --i)
+	for (const FOfferOption& Option : Generated.ApplyAtOnce)
 	{
-		Pool.Swap(i, FMath::RandRange(0, i));
+		ApplyOption(Option);
 	}
-
-	// With fewer than three options there is nothing to cut: the player simply gets what is left.
-	if (Pool.Num() < 3)
+	if (Generated.bOfferOpened)
 	{
-		for (const FOfferOption& Option : Pool)
-		{
-			ApplyOption(Option);
-		}
-		return;
+		UGameAudioSubsystem::PlayIn(this, EGameSound::LevelUp);
+		ShowOffer();
 	}
-
-	// Options a lost film reel unlocked since the player last saw an offer go first and are marked NEW, so
-	// "carry a reel out, see the new option in the next run" always happens in the first offer.
-	UGameInstance* GameInstance = GetWorld()->GetGameInstance();
-	if (UCampStockSubsystem* Stock = GameInstance ? GameInstance->GetSubsystem<UCampStockSubsystem>() : nullptr)
-	{
-		MoveNewUnlocksToFront(Pool, Stock->TakeNewOptions());
-	}
-
-	for (int32 i = 0; i < 3; ++i)
-	{
-		Offer.Add(Pool[i]);
-	}
-	bOfferPending = true;
-	bCutUsedThisOffer = false;
-	UGameAudioSubsystem::PlayIn(this, EGameSound::LevelUp);
-	ShowOffer();
 }
 
 void URunProgressionSubsystem::ApplyOption(const FOfferOption& Option)
@@ -277,63 +226,45 @@ void URunProgressionSubsystem::ApplyOption(const FOfferOption& Option)
 
 bool URunProgressionSubsystem::CanCutFromOffer() const
 {
-	// One cut per level-up, only while permanent cuts remain (that rule keeps the pool from shrinking below an offer).
-	return bOfferPending && !bCutUsedThisOffer && PermanentCutsLeft > 0 && Offer.Num() > 1;
+	return Rules.CanCut();
 }
 
 void URunProgressionSubsystem::CutFromOffer(int32 Index)
 {
-	if (!CanCutFromOffer() || !Offer.IsValidIndex(Index))
+	FOfferOption Cut;
+	if (!Rules.Cut(Index, Cut))
 	{
 		return;
 	}
 
 	UGameAudioSubsystem::PlayIn(this, EGameSound::Cut);
-	// The cut option leaves the pool for good and goes to the cutting-room floor, where the boss takes it.
-	const FOfferOption Cut = Offer[Index];
-	CuttingRoomFloor.Add(Cut);
-	--PermanentCutsLeft;
-	if (Cut.bIsWeapon)
-	{
-		CutWeapons.Add(Cut.Weapon);
-	}
-	else
-	{
-		CutPassives.Add(Cut.Passive);
-	}
-	Offer.RemoveAt(Index);
-	bCutUsedThisOffer = true;
 	UHudMessageSubsystem::Post(this, FString::Printf(TEXT("CUT: %s now belongs to the Boss"), *OptionName(Cut)), FLinearColor(1.0f, 0.4f, 0.4f), 3.0f);
 }
 
 void URunProgressionSubsystem::ChooseOption(int32 Index)
 {
-	if (!bOfferPending || !Offer.IsValidIndex(Index))
+	FOfferOption Chosen;
+	if (!Rules.Choose(Index, Chosen))
 	{
 		return;
 	}
 
-	// Take the chosen option. The others stay in the pool and may be offered again; only a cut removes one.
-	const FOfferOption Chosen = Offer[Index];
-	bOfferPending = false;
-	Offer.Reset();
 	ApplyOption(Chosen);
-
 	CheckLevelUp(); // leftover XP may already qualify for another level.
 }
 
 void URunProgressionSubsystem::ShowOffer() const
 {
 	// The level-up panel (story 007) reads GetOfferDescriptions(); nothing is drawn here.
-	UE_LOG(LogTemp, Log, TEXT("Level up -> %d, %d option(s) offered"), Level, Offer.Num());
+	UE_LOG(LogTemp, Log, TEXT("Level up -> %d, %d option(s) offered"), Level, Rules.Offer.Num());
 }
 
 TArray<FString> URunProgressionSubsystem::GetOfferDescriptions() const
 {
 	TArray<FString> Lines;
-	if (bOfferPending)
+	if (Rules.bPending)
 	{
-		for (const FOfferOption& Option : Offer)
+		for (const FOfferOption& Option : Rules.Offer)
 		{
 			Lines.Add(DescribeOption(Option));
 		}
@@ -346,24 +277,6 @@ FString URunProgressionSubsystem::OptionName(const FOfferOption& Option) const
 	return Option.bIsWeapon
 		? StaticEnum<EWeaponType>()->GetDisplayNameTextByValue(static_cast<int64>(Option.Weapon)).ToString()
 		: StaticEnum<EPassiveType>()->GetDisplayNameTextByValue(static_cast<int64>(Option.Passive)).ToString();
-}
-
-FName URunProgressionSubsystem::OptionId(const FOfferOption& Option)
-{
-	return Option.bIsWeapon ? FName(FRunLoadout::WeaponRowName(Option.Weapon)) : FName(FRunLoadout::PassiveRowName(Option.Passive));
-}
-
-void URunProgressionSubsystem::MoveNewUnlocksToFront(TArray<FOfferOption>& Pool, const TArray<FName>& NewIds)
-{
-	int32 Front = 0;
-	for (int32 i = 0; i < Pool.Num(); ++i)
-	{
-		if (NewIds.Contains(OptionId(Pool[i])))
-		{
-			Pool[i].bIsNewUnlock = true;
-			Pool.Swap(i, Front++);
-		}
-	}
 }
 
 FString URunProgressionSubsystem::DescribeOption(const FOfferOption& Option) const
@@ -395,11 +308,11 @@ FString URunProgressionSubsystem::DescribeOption(const FOfferOption& Option) con
 TArray<FOfferCardText> URunProgressionSubsystem::GetOfferCards() const
 {
 	TArray<FOfferCardText> Cards;
-	if (!bOfferPending)
+	if (!Rules.bPending)
 	{
 		return Cards;
 	}
-	for (const FOfferOption& Option : Offer)
+	for (const FOfferOption& Option : Rules.Offer)
 	{
 		FOfferCardText Card;
 		Card.Title = (Option.bIsNewUnlock ? FString(TEXT("NEW!  ")) : FString()) + OptionName(Option);
@@ -468,7 +381,7 @@ void URunProgressionSubsystem::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if (bOfferPending || Pickups.IsEmpty())
+	if (Rules.bPending || Pickups.IsEmpty())
 	{
 		return;
 	}

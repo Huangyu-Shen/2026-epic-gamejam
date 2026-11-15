@@ -1,7 +1,7 @@
 // Director's Cut - tech debt TD-011: tests for the run settlement and the NEW-unlock ordering of a level-up offer.
 #include "Misc/AutomationTest.h"
 #include "Extraction/ExtractionTypes.h"
-#include "Progression/RunProgressionSubsystem.h"
+#include "Progression/OfferRules.h"
 
 #if WITH_DEV_AUTOMATION_TESTS
 
@@ -101,10 +101,10 @@ bool FOfferNewUnlockFirstTest::RunTest(const FString& Parameters)
 	// Arrange: the pool holds three options; the last one is the id a reel unlocked
 	TArray<FOfferOption> Pool = { RunSettlementTest::MakeWeapon(EWeaponType::Blade), RunSettlementTest::MakePassive(EPassiveType::Swiftness),
 		RunSettlementTest::MakeWeapon(EWeaponType::Chain) };
-	const FName ChainId = URunProgressionSubsystem::OptionId(Pool[2]);
+	const FName ChainId = FOfferRules::OptionId(Pool[2]);
 
 	// Act
-	URunProgressionSubsystem::MoveNewUnlocksToFront(Pool, { ChainId });
+	FOfferRules::MoveNewUnlocksToFront(Pool, { ChainId });
 
 	// Assert
 	TestEqual(TEXT("the pool keeps its size"), Pool.Num(), 3);
@@ -123,7 +123,7 @@ bool FOfferNoNewUnlockTest::RunTest(const FString& Parameters)
 	TArray<FOfferOption> Pool = { RunSettlementTest::MakeWeapon(EWeaponType::Blade), RunSettlementTest::MakePassive(EPassiveType::Swiftness) };
 
 	// Act
-	URunProgressionSubsystem::MoveNewUnlocksToFront(Pool, {});
+	FOfferRules::MoveNewUnlocksToFront(Pool, {});
 
 	// Assert
 	TestTrue(TEXT("the first option is still the blade"), Pool[0].bIsWeapon && Pool[0].Weapon == EWeaponType::Blade);
@@ -137,9 +137,9 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FOfferOptionIdTest, "Game_01.Progression.Option
 bool FOfferOptionIdTest::RunTest(const FString& Parameters)
 {
 	// Arrange / Act
-	const FName BladeId = URunProgressionSubsystem::OptionId(RunSettlementTest::MakeWeapon(EWeaponType::Blade));
-	const FName ChainId = URunProgressionSubsystem::OptionId(RunSettlementTest::MakeWeapon(EWeaponType::Chain));
-	const FName SwiftId = URunProgressionSubsystem::OptionId(RunSettlementTest::MakePassive(EPassiveType::Swiftness));
+	const FName BladeId = FOfferRules::OptionId(RunSettlementTest::MakeWeapon(EWeaponType::Blade));
+	const FName ChainId = FOfferRules::OptionId(RunSettlementTest::MakeWeapon(EWeaponType::Chain));
+	const FName SwiftId = FOfferRules::OptionId(RunSettlementTest::MakePassive(EPassiveType::Swiftness));
 
 	// Assert
 	TestNotEqual(TEXT("two weapons have different ids"), BladeId, ChainId);

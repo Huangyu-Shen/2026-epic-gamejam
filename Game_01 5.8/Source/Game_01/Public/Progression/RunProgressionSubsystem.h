@@ -5,38 +5,11 @@
 #include "Subsystems/WorldSubsystem.h"
 #include "Enemies/EnemyTypes.h"
 #include "Progression/ProgressionTypes.h"
+#include "Progression/OfferRules.h"
 #include "Progression/RunLoadout.h"
 #include "RunProgressionSubsystem.generated.h"
 
 class AXpPickup;
-
-/** One option in a level-up offer: a new weapon, another copy of a weapon, or another copy of a passive. */
-USTRUCT(BlueprintType)
-struct GAME_01_API FOfferOption
-{
-	GENERATED_BODY()
-
-	UPROPERTY(BlueprintReadOnly, Category = "Progression")
-	bool bIsWeapon = false;
-
-	UPROPERTY(BlueprintReadOnly, Category = "Progression")
-	EWeaponType Weapon = EWeaponType::Blade;
-
-	UPROPERTY(BlueprintReadOnly, Category = "Progression")
-	EPassiveType Passive = EPassiveType::Swiftness;
-
-	/** True when a weapon is offered that the run does not own yet. */
-	UPROPERTY(BlueprintReadOnly, Category = "Progression")
-	bool bIsNewWeapon = false;
-
-	/** Copies held before this pick (copies are also the level). */
-	UPROPERTY(BlueprintReadOnly, Category = "Progression")
-	int32 CurrentLevel = 0;
-
-	/** True when this option was unlocked by a lost film reel since the player last saw an offer (story 009). */
-	UPROPERTY(BlueprintReadOnly, Category = "Progression")
-	bool bIsNewUnlock = false;
-};
 
 /**
  * Owns in-run growth: XP, level, the level-up offer and the weapon/passive loadout.
@@ -130,10 +103,10 @@ public:
 
 	/** Cuts left this run that remove the cut option from the pool for good. */
 	UFUNCTION(BlueprintPure, Category = "Progression")
-	int32 GetPermanentCutsLeft() const { return PermanentCutsLeft; }
+	int32 GetPermanentCutsLeft() const { return Rules.PermanentCutsLeft; }
 
 	/** Everything cut this run, oldest first (permanent or not). Kept for the boss that fights with the cut footage. */
-	const TArray<FOfferOption>& GetCuttingRoomFloor() const { return CuttingRoomFloor; }
+	const TArray<FOfferOption>& GetCuttingRoomFloor() const { return Rules.CuttingRoomFloor; }
 
 	/** One line for the HUD: every owned weapon and passive with its level and stars. */
 	UFUNCTION(BlueprintPure, Category = "Progression")
@@ -144,7 +117,7 @@ public:
 
 	/** True while the level-up offer is showing and the game is soft-paused. */
 	UFUNCTION(BlueprintPure, Category = "Progression")
-	bool IsOfferPending() const { return bOfferPending; }
+	bool IsOfferPending() const { return Rules.bPending; }
 
 	/** The pending offer as three short pieces per option, for the level-up cards (empty when no offer is showing). */
 	TArray<FOfferCardText> GetOfferCards() const;
@@ -169,7 +142,7 @@ public:
 	void DebugGrantWeapon(EWeaponType Weapon, int32 Copies);
 
 	/** Test harness only (-BossProbe): puts an option on the cutting-room floor as if the player had cut it. */
-	void DebugCut(const FOfferOption& Option) { CuttingRoomFloor.Add(Option); }
+	void DebugCut(const FOfferOption& Option) { Rules.CuttingRoomFloor.Add(Option); }
 
 	/** Adds XP and opens the level-up offer once the threshold is reached. Used by pickups and by the -OfferProbe harness. */
 	void GrantXp(float Amount);
@@ -197,17 +170,6 @@ private:
 	void ShowOffer() const;
 	FString DescribeOption(const FOfferOption& Option) const;
 	FString OptionName(const FOfferOption& Option) const;
-public:
-	/** The option's stable id: its data-table row name, which is also what a lost film reel unlocks. */
-	static FName OptionId(const FOfferOption& Option);
-
-	/**
-	 * Marks every option whose id is in NewIds as a NEW unlock and moves those options to the front of the pool
-	 * (their relative order is not kept). Pure: used by GenerateOffer, and testable without a world.
-	 */
-	static void MoveNewUnlocksToFront(TArray<FOfferOption>& Pool, const TArray<FName>& NewIds);
-
-private:
 
 	// Loaded tuning (defaults are always present; tables override).
 	FXpCurveRow XpCurve;
@@ -219,13 +181,12 @@ private:
 	int32 Level = 1;
 	float Xp = 0.0f;
 	float XpToNext = 30.0f;
-	bool bOfferPending = false;
-	bool bCutUsedThisOffer = false;
-	TArray<FOfferOption> Offer;
-	TSet<EWeaponType> CutWeapons;
-	TSet<EPassiveType> CutPassives;
-	int32 PermanentCutsLeft = 0;
-	TArray<FOfferOption> CuttingRoomFloor;
+
+	/** The level-up offer, the cuts and the choice (pure rules, see OfferRules.h). */
+	FOfferRules Rules;
+
+	/** The shuffle of the offer pool, seeded differently each session. */
+	FRandomStream Random;
 
 	UPROPERTY(EditAnywhere, Category = "Progression", meta = (ClampMin = "0.0"))
 	float CollectRadius = 80.0f;
