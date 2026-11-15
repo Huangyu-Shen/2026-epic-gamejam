@@ -62,9 +62,6 @@ public:
 
 	// ---- Read-only contents ----
 
-	UFUNCTION(BlueprintPure, Category = "Loot")
-	int32 GetIronCount() const { return IronCount; }
-
 	/** Wood in the bag (the field keeps its old name, IronCount, from when wood was Iron). */
 	UFUNCTION(BlueprintPure, Category = "Loot")
 	int32 GetWoodCount() const { return IronCount; }

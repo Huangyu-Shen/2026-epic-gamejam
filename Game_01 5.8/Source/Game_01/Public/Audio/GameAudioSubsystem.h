@@ -74,11 +74,6 @@ public:
 	/** Sets a bus (clamped to 0..1) for this session and applies it to the music that is playing now. */
 	static void SetBusVolume(const UObject* WorldContext, EAudioBus Bus, float Volume);
 
-	/** Number of Play requests for a sound this world, counting capped and asset-less ones. */
-	int32 GetRequestCount(EGameSound Sound) const { return Requests[static_cast<int32>(Sound)]; }
-
-	/** Number of requests dropped by the crowd cap. */
-	int32 GetCappedCount() const { return Capped; }
 
 private:
 	static bool IsCrowdSound(EGameSound Sound);
@@ -89,7 +84,6 @@ private:
 	UPROPERTY(Transient)
 	TObjectPtr<UAudioComponent> MusicComponent;
 
-	int32 Requests[static_cast<int32>(EGameSound::Count)] = {};
 	int32 Played[static_cast<int32>(EGameSound::Count)] = {};
 	int32 Capped = 0;
 	bool bLoggedFirst[static_cast<int32>(EGameSound::Count)] = {};

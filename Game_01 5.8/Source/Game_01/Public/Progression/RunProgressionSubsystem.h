@@ -83,9 +83,6 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Progression")
 	int32 GetWeaponStars(EWeaponType Weapon) const { return Loadout.WeaponStars(Weapon); }
 
-	UFUNCTION(BlueprintPure, Category = "Progression")
-	int32 GetPassiveStars(EPassiveType Passive) const { return Loadout.PassiveStarsFor(Passive); }
-
 	/** Star multipliers for a weapon the run owns (1.0 at one star). */
 	float GetWeaponStarDamageMultiplier(EWeaponType Weapon) const { return Loadout.WeaponStarDamageMultiplier(Weapon); }
 	float GetWeaponStarRangeMultiplier(EWeaponType Weapon) const { return Loadout.WeaponStarRangeMultiplier(Weapon); }

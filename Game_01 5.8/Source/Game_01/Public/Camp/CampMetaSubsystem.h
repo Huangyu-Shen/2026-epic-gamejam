@@ -38,7 +38,7 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Camp")
 	bool IsMaxLevel(EBuildingType Type) const;
 
-	/** Spends the Iron and raises the level on success. On failure fills Reason and returns false. */
+	/** Spends the cost (wood or stone) and raises the level on success. On failure fills Reason and returns false. */
 	UFUNCTION(BlueprintCallable, Category = "Camp")
 	bool TryUpgrade(EBuildingType Type, FText& Reason);
 
@@ -55,10 +55,6 @@ public:
 
 	/** Replaces all levels (save-game restore, story 007); each is clamped to [0, MaxLevel]. */
 	void RestoreLevels(const TMap<EBuildingType, int32>& InLevels);
-
-	/** Resets every building to level 0 (fresh game). */
-	UFUNCTION(BlueprintCallable, Category = "Camp")
-	void ResetCamp();
 
 	/**
 	 * Film cards slotted in the editing room, kept here so they survive the camp -> run level change

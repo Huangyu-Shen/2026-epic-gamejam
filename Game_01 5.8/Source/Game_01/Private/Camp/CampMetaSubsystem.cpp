@@ -68,8 +68,7 @@ int32 UCampMetaSubsystem::GetBuildingLevel(EBuildingType Type) const
 int32 UCampMetaSubsystem::GetUpgradeCost(EBuildingType Type) const
 {
 	const FBuildingRow& Row = Buildings.FindChecked(Type);
-	const int32 Level = Levels.FindRef(Type);
-	return FMath::FloorToInt32(static_cast<float>(Row.BaseCost) * FMath::Pow(Row.CostGrowth, static_cast<float>(Level)));
+	return Row.CostForLevel(Levels.FindRef(Type));
 }
 
 bool UCampMetaSubsystem::IsMaxLevel(EBuildingType Type) const
@@ -110,12 +109,12 @@ bool UCampMetaSubsystem::TryUpgrade(EBuildingType Type, FText& Reason)
 
 float UCampMetaSubsystem::GetWeaponDamageBonus() const
 {
-	return static_cast<float>(Levels.FindRef(EBuildingType::Smithy)) * Buildings.FindChecked(EBuildingType::Smithy).DamagePerLevel;
+	return Buildings.FindChecked(EBuildingType::Smithy).DamageBonusForLevel(Levels.FindRef(EBuildingType::Smithy));
 }
 
 float UCampMetaSubsystem::GetMaxHealthBonus() const
 {
-	return static_cast<float>(Levels.FindRef(EBuildingType::Clinic)) * Buildings.FindChecked(EBuildingType::Clinic).MaxHealthPerLevel;
+	return Buildings.FindChecked(EBuildingType::Clinic).MaxHealthBonusForLevel(Levels.FindRef(EBuildingType::Clinic));
 }
 
 void UCampMetaSubsystem::RestoreLevels(const TMap<EBuildingType, int32>& InLevels)
@@ -128,12 +127,6 @@ void UCampMetaSubsystem::RestoreLevels(const TMap<EBuildingType, int32>& InLevel
 			Levels.Add(Pair.Key, FMath::Clamp(Pair.Value, 0, Row->MaxLevel));
 		}
 	}
-	OnMetaChanged.Broadcast();
-}
-
-void UCampMetaSubsystem::ResetCamp()
-{
-	Levels.Reset();
 	OnMetaChanged.Broadcast();
 }
 

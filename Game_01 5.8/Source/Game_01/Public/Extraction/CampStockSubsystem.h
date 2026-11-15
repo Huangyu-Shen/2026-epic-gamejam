@@ -9,7 +9,7 @@
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnCampStockChanged);
 
 /**
- * Camp Iron and the set of unlocked upgrade options, kept for the whole game session.
+ * Camp wood (the field is still named Iron), stone and the set of unlocked upgrade options, kept for the whole game session.
  * (Lost film reels are not stored: carrying one out unlocks its option at once, see URunOutcomeSubsystem.)
  * Access: GetGameInstance()->GetSubsystem<UCampStockSubsystem>().
  */
@@ -19,11 +19,11 @@ class GAME_01_API UCampStockSubsystem : public UGameInstanceSubsystem
 	GENERATED_BODY()
 
 public:
-	/** Fired whenever Iron or the warehouse changes. */
+	/** Fired whenever wood, stone or the unlocked options change. */
 	UPROPERTY(BlueprintAssignable, Category = "Camp")
 	FOnCampStockChanged OnStockChanged;
 
-	/** Adds Iron to the camp. Non-positive amounts are ignored. */
+	/** Adds wood to the camp (the method keeps its old name). Non-positive amounts are ignored. */
 	UFUNCTION(BlueprintCallable, Category = "Camp")
 	void AddIron(int32 Amount);
 
@@ -35,9 +35,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Camp")
 	bool UnlockOption(FName Option);
 
-	UFUNCTION(BlueprintPure, Category = "Camp")
-	bool IsOptionUnlocked(FName Option) const { return UnlockedOptions.Contains(Option); }
-
 	/**
 	 * Options unlocked since the player last saw them in a level-up offer. The next run guarantees them a place
 	 * in its first offer and marks them NEW; the list is cleared once taken. It is saved with the unlocks (taking
@@ -47,7 +44,7 @@ public:
 
 	const TArray<FName>& GetNewOptions() const { return NewOptions; }
 
-	/** Deducts Amount Iron; returns false and changes nothing if the stock is too low (story 006 building upgrade). */
+	/** Deducts Amount wood; returns false and changes nothing if the stock is too low (story 006 building upgrade). */
 	UFUNCTION(BlueprintCallable, Category = "Camp")
 	bool SpendIron(int32 Amount);
 

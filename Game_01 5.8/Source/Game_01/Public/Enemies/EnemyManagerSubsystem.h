@@ -50,9 +50,6 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Enemies")
 	int32 GetAliveCount() const { return Enemies.Num(); }
 
-	UFUNCTION(BlueprintPure, Category = "Enemies")
-	int32 GetKillCount() const { return KillCount; }
-
 	/** Destroys every living enemy without counting kills. */
 	UFUNCTION(BlueprintCallable, Category = "Enemies")
 	void ClearAll();

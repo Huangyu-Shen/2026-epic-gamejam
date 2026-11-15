@@ -8,7 +8,7 @@
 class UDataTable;
 
 /**
- * Data-driven loot configuration. Create a Data Asset of this class to tune.
+ * Data-driven loot configuration. Tuned through the data tables named in the Director Tuning settings.
  * Each table is optional: if a table is unset or empty, the inline defaults
  * below (filled in the constructor, editable on the asset) are used, so the
  * game runs with no authored content.
@@ -58,10 +58,6 @@ public:
 	/** All effective reel rows. */
 	UFUNCTION(BlueprintCallable, Category = "Loot")
 	TArray<FRelicRow> GetRelicRows() const;
-
-	/** Finds the effective row for a reel type. Returns false if none. */
-	UFUNCTION(BlueprintCallable, Category = "Loot")
-	bool FindRelicRow(ERelicType Type, FRelicRow& OutRow) const;
 
 	/** Finds the effective row for a container type. Returns false if none. */
 	UFUNCTION(BlueprintCallable, Category = "Loot")

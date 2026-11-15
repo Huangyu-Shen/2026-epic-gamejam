@@ -87,19 +87,6 @@ TArray<FRelicRow> ULootConfig::GetRelicRows() const
 	return Result.Num() > 0 ? Result : DefaultRelics;
 }
 
-bool ULootConfig::FindRelicRow(ERelicType Type, FRelicRow& OutRow) const
-{
-	for (const FRelicRow& Row : GetRelicRows())
-	{
-		if (Row.RelicType == Type)
-		{
-			OutRow = Row;
-			return true;
-		}
-	}
-	return false;
-}
-
 bool ULootConfig::FindContainerRow(ELootContainerType Type, FLootContainerRow& OutRow) const
 {
 	TArray<FLootContainerRow> Rows;

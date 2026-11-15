@@ -99,7 +99,6 @@ void UGameAudioSubsystem::Play(EGameSound Sound)
 	{
 		return;
 	}
-	++Requests[Index];
 
 	const UDirectorTuningSettings* Settings = GetDefault<UDirectorTuningSettings>();
 	const double Now = GetWorld()->GetRealTimeSeconds();
