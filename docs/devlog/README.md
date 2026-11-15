@@ -5,9 +5,8 @@ Claude Code driving the editor through the official Unreal MCP plugin.
 
 **Status:** this log is updated every day of the jam. Days 1, 2 and 3 are written. Day 4
 (15 Nov) is in progress: the submission texts are drafted, the tech debt register is closed except
-three items, and the final package is not built yet. Stories 001 to 010 and 012 are closed; story 011 (art,
-audio, feel) has its code done and its packaged-build checks open; story 013 (package and
-submission) is started.
+one item, and the packaged build has been measured. Stories 001 to 012 are closed; story 013 (package and
+submission) is in progress: the final package, the hand walk-through, the video and the submission remain.
 
 **Public address of this log** (the repository is public):
 <https://github.com/Huangyu-Shen/2026-epic-gamejam/blob/main/docs/devlog/README.md>
@@ -75,6 +74,7 @@ can read a day from top to bottom or open just the part you care about.
 | [08 Splitting the progression subsystem](day-4/08-splitting-the-progression-subsystem.md) | 684 lines into three plain modules, 19 tests to 41, and `FireWeapon` into five functions |
 | [09 A bad save file crashed the game](day-4/09-a-bad-save-file-crashed-the-game.md) | A garbage file in the save slot made the engine assert at start; the check, the backups and what is not covered |
 | [10 Closing the register](day-4/10-closing-the-register.md) | The author's question about 12 open items, what was done, what was accepted and why |
+| [11 The first packages since the refactor](day-4/11-the-first-packages-since-the-refactor.md) | A plugin change that only a package could show was wrong, size, frame rate with weapons on, and the star-up pair |
 
 ## The game in one paragraph
 
@@ -125,12 +125,12 @@ batches and the new tests.
 - 32 commits on `main`, 16 of them through pull requests (3 to 16; each of the last four squashed several
   commits into one).
 - 99 C++ source files, about 11,850 lines (`.h` and `.cpp` under `Source/`, including about 1,160 lines of tests).
-- 13 story files: 11 closed as complete (stories 001 to 010 and 012; 010 with notes), story 011 in progress
-  (code done; the packaged-build checks are open) and story 013 (the submission) started. The Day 2 redesign
+- 13 story files: 12 closed as complete (stories 001 to 012; 010 with notes), and story 013 (the submission)
+  in progress. The Day 2 redesign
   (cut one, keep two; star merge) was built without a story file, and the Day 3 playtest then replaced the cut
   rule again.
 - 12 game-design documents (the master PRD and 11 system documents, including the art and audio direction)
-  plus the one-page brief, and a tech debt register of 21 items: 16 resolved, 2 accepted with reasons, 3 open.
+  plus the one-page brief, and a tech debt register of 21 items: 18 resolved, 2 accepted with reasons, 1 open.
 - 46 automated tests (the star-merge rules, the lost-reel and locked-option rules, the run settlement, the
   loadout, the offer rules and wording, the save checks, the building math). None cover the boss, firing a
   weapon, the floor clamp or the code that ties the subsystems to the world. The earlier stories were

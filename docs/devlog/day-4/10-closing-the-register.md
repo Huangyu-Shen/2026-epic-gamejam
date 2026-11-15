@@ -1,6 +1,6 @@
 # Day 4 (15 Nov) · Closing the register
 
-[Dev log index](../README.md) · [← previous](09-a-bad-save-file-crashed-the-game.md)
+[Dev log index](../README.md) · [← previous](09-a-bad-save-file-crashed-the-game.md) · [next →](11-the-first-packages-since-the-refactor.md)
 
 ## The author asked a fair question
 
