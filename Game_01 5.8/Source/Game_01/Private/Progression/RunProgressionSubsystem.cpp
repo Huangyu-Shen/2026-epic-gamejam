@@ -6,103 +6,13 @@
 #include "Extraction/CampStockSubsystem.h"
 #include "Game/DirectorTuningSettings.h"
 #include "Player/HeroCharacter.h"
+#include "Progression/RunLoadout.h"
 #include "Progression/XpPickup.h"
 #include "UI/HudMessageSubsystem.h"
 #include "Engine/DataTable.h"
 #include "Engine/Engine.h"
 #include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
-
-namespace
-{
-	FWeaponRow DefaultWeapon(EWeaponType Type)
-	{
-		FWeaponRow Row;
-		Row.WeaponType = Type;
-		switch (Type)
-		{
-		case EWeaponType::Blade:
-			Row.Damage = 15.0f; Row.DamagePerLevel = 8.0f; Row.Interval = 0.4f; Row.Range = 600.0f; Row.LineHalfWidth = 0.0f; Row.MaxLevel = 5;
-			break;
-		case EWeaponType::Bolt:
-			Row.Damage = 20.0f; Row.DamagePerLevel = 10.0f; Row.Interval = 0.9f; Row.Range = 1200.0f; Row.LineHalfWidth = 80.0f; Row.MaxLevel = 5;
-			break;
-		case EWeaponType::Nova:
-			Row.Damage = 25.0f; Row.DamagePerLevel = 12.0f; Row.Interval = 1.6f; Row.Range = 350.0f; Row.LineHalfWidth = 0.0f; Row.MaxLevel = 5;
-			break;
-		case EWeaponType::Chain:
-			Row.Damage = 12.0f; Row.DamagePerLevel = 6.0f; Row.Interval = 1.1f; Row.Range = 700.0f; Row.LineHalfWidth = 0.0f; Row.MaxLevel = 5;
-			Row.ChainJumps = 3; Row.ChainRange = 350.0f; Row.bStartsLocked = true;
-			break;
-		case EWeaponType::Gun:
-			// Long reach on purpose: it is the answer to enemies closing in before the hero is strong.
-			Row.Damage = 14.0f; Row.DamagePerLevel = 7.0f; Row.Interval = 0.7f; Row.Range = 1500.0f; Row.LineHalfWidth = 0.0f; Row.MaxLevel = 5;
-			Row.ProjectileSpeed = 2600.0f; Row.ProjectileCount = 1;
-			break;
-		case EWeaponType::Orbit:
-			// Range is the orbit radius; Interval is how often one enemy can be hurt by the balls again.
-			Row.Damage = 10.0f; Row.DamagePerLevel = 5.0f; Row.Interval = 0.5f; Row.Range = 240.0f; Row.LineHalfWidth = 0.0f; Row.MaxLevel = 5;
-			Row.ProjectileSpeed = 160.0f; Row.ProjectileCount = 2;
-			break;
-		default:
-			break;
-		}
-		return Row;
-	}
-
-	FPassiveRow DefaultPassive(EPassiveType Type)
-	{
-		FPassiveRow Row;
-		Row.PassiveType = Type;
-		switch (Type)
-		{
-		case EPassiveType::Swiftness: Row.MoveSpeedAdd = 0.10f; Row.MaxLevel = 5; break;
-		case EPassiveType::Might:     Row.DamageAdd = 0.15f; Row.MaxLevel = 5; break;
-		case EPassiveType::Vitality:  Row.MaxHealthAdd = 20.0f; Row.MaxLevel = 5; break;
-		case EPassiveType::Greed:     Row.XpGainAdd = 0.25f; Row.MaxLevel = 5; break;
-		case EPassiveType::Haste:     Row.AttackSpeedAdd = 0.12f; Row.MaxLevel = 5; Row.bStartsLocked = true; break;
-			case EPassiveType::Magnet:    Row.MagnetRadiusAdd = 150.0f; Row.MaxLevel = 5; Row.bStartsLocked = true; break;
-			case EPassiveType::Reach:     Row.RangeAdd = 0.12f; Row.MaxLevel = 5; break;
-			case EPassiveType::Armor:     Row.DamageReductionAdd = 0.08f; Row.MaxLevel = 5; break;
-			case EPassiveType::Regen:     Row.RegenPerSecondAdd = 1.0f; Row.MaxLevel = 5; break;
-			case EPassiveType::Crit:      Row.CritChanceAdd = 0.08f; Row.CritMultiplier = 2.0f; Row.MaxLevel = 5; break;
-		default: break;
-		}
-		return Row;
-	}
-
-	const TCHAR* WeaponRowName(EWeaponType Type)
-	{
-		switch (Type)
-		{
-		case EWeaponType::Blade: return TEXT("Blade");
-		case EWeaponType::Bolt:  return TEXT("Bolt");
-		case EWeaponType::Nova:  return TEXT("Nova");
-		case EWeaponType::Chain: return TEXT("Chain");
-		case EWeaponType::Gun:   return TEXT("Gun");
-		case EWeaponType::Orbit: return TEXT("Orbit");
-		default: return TEXT("");
-		}
-	}
-
-	const TCHAR* PassiveRowName(EPassiveType Type)
-	{
-		switch (Type)
-		{
-		case EPassiveType::Swiftness: return TEXT("Swiftness");
-		case EPassiveType::Might:     return TEXT("Might");
-		case EPassiveType::Vitality:  return TEXT("Vitality");
-		case EPassiveType::Greed:     return TEXT("Greed");
-		case EPassiveType::Haste:     return TEXT("Haste");
-			case EPassiveType::Magnet:    return TEXT("Magnet");
-			case EPassiveType::Reach:     return TEXT("Reach");
-			case EPassiveType::Armor:     return TEXT("Armor");
-			case EPassiveType::Regen:     return TEXT("Regen");
-			case EPassiveType::Crit:      return TEXT("Crit");
-			default: return TEXT("");
-		}
-	}
-}
 
 void URunProgressionSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
@@ -113,7 +23,7 @@ void URunProgressionSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 	// Project Settings > Game > Director Tuning. Missing tables/rows silently keep the inline defaults.
 	const UDirectorTuningSettings* Settings = GetDefault<UDirectorTuningSettings>();
 	const TCHAR* Context = TEXT("URunProgressionSubsystem::Initialize");
-	Stars = Settings->StarTuning;
+	Loadout.Stars = Settings->StarTuning;
 
 	if (const UDataTable* XpTable = Settings->ProgressionTable.LoadSynchronous())
 	{
@@ -122,35 +32,36 @@ void URunProgressionSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 			XpCurve = *Row;
 		}
 	}
+	Loadout.BaseMagnetRadius = XpCurve.BaseMagnetRadius;
 
 	for (uint8 W = 0; W < static_cast<uint8>(EWeaponType::Count); ++W)
 	{
 		const EWeaponType Type = static_cast<EWeaponType>(W);
-		FWeaponRow Row = DefaultWeapon(Type);
+		FWeaponRow Row = FRunLoadout::DefaultWeapon(Type);
 		if (const UDataTable* WeaponTable = Settings->WeaponTable.LoadSynchronous())
 		{
-			if (const FWeaponRow* Found = WeaponTable->FindRow<FWeaponRow>(WeaponRowName(Type), Context, false))
+			if (const FWeaponRow* Found = WeaponTable->FindRow<FWeaponRow>(FRunLoadout::WeaponRowName(Type), Context, false))
 			{
 				Row = *Found;
 				Row.WeaponType = Type; // the row key is the source of truth, not the row's own type field
 			}
 		}
-		Weapons.Add(Type, Row);
+		Loadout.Weapons.Add(Type, Row);
 	}
 
 	for (uint8 P = 0; P < static_cast<uint8>(EPassiveType::Count); ++P)
 	{
 		const EPassiveType Type = static_cast<EPassiveType>(P);
-		FPassiveRow Row = DefaultPassive(Type);
+		FPassiveRow Row = FRunLoadout::DefaultPassive(Type);
 		if (const UDataTable* PassiveTable = Settings->PassiveTable.LoadSynchronous())
 		{
-			if (const FPassiveRow* Found = PassiveTable->FindRow<FPassiveRow>(PassiveRowName(Type), Context, false))
+			if (const FPassiveRow* Found = PassiveTable->FindRow<FPassiveRow>(FRunLoadout::PassiveRowName(Type), Context, false))
 			{
 				Row = *Found;
 				Row.PassiveType = Type;
 			}
 		}
-		Passives.Add(Type, Row);
+		Loadout.Passives.Add(Type, Row);
 	}
 
 	if (UEnemyManagerSubsystem* Manager = GetWorld()->GetSubsystem<UEnemyManagerSubsystem>())
@@ -166,15 +77,13 @@ void URunProgressionSubsystem::ResetProgression()
 	Level = 1;
 	Xp = 0.0f;
 	XpToNext = XpCurve.BaseXp;
-	WeaponLevels.Reset();
-	WeaponLevels.Add(EWeaponType::Blade, 1); // the starter weapon
-	PassiveStacks.Reset();
+	Loadout.ResetOwnership();
 	bOfferPending = false;
 	Offer.Reset();
 	CutWeapons.Reset();
 	CutPassives.Reset();
 	CuttingRoomFloor.Reset();
-	PermanentCutsLeft = Stars.PermanentCutsForPool(GetPoolSize());
+	PermanentCutsLeft = Loadout.Stars.PermanentCutsForPool(GetPoolSize());
 	UE_LOG(LogTemp, Log, TEXT("PROGRESSION pool=%d permanentCuts=%d"), GetPoolSize(), PermanentCutsLeft);
 
 	// Destroy leftover pickups from the previous run (Destroy() unregisters them).
@@ -189,66 +98,17 @@ void URunProgressionSubsystem::ResetProgression()
 	}
 }
 
-float URunProgressionSubsystem::PassiveTotal(EPassiveType Passive, float PerStack) const
-{
-	const int32 Stacks = PassiveStacks.FindRef(Passive);
-	return static_cast<float>(Stacks) * PerStack * Stars.PassiveMultiplier(Stars.StarsForCopies(Stacks));
-}
-
-float URunProgressionSubsystem::GetMoveSpeedMultiplier() const
-{
-	return 1.0f + PassiveTotal(EPassiveType::Swiftness, Passives.FindChecked(EPassiveType::Swiftness).MoveSpeedAdd);
-}
-
-float URunProgressionSubsystem::GetDamageMultiplier() const
-{
-	return 1.0f + PassiveTotal(EPassiveType::Might, Passives.FindChecked(EPassiveType::Might).DamageAdd);
-}
-
-float URunProgressionSubsystem::GetMaxHealthBonus() const
-{
-	return PassiveTotal(EPassiveType::Vitality, Passives.FindChecked(EPassiveType::Vitality).MaxHealthAdd);
-}
-
-float URunProgressionSubsystem::GetXpGainMultiplier() const
-{
-	return 1.0f + PassiveTotal(EPassiveType::Greed, Passives.FindChecked(EPassiveType::Greed).XpGainAdd);
-}
-
-float URunProgressionSubsystem::GetAttackSpeedMultiplier() const
-{
-	return 1.0f + PassiveTotal(EPassiveType::Haste, Passives.FindChecked(EPassiveType::Haste).AttackSpeedAdd);
-}
-
-float URunProgressionSubsystem::GetMagnetRadius() const
-{
-	return XpCurve.BaseMagnetRadius + PassiveTotal(EPassiveType::Magnet, Passives.FindChecked(EPassiveType::Magnet).MagnetRadiusAdd);
-}
-
-float URunProgressionSubsystem::GetRangeMultiplier() const
-{
-	return 1.0f + PassiveTotal(EPassiveType::Reach, Passives.FindChecked(EPassiveType::Reach).RangeAdd);
-}
-
-float URunProgressionSubsystem::GetDamageReduction() const
-{
-	return FMath::Clamp(PassiveTotal(EPassiveType::Armor, Passives.FindChecked(EPassiveType::Armor).DamageReductionAdd), 0.0f, 0.75f);
-}
-
-float URunProgressionSubsystem::GetRegenPerSecond() const
-{
-	return PassiveTotal(EPassiveType::Regen, Passives.FindChecked(EPassiveType::Regen).RegenPerSecondAdd);
-}
-
-float URunProgressionSubsystem::GetCritChance() const
-{
-	return FMath::Clamp(PassiveTotal(EPassiveType::Crit, Passives.FindChecked(EPassiveType::Crit).CritChanceAdd), 0.0f, 0.9f);
-}
-
-float URunProgressionSubsystem::GetCritMultiplier() const
-{
-	return Passives.FindChecked(EPassiveType::Crit).CritMultiplier;
-}
+float URunProgressionSubsystem::GetMoveSpeedMultiplier() const { return Loadout.MoveSpeedMultiplier(); }
+float URunProgressionSubsystem::GetDamageMultiplier() const { return Loadout.DamageMultiplier(); }
+float URunProgressionSubsystem::GetMaxHealthBonus() const { return Loadout.MaxHealthBonus(); }
+float URunProgressionSubsystem::GetXpGainMultiplier() const { return Loadout.XpGainMultiplier(); }
+float URunProgressionSubsystem::GetAttackSpeedMultiplier() const { return Loadout.AttackSpeedMultiplier(); }
+float URunProgressionSubsystem::GetMagnetRadius() const { return Loadout.MagnetRadius(); }
+float URunProgressionSubsystem::GetRangeMultiplier() const { return Loadout.RangeMultiplier(); }
+float URunProgressionSubsystem::GetDamageReduction() const { return Loadout.DamageReduction(); }
+float URunProgressionSubsystem::GetRegenPerSecond() const { return Loadout.RegenPerSecond(); }
+float URunProgressionSubsystem::GetCritChance() const { return Loadout.CritChance(); }
+float URunProgressionSubsystem::GetCritMultiplier() const { return Loadout.CritMultiplier(); }
 
 TArray<FName> URunProgressionSubsystem::GetUnlockedOptions() const
 {
@@ -262,29 +122,9 @@ TArray<FName> URunProgressionSubsystem::GetUnlockedOptions() const
 	return {};
 }
 
-bool URunProgressionSubsystem::IsWeaponAvailable(EWeaponType Type, const TArray<FName>& Unlocked) const
-{
-	return FOptionUnlock::IsAvailable(Weapons.FindChecked(Type).bStartsLocked, WeaponRowName(Type), Unlocked);
-}
-
-bool URunProgressionSubsystem::IsPassiveAvailable(EPassiveType Type, const TArray<FName>& Unlocked) const
-{
-	return FOptionUnlock::IsAvailable(Passives.FindChecked(Type).bStartsLocked, PassiveRowName(Type), Unlocked);
-}
-
 int32 URunProgressionSubsystem::GetPoolSize() const
 {
-	const TArray<FName> Unlocked = GetUnlockedOptions();
-	int32 Count = 0;
-	for (uint8 W = 0; W < static_cast<uint8>(EWeaponType::Count); ++W)
-	{
-		Count += IsWeaponAvailable(static_cast<EWeaponType>(W), Unlocked) ? 1 : 0;
-	}
-	for (uint8 P = 0; P < static_cast<uint8>(EPassiveType::Count); ++P)
-	{
-		Count += IsPassiveAvailable(static_cast<EPassiveType>(P), Unlocked) ? 1 : 0;
-	}
-	return Count;
+	return Loadout.PoolSize(GetUnlockedOptions());
 }
 
 void URunProgressionSubsystem::HandleEnemyKilled(EEnemyKind Kind, FVector Location)
@@ -304,7 +144,7 @@ void URunProgressionSubsystem::HandleEnemyKilled(EEnemyKind Kind, FVector Locati
 
 void URunProgressionSubsystem::DebugGrantWeapon(EWeaponType Weapon, int32 Copies)
 {
-	WeaponLevels.FindOrAdd(Weapon) = FMath::Clamp(Copies, 1, MaxCopies(Weapons.FindChecked(Weapon).MaxLevel));
+	Loadout.SetWeaponCopies(Weapon, Copies);
 }
 
 void URunProgressionSubsystem::GrantXp(float Amount)
@@ -335,8 +175,8 @@ void URunProgressionSubsystem::GenerateOffer()
 	for (uint8 W = 0; W < static_cast<uint8>(EWeaponType::Count); ++W)
 	{
 		const EWeaponType Type = static_cast<EWeaponType>(W);
-		const int32 Copies = WeaponLevels.FindRef(Type);
-		if (IsWeaponAvailable(Type, Unlocked) && !CutWeapons.Contains(Type) && Copies < MaxCopies(Weapons.FindChecked(Type).MaxLevel))
+		const int32 Copies = Loadout.WeaponCopies(Type);
+		if (Loadout.IsWeaponAvailable(Type, Unlocked) && !CutWeapons.Contains(Type) && Copies < Loadout.MaxCopies(Loadout.Weapons.FindChecked(Type).MaxLevel))
 		{
 			FOfferOption Opt;
 			Opt.bIsWeapon = true;
@@ -349,8 +189,8 @@ void URunProgressionSubsystem::GenerateOffer()
 	for (uint8 P = 0; P < static_cast<uint8>(EPassiveType::Count); ++P)
 	{
 		const EPassiveType Type = static_cast<EPassiveType>(P);
-		const int32 Copies = PassiveStacks.FindRef(Type);
-		if (IsPassiveAvailable(Type, Unlocked) && !CutPassives.Contains(Type) && Copies < MaxCopies(Passives.FindChecked(Type).MaxLevel))
+		const int32 Copies = Loadout.PassiveCopies(Type);
+		if (Loadout.IsPassiveAvailable(Type, Unlocked) && !CutPassives.Contains(Type) && Copies < Loadout.MaxCopies(Loadout.Passives.FindChecked(Type).MaxLevel))
 		{
 			FOfferOption Opt;
 			Opt.bIsWeapon = false;
@@ -401,10 +241,9 @@ void URunProgressionSubsystem::ApplyOption(const FOfferOption& Option)
 
 	if (Option.bIsWeapon)
 	{
-		int32& Copies = WeaponLevels.FindOrAdd(Option.Weapon);
-		StarsBefore = Stars.StarsForCopies(Copies);
-		Copies = FMath::Min(Copies + 1, MaxCopies(Weapons.FindChecked(Option.Weapon).MaxLevel));
-		StarsAfter = Stars.StarsForCopies(Copies);
+		StarsBefore = Loadout.WeaponStars(Option.Weapon);
+		Loadout.AddWeaponCopy(Option.Weapon);
+		StarsAfter = Loadout.WeaponStars(Option.Weapon);
 	}
 	else
 	{
@@ -412,10 +251,9 @@ void URunProgressionSubsystem::ApplyOption(const FOfferOption& Option)
 		// which includes the jump from a star-up.
 		const float HealthBonusBefore = GetMaxHealthBonus();
 
-		int32& Copies = PassiveStacks.FindOrAdd(Option.Passive);
-		StarsBefore = Stars.StarsForCopies(Copies);
-		Copies = FMath::Min(Copies + 1, MaxCopies(Passives.FindChecked(Option.Passive).MaxLevel));
-		StarsAfter = Stars.StarsForCopies(Copies);
+		StarsBefore = Loadout.PassiveStarsFor(Option.Passive);
+		Loadout.AddPassiveCopy(Option.Passive);
+		StarsAfter = Loadout.PassiveStarsFor(Option.Passive);
 
 		const float HealthGained = GetMaxHealthBonus() - HealthBonusBefore;
 		if (HealthGained > 0.0f)
@@ -512,7 +350,7 @@ FString URunProgressionSubsystem::OptionName(const FOfferOption& Option) const
 
 FName URunProgressionSubsystem::OptionId(const FOfferOption& Option)
 {
-	return Option.bIsWeapon ? FName(WeaponRowName(Option.Weapon)) : FName(PassiveRowName(Option.Passive));
+	return Option.bIsWeapon ? FName(FRunLoadout::WeaponRowName(Option.Weapon)) : FName(FRunLoadout::PassiveRowName(Option.Passive));
 }
 
 void URunProgressionSubsystem::MoveNewUnlocksToFront(TArray<FOfferOption>& Pool, const TArray<FName>& NewIds)
@@ -541,15 +379,15 @@ FString URunProgressionSubsystem::DescribeOption(const FOfferOption& Option) con
 
 	// What one more copy does to the star: a star-up, or how far the next one is.
 	const int32 After = Option.CurrentLevel + 1;
-	const int32 StarsAfter = Stars.StarsForCopies(After);
+	const int32 StarsAfter = Loadout.Stars.StarsForCopies(After);
 	FString StarNote;
-	if (StarsAfter > Stars.StarsForCopies(Option.CurrentLevel) && Option.CurrentLevel > 0)
+	if (StarsAfter > Loadout.Stars.StarsForCopies(Option.CurrentLevel) && Option.CurrentLevel > 0)
 	{
 		StarNote = FString::Printf(TEXT("   >> %d-STAR!"), StarsAfter);
 	}
 	else if (StarsAfter < 3)
 	{
-		StarNote = FString::Printf(TEXT("   (%d more to %d-STAR)"), Stars.CopiesToNextStar(After), StarsAfter + 1);
+		StarNote = FString::Printf(TEXT("   (%d more to %d-STAR)"), Loadout.Stars.CopiesToNextStar(After), StarsAfter + 1);
 	}
 	return FString::Printf(TEXT("%s%s  Lv%d -> Lv%d%s"), *NewMark, *Name, Option.CurrentLevel, After, *StarNote);
 }
@@ -573,16 +411,16 @@ TArray<FOfferCardText> URunProgressionSubsystem::GetOfferCards() const
 		else
 		{
 			const int32 After = Option.CurrentLevel + 1;
-			const int32 StarsAfter = Stars.StarsForCopies(After);
+			const int32 StarsAfter = Loadout.Stars.StarsForCopies(After);
 			Card.Detail = FString::Printf(TEXT("Lv%d  >  Lv%d"), Option.CurrentLevel, After);
-			if (StarsAfter > Stars.StarsForCopies(Option.CurrentLevel) && Option.CurrentLevel > 0)
+			if (StarsAfter > Loadout.Stars.StarsForCopies(Option.CurrentLevel) && Option.CurrentLevel > 0)
 			{
 				Card.Note = FString::Printf(TEXT("%d-STAR UP!"), StarsAfter);
 				Card.bHighlight = true;
 			}
 			else if (StarsAfter < 3)
 			{
-				Card.Note = FString::Printf(TEXT("%d more to %d-STAR"), Stars.CopiesToNextStar(After), StarsAfter + 1);
+				Card.Note = FString::Printf(TEXT("%d more to %d-STAR"), Loadout.Stars.CopiesToNextStar(After), StarsAfter + 1);
 			}
 		}
 		Cards.Add(Card);
@@ -599,16 +437,16 @@ FString URunProgressionSubsystem::GetLoadoutSummary() const
 		if (Copies > 0)
 		{
 			Out += FString::Printf(TEXT("%s%s Lv%d%s"), Out.IsEmpty() ? TEXT("") : TEXT("   "), *Name, Copies,
-				*FString::ChrN(Stars.StarsForCopies(Copies), TEXT('*')));
+				*FString::ChrN(Loadout.Stars.StarsForCopies(Copies), TEXT('*')));
 		}
 	};
 	for (uint8 W = 0; W < static_cast<uint8>(EWeaponType::Count); ++W)
 	{
-		Append(StaticEnum<EWeaponType>()->GetDisplayNameTextByValue(W).ToString(), WeaponLevels.FindRef(static_cast<EWeaponType>(W)));
+		Append(StaticEnum<EWeaponType>()->GetDisplayNameTextByValue(W).ToString(), Loadout.WeaponCopies(static_cast<EWeaponType>(W)));
 	}
 	for (uint8 P = 0; P < static_cast<uint8>(EPassiveType::Count); ++P)
 	{
-		Append(StaticEnum<EPassiveType>()->GetDisplayNameTextByValue(P).ToString(), PassiveStacks.FindRef(static_cast<EPassiveType>(P)));
+		Append(StaticEnum<EPassiveType>()->GetDisplayNameTextByValue(P).ToString(), Loadout.PassiveCopies(static_cast<EPassiveType>(P)));
 	}
 	return Out;
 }

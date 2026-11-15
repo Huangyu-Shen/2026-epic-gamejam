@@ -5,6 +5,7 @@
 #include "Subsystems/WorldSubsystem.h"
 #include "Enemies/EnemyTypes.h"
 #include "Progression/ProgressionTypes.h"
+#include "Progression/RunLoadout.h"
 #include "RunProgressionSubsystem.generated.h"
 
 class AXpPickup;
@@ -114,18 +115,18 @@ public:
 
 	/** Copies of the weapon held; 0 = not owned. Copies are also its level. */
 	UFUNCTION(BlueprintPure, Category = "Progression")
-	int32 GetWeaponLevel(EWeaponType Weapon) const { return WeaponLevels.FindRef(Weapon); }
+	int32 GetWeaponLevel(EWeaponType Weapon) const { return Loadout.WeaponCopies(Weapon); }
 
 	/** 0 = not owned, otherwise 1 to 3 stars. */
 	UFUNCTION(BlueprintPure, Category = "Progression")
-	int32 GetWeaponStars(EWeaponType Weapon) const { return Stars.StarsForCopies(WeaponLevels.FindRef(Weapon)); }
+	int32 GetWeaponStars(EWeaponType Weapon) const { return Loadout.WeaponStars(Weapon); }
 
 	UFUNCTION(BlueprintPure, Category = "Progression")
-	int32 GetPassiveStars(EPassiveType Passive) const { return Stars.StarsForCopies(PassiveStacks.FindRef(Passive)); }
+	int32 GetPassiveStars(EPassiveType Passive) const { return Loadout.PassiveStarsFor(Passive); }
 
 	/** Star multipliers for a weapon the run owns (1.0 at one star). */
-	float GetWeaponStarDamageMultiplier(EWeaponType Weapon) const { return Stars.WeaponDamageMultiplier(GetWeaponStars(Weapon)); }
-	float GetWeaponStarRangeMultiplier(EWeaponType Weapon) const { return Stars.WeaponRangeMultiplier(GetWeaponStars(Weapon)); }
+	float GetWeaponStarDamageMultiplier(EWeaponType Weapon) const { return Loadout.WeaponStarDamageMultiplier(Weapon); }
+	float GetWeaponStarRangeMultiplier(EWeaponType Weapon) const { return Loadout.WeaponStarRangeMultiplier(Weapon); }
 
 	/** Cuts left this run that remove the cut option from the pool for good. */
 	UFUNCTION(BlueprintPure, Category = "Progression")
@@ -139,7 +140,7 @@ public:
 	FString GetLoadoutSummary() const;
 
 	/** The weapon's stats (never null; defaults are filled at init). */
-	const FWeaponRow& GetWeaponRow(EWeaponType Weapon) const { return Weapons.FindChecked(Weapon); }
+	const FWeaponRow& GetWeaponRow(EWeaponType Weapon) const { return Loadout.Weapons.FindChecked(Weapon); }
 
 	/** True while the level-up offer is showing and the game is soft-paused. */
 	UFUNCTION(BlueprintPure, Category = "Progression")
@@ -192,8 +193,6 @@ private:
 	void GenerateOffer();
 	/** The upgrade options the camp has unlocked (empty when there is no camp stock). */
 	TArray<FName> GetUnlockedOptions() const;
-	bool IsWeaponAvailable(EWeaponType Type, const TArray<FName>& Unlocked) const;
-	bool IsPassiveAvailable(EPassiveType Type, const TArray<FName>& Unlocked) const;
 	void ApplyOption(const FOfferOption& Option);
 	void ShowOffer() const;
 	FString DescribeOption(const FOfferOption& Option) const;
@@ -209,22 +208,17 @@ public:
 	static void MoveNewUnlocksToFront(TArray<FOfferOption>& Pool, const TArray<FName>& NewIds);
 
 private:
-	int32 MaxCopies(int32 RowMaxLevel) const { return FMath::Max(RowMaxLevel, Stars.CopiesForThreeStar); }
-	/** A passive's total effect: stacks x per-stack amount x its star multiplier. */
-	float PassiveTotal(EPassiveType Passive, float PerStack) const;
 
 	// Loaded tuning (defaults are always present; tables override).
 	FXpCurveRow XpCurve;
-	TMap<EWeaponType, FWeaponRow> Weapons;
-	TMap<EPassiveType, FPassiveRow> Passives;
-	FStarTuning Stars;
+
+	/** What the run owns and what it is worth (tuning rows, copies, stars, passive effects). */
+	FRunLoadout Loadout;
 
 	// Run state.
 	int32 Level = 1;
 	float Xp = 0.0f;
 	float XpToNext = 30.0f;
-	TMap<EWeaponType, int32> WeaponLevels;
-	TMap<EPassiveType, int32> PassiveStacks;
 	bool bOfferPending = false;
 	bool bCutUsedThisOffer = false;
 	TArray<FOfferOption> Offer;
