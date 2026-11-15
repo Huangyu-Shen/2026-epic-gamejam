@@ -28,6 +28,9 @@ private:
 	/** Left click on a building in the scene upgrades it (the panel's buttons do the same). */
 	void OnClick();
 
+	/** Esc quits the game. */
+	void QuitKey();
+
 	UPROPERTY(VisibleAnywhere, Category = "Camp")
 	TObjectPtr<USceneComponent> Root;
 

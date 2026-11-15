@@ -66,6 +66,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Health")
 	void ResetHealth();
 
+	/** Restores health up to the maximum. Does nothing when dead. */
+	void Heal(float Amount);
+
 	/** Raises max health and heals by the same amount (story 004 Vitality passive). */
 	UFUNCTION(BlueprintCallable, Category = "Health")
 	void IncreaseMaxHealth(float Amount);

@@ -1,4 +1,5 @@
 #include "Enemies/Enemy.h"
+#include "Audio/GameAudioSubsystem.h"
 #include "Enemies/EnemyManagerSubsystem.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
@@ -22,6 +23,11 @@ AEnemy::AEnemy()
 	{
 		Body->SetStaticMesh(CubeFinder.Object);
 	}
+	static ConstructorHelpers::FObjectFinder<UMaterialInterface> FlatFinder(TEXT("/Game/Materials/M_FlatColor.M_FlatColor"));
+	if (FlatFinder.Succeeded())
+	{
+		Body->SetMaterial(0, FlatFinder.Object);
+	}
 }
 
 void AEnemy::Init(const FEnemyTuning& InTuning)
@@ -33,9 +39,11 @@ void AEnemy::Init(const FEnemyTuning& InTuning)
 	// Greybox readability: enemies must not share the floor's grey. Grunts are red, the Boss is purple.
 	static const FLinearColor GruntColor(0.75f, 0.08f, 0.06f);
 	static const FLinearColor BossColor(0.45f, 0.05f, 0.7f);
-	if (UMaterialInstanceDynamic* Material = Body->CreateDynamicMaterialInstance(0))
+	BaseColor = Tuning.Kind == EEnemyKind::Boss ? BossColor : GruntColor;
+	BodyMaterial = Body->CreateDynamicMaterialInstance(0);
+	if (BodyMaterial)
 	{
-		Material->SetVectorParameterValue(TEXT("Color"), Tuning.Kind == EEnemyKind::Boss ? BossColor : GruntColor);
+		BodyMaterial->SetVectorParameterValue(TEXT("Color"), BaseColor);
 	}
 }
 
@@ -52,7 +60,35 @@ void AEnemy::ApplyDamage(float Amount)
 		{
 			Manager->NotifyEnemyKilled(this);
 		}
+		UGameAudioSubsystem::PlayIn(this, EGameSound::EnemyDeath);
 		Destroy();
+		return;
+	}
+
+	// Cheap hit feedback: one material parameter and one scale change, undone by the manager loop.
+	UGameAudioSubsystem::PlayIn(this, EGameSound::EnemyHit);
+	HitFlashUntil = GetWorld()->GetTimeSeconds() + 0.1;
+	if (!bFlashing)
+	{
+		bFlashing = true;
+		Body->SetWorldScale3D(FVector(Tuning.Scale * 1.2f));
+		if (BodyMaterial)
+		{
+			BodyMaterial->SetVectorParameterValue(TEXT("Color"), FLinearColor::White);
+		}
+	}
+}
+
+void AEnemy::UpdateHitFeedback(double Now)
+{
+	if (bFlashing && Now >= HitFlashUntil)
+	{
+		bFlashing = false;
+		Body->SetWorldScale3D(FVector(Tuning.Scale));
+		if (BodyMaterial)
+		{
+			BodyMaterial->SetVectorParameterValue(TEXT("Color"), BaseColor);
+		}
 	}
 }
 

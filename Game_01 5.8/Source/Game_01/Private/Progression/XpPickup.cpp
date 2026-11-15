@@ -21,6 +21,11 @@ AXpPickup::AXpPickup()
 		Body->SetStaticMesh(CubeFinder.Object);
 	}
 	Body->SetWorldScale3D(FVector(0.2f));
+	static ConstructorHelpers::FObjectFinder<UMaterialInterface> FlatFinder(TEXT("/Game/Materials/M_FlatColor.M_FlatColor"));
+	if (FlatFinder.Succeeded())
+	{
+		Body->SetMaterial(0, FlatFinder.Object);
+	}
 }
 
 void AXpPickup::BeginPlay()

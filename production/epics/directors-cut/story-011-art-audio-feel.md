@@ -1,13 +1,13 @@
 # Story 011: Art, audio and feel
 
 > **Epic**: Director's Cut (MVP)
-> **Status**: Ready
+> **Status**: In Progress
 > **Layer**: N/A (minimal)
 > **Type**: Visual/Feel
 > **Estimate**: L
 > **Tier**: Should (`design/prd/master-prd.md` §6 row 11), except replacing the DrawDebug weapon visuals, which is Must for a Shipping package. Code parts must be in before the Day 3 23:00 freeze; swapping assets is allowed after it (PRD §8 rule 4)
 > **Manifest Version**: N/A (minimal — no control manifest)
-> **Last Updated**: 2026-11-14 (reviewed against the PRD and the source tree; second review filled the gaps marked "Review 2")
+> **Last Updated**: 2026-11-14
 
 ## Context
 
@@ -76,14 +76,12 @@ Evidence:
 
 ## Files
 
-All paths are under `Game_01 5.8/`.
-
-- `Content/` (materials, meshes, VFX, sounds, music)
-- `Source/Game_01/Private/Combat/AutoWeaponComponent.cpp` (replace DrawDebug)
-- `Source/Game_01/Private/Player/HeroCharacter.cpp`, `Private/Enemies/Enemy.cpp` (materials, hit feedback)
-- New audio subsystem under `Source/Game_01/Public/Audio/` and `Private/Audio/`
-- Call sites: `RunProgressionSubsystem.cpp`, `LootContainer.cpp`, `ExtractionZone.cpp`, `HealthComponent.cpp`, `CampGameMode.cpp`, `DirectorGameMode.cpp`
-- `docs/devlog/README.md` (Assets and Tools sections)
+- `Game_01 5.8/Source/Game_01/Public/Audio/GameAudioSubsystem.h`, `Private/Audio/GameAudioSubsystem.cpp` (new: audio entry point, music, crowd cap)
+- `Game_01 5.8/Source/Game_01/Public/Combat/WeaponEffect.h`, `Private/Combat/WeaponEffect.cpp` (new: weapon visuals, replace DrawDebug)
+- `Game_01 5.8/Source/Game_01/Private/Combat/AutoWeaponComponent.cpp`, `Public/Combat/AutoWeaponComponent.h` (visuals, attack sound)
+- `Game_01 5.8/Source/Game_01/Private/Enemies/Enemy.cpp`, `Public/Enemies/Enemy.h`, `Private/Enemies/EnemyManagerSubsystem.cpp` (hit flash, hit and death sound)
+- `Game_01 5.8/Source/Game_01/Public/Game/DirectorTuningSettings.h` (audio settings)
+- `Game_01 5.8/Source/Game_01/Private/Progression/RunProgressionSubsystem.cpp`, `Private/Extraction/RunOutcomeSubsystem.cpp`, `Private/Loot/LootContainer.cpp`, `Private/Camp/CampGameMode.cpp`, `Private/Game/DirectorGameMode.cpp` (sound calls, music start, weapon-visual probe shots)
 
 ## QA Test Cases
 

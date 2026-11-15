@@ -1,0 +1,38 @@
+## packaged build (Development), run B: three reels carried out
+LogTemp: PROGRESSION pool=7 permanentCuts=3
+LogTemp: PROGRESSION pool=7 permanentCuts=3
+LogLoot: LOOTCFG source=table capacity=6 ironPerSlot=10 heatPerReel=15.0 maxHeat=100.0 pressure=1.00..3.00 reelRows=3
+LogTemp: PROGRESSION pool=7 permanentCuts=3
+LogEnemies: Display: REELPROBE reel-in-bag reelsInBag=3 heat=45.0 unlocked=[] anotherReelCanDrop=0 outcome=0
+LogCampSave: Camp save written: Iron 25, 0 unlocked options
+LogExtraction: Upgrade option unlocked: Haste (1 unlocked)
+LogCampSave: Camp save written: Iron 25, 1 unlocked options
+LogExtraction: Upgrade option unlocked: Magnet (2 unlocked)
+LogCampSave: Camp save written: Iron 25, 2 unlocked options
+LogExtraction: Upgrade option unlocked: Chain (3 unlocked)
+LogCampSave: Camp save written: Iron 25, 3 unlocked options
+LogCampSave: Camp save written: Iron 25, 3 unlocked options
+LogExtraction: EXTRACTED: bag Iron 25 x 1.00 = +25 to camp, 3 lost reels carried out, 3 options unlocked
+LogEnemies: Display: REELPROBE after-extraction reelsInBag=0 heat=0.0 unlocked=[Haste Magnet Chain ] anotherReelCanDrop=0 outcome=1
+## packaged build, run C: new launch on the same slot, level-up probe
+LogTemp: PROGRESSION pool=7 permanentCuts=3
+LogExtraction: Camp stock restored: Iron 25, 3 unlocked options
+LogCampSave: Loaded camp save: Iron 25, 3 unlocked options, 0 building entries
+LogTemp: PROGRESSION pool=10 permanentCuts=6
+LogLoot: LOOTCFG source=table capacity=6 ironPerSlot=10 heatPerReel=15.0 maxHeat=100.0 pressure=1.00..3.00 reelRows=3
+LogTemp: PROGRESSION pool=10 permanentCuts=6
+LogEnemies: Display: OFFERPROBE first-offer level=2 pool=10 cutsLeft=6 cutSoFar=0 attackSpeed=1.00 magnetRadius=600 loadout=[Blade Lv1*]
+LogEnemies: Display: OFFERPROBE   option: NEW! Chain  (unlocked weapon)
+LogEnemies: Display: OFFERPROBE   option: NEW! Magnet  Lv0 -> Lv1   (2 more to 2-STAR)
+LogEnemies: Display: OFFERPROBE   option: NEW! Haste  Lv0 -> Lv1   (2 more to 2-STAR)
+LogTemp: HASTE is now 2-STAR!
+LogTemp: CHAIN is now 2-STAR!
+LogTemp: BLADE is now 2-STAR!
+LogEnemies: Display: OFFERPROBE after-level-ups level=8 pool=10 cutsLeft=0 cutSoFar=7 attackSpeed=1.72 magnetRadius=600 loadout=[Blade Lv3**   Nova Lv1*   Chain Lv4**   Might Lv2*   Greed Lv1*   Haste Lv4**]
+LogEnemies: Display: OFFERPROBE late-offer level=9 pool=10 cutsLeft=0 cutSoFar=7 attackSpeed=1.72 magnetRadius=600 loadout=[Blade Lv3**   Nova Lv1*   Chain Lv4**   Might Lv2*   Greed Lv1*   Haste Lv4**]
+LogEnemies: Display: OFFERPROBE   option: Blade  Lv3 -> Lv4   (5 more to 3-STAR)
+LogEnemies: Display: OFFERPROBE   option: Might  Lv2 -> Lv3   >> 2-STAR!
+LogEnemies: Display: OFFERPROBE   option: Nova  Lv1 -> Lv2   (1 more to 2-STAR)
+LogTemp: MIGHT is now 2-STAR!
+LogEnemies: Display: OFFERPROBE chain fired: hit 3 enemies in one attack
+LogEnemies: Display: OFFERPROBE chain: owned=1 multiHitShot=1

@@ -1,0 +1,5 @@
+Reviewed-Content-Hash: Game_01 5.8/Source/Game_01/Private/Progression/RunProgressionSubsystem.cpp f2fc51267984755a8ce43d89f4607830666b3a15
+Reviewed-Content-Hash: Game_01 5.8/Source/Game_01/Private/Combat/AutoWeaponComponent.cpp f2274961605d7feb7a46bb66e537c7cbb63b960e
+Reviewed-Content-Hash: Game_01 5.8/Source/Game_01/Public/Progression/ProgressionTypes.h 5c4f298ee41cdf4c83c18681da09bcf333f3c15c
+Reviewed-Content-Hash: Game_01 5.8/Source/Game_01/Private/Extraction/CampStockSubsystem.cpp aeceb054edfd86639dafa32c297ac28882b54a39
+Reviewed-Content-Hash: Game_01 5.8/Source/Game_01/Private/Game/DirectorGameMode.cpp e4be100b884f1631876d6c6864bb7bb3e7a952d0

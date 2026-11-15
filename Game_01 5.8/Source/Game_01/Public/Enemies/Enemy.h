@@ -7,6 +7,7 @@
 #include "Enemy.generated.h"
 
 class UStaticMeshComponent;
+class UMaterialInstanceDynamic;
 
 /**
  * A greybox enemy: an engine cube with no collision, no tick and no movement component.
@@ -40,6 +41,9 @@ public:
 	/** Half the body width (cm), used for the push-apart pass. */
 	float GetBodyRadius() const { return Tuning.Scale * EngineCubeSize * 0.5f; }
 
+	/** Ends the hit flash once its short time is up. Called by the manager's loop, so enemies need no tick of their own. */
+	void UpdateHitFeedback(double Now);
+
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 private:
@@ -47,4 +51,11 @@ private:
 	TObjectPtr<UStaticMeshComponent> Body;
 
 	float Health = 0.0f;
+
+	/** Hit feedback (story 011): a white flash and a small scale punch for a tenth of a second. */
+	UPROPERTY(Transient)
+	TObjectPtr<UMaterialInstanceDynamic> BodyMaterial;
+	FLinearColor BaseColor = FLinearColor::White;
+	double HitFlashUntil = 0.0;
+	bool bFlashing = false;
 };

@@ -1,7 +1,9 @@
 #include "Progression/RunProgressionSubsystem.h"
+#include "Audio/GameAudioSubsystem.h"
 #include "Combat/HealthComponent.h"
 #include "Enemies/EnemyManagerSubsystem.h"
 #include "Enemies/EnemyTypes.h"
+#include "Extraction/CampStockSubsystem.h"
 #include "Game/DirectorTuningSettings.h"
 #include "Player/HeroCharacter.h"
 #include "Progression/XpPickup.h"
@@ -28,6 +30,20 @@ namespace
 		case EWeaponType::Nova:
 			Row.Damage = 25.0f; Row.DamagePerLevel = 12.0f; Row.Interval = 1.6f; Row.Range = 350.0f; Row.LineHalfWidth = 0.0f; Row.MaxLevel = 5;
 			break;
+		case EWeaponType::Chain:
+			Row.Damage = 12.0f; Row.DamagePerLevel = 6.0f; Row.Interval = 1.1f; Row.Range = 700.0f; Row.LineHalfWidth = 0.0f; Row.MaxLevel = 5;
+			Row.ChainJumps = 3; Row.ChainRange = 350.0f; Row.bStartsLocked = true;
+			break;
+		case EWeaponType::Gun:
+			// Long reach on purpose: it is the answer to enemies closing in before the hero is strong.
+			Row.Damage = 14.0f; Row.DamagePerLevel = 7.0f; Row.Interval = 0.7f; Row.Range = 1500.0f; Row.LineHalfWidth = 0.0f; Row.MaxLevel = 5;
+			Row.ProjectileSpeed = 2600.0f; Row.ProjectileCount = 1;
+			break;
+		case EWeaponType::Orbit:
+			// Range is the orbit radius; Interval is how often one enemy can be hurt by the balls again.
+			Row.Damage = 10.0f; Row.DamagePerLevel = 5.0f; Row.Interval = 0.5f; Row.Range = 240.0f; Row.LineHalfWidth = 0.0f; Row.MaxLevel = 5;
+			Row.ProjectileSpeed = 160.0f; Row.ProjectileCount = 2;
+			break;
 		default:
 			break;
 		}
@@ -44,6 +60,12 @@ namespace
 		case EPassiveType::Might:     Row.DamageAdd = 0.15f; Row.MaxLevel = 5; break;
 		case EPassiveType::Vitality:  Row.MaxHealthAdd = 20.0f; Row.MaxLevel = 5; break;
 		case EPassiveType::Greed:     Row.XpGainAdd = 0.25f; Row.MaxLevel = 5; break;
+		case EPassiveType::Haste:     Row.AttackSpeedAdd = 0.12f; Row.MaxLevel = 5; Row.bStartsLocked = true; break;
+			case EPassiveType::Magnet:    Row.MagnetRadiusAdd = 150.0f; Row.MaxLevel = 5; Row.bStartsLocked = true; break;
+			case EPassiveType::Reach:     Row.RangeAdd = 0.12f; Row.MaxLevel = 5; break;
+			case EPassiveType::Armor:     Row.DamageReductionAdd = 0.08f; Row.MaxLevel = 5; break;
+			case EPassiveType::Regen:     Row.RegenPerSecondAdd = 1.0f; Row.MaxLevel = 5; break;
+			case EPassiveType::Crit:      Row.CritChanceAdd = 0.08f; Row.CritMultiplier = 2.0f; Row.MaxLevel = 5; break;
 		default: break;
 		}
 		return Row;
@@ -56,6 +78,9 @@ namespace
 		case EWeaponType::Blade: return TEXT("Blade");
 		case EWeaponType::Bolt:  return TEXT("Bolt");
 		case EWeaponType::Nova:  return TEXT("Nova");
+		case EWeaponType::Chain: return TEXT("Chain");
+		case EWeaponType::Gun:   return TEXT("Gun");
+		case EWeaponType::Orbit: return TEXT("Orbit");
 		default: return TEXT("");
 		}
 	}
@@ -68,7 +93,13 @@ namespace
 		case EPassiveType::Might:     return TEXT("Might");
 		case EPassiveType::Vitality:  return TEXT("Vitality");
 		case EPassiveType::Greed:     return TEXT("Greed");
-		default: return TEXT("");
+		case EPassiveType::Haste:     return TEXT("Haste");
+			case EPassiveType::Magnet:    return TEXT("Magnet");
+			case EPassiveType::Reach:     return TEXT("Reach");
+			case EPassiveType::Armor:     return TEXT("Armor");
+			case EPassiveType::Regen:     return TEXT("Regen");
+			case EPassiveType::Crit:      return TEXT("Crit");
+			default: return TEXT("");
 		}
 	}
 }
@@ -141,7 +172,8 @@ void URunProgressionSubsystem::ResetProgression()
 	CutWeapons.Reset();
 	CutPassives.Reset();
 	CuttingRoomFloor.Reset();
-	PermanentCutsLeft = Stars.PermanentCutsForPool(Weapons.Num() + Passives.Num());
+	PermanentCutsLeft = Stars.PermanentCutsForPool(GetPoolSize());
+	UE_LOG(LogTemp, Log, TEXT("PROGRESSION pool=%d permanentCuts=%d"), GetPoolSize(), PermanentCutsLeft);
 
 	// Clear any offer text still on screen.
 	if (GEngine)
@@ -191,6 +223,78 @@ float URunProgressionSubsystem::GetXpGainMultiplier() const
 	return 1.0f + PassiveTotal(EPassiveType::Greed, Passives.FindChecked(EPassiveType::Greed).XpGainAdd);
 }
 
+float URunProgressionSubsystem::GetAttackSpeedMultiplier() const
+{
+	return 1.0f + PassiveTotal(EPassiveType::Haste, Passives.FindChecked(EPassiveType::Haste).AttackSpeedAdd);
+}
+
+float URunProgressionSubsystem::GetMagnetRadius() const
+{
+	return XpCurve.BaseMagnetRadius + PassiveTotal(EPassiveType::Magnet, Passives.FindChecked(EPassiveType::Magnet).MagnetRadiusAdd);
+}
+
+float URunProgressionSubsystem::GetRangeMultiplier() const
+{
+	return 1.0f + PassiveTotal(EPassiveType::Reach, Passives.FindChecked(EPassiveType::Reach).RangeAdd);
+}
+
+float URunProgressionSubsystem::GetDamageReduction() const
+{
+	return FMath::Clamp(PassiveTotal(EPassiveType::Armor, Passives.FindChecked(EPassiveType::Armor).DamageReductionAdd), 0.0f, 0.75f);
+}
+
+float URunProgressionSubsystem::GetRegenPerSecond() const
+{
+	return PassiveTotal(EPassiveType::Regen, Passives.FindChecked(EPassiveType::Regen).RegenPerSecondAdd);
+}
+
+float URunProgressionSubsystem::GetCritChance() const
+{
+	return FMath::Clamp(PassiveTotal(EPassiveType::Crit, Passives.FindChecked(EPassiveType::Crit).CritChanceAdd), 0.0f, 0.9f);
+}
+
+float URunProgressionSubsystem::GetCritMultiplier() const
+{
+	return Passives.FindChecked(EPassiveType::Crit).CritMultiplier;
+}
+
+TArray<FName> URunProgressionSubsystem::GetUnlockedOptions() const
+{
+	// Editor and commandlet worlds have no game instance, so every step may be null.
+	const UWorld* World = GetWorld();
+	const UGameInstance* GameInstance = World ? World->GetGameInstance() : nullptr;
+	if (const UCampStockSubsystem* Stock = GameInstance ? GameInstance->GetSubsystem<UCampStockSubsystem>() : nullptr)
+	{
+		return Stock->GetUnlockedOptions();
+	}
+	return {};
+}
+
+bool URunProgressionSubsystem::IsWeaponAvailable(EWeaponType Type, const TArray<FName>& Unlocked) const
+{
+	return FOptionUnlock::IsAvailable(Weapons.FindChecked(Type).bStartsLocked, WeaponRowName(Type), Unlocked);
+}
+
+bool URunProgressionSubsystem::IsPassiveAvailable(EPassiveType Type, const TArray<FName>& Unlocked) const
+{
+	return FOptionUnlock::IsAvailable(Passives.FindChecked(Type).bStartsLocked, PassiveRowName(Type), Unlocked);
+}
+
+int32 URunProgressionSubsystem::GetPoolSize() const
+{
+	const TArray<FName> Unlocked = GetUnlockedOptions();
+	int32 Count = 0;
+	for (uint8 W = 0; W < static_cast<uint8>(EWeaponType::Count); ++W)
+	{
+		Count += IsWeaponAvailable(static_cast<EWeaponType>(W), Unlocked) ? 1 : 0;
+	}
+	for (uint8 P = 0; P < static_cast<uint8>(EPassiveType::Count); ++P)
+	{
+		Count += IsPassiveAvailable(static_cast<EPassiveType>(P), Unlocked) ? 1 : 0;
+	}
+	return Count;
+}
+
 void URunProgressionSubsystem::HandleEnemyKilled(EEnemyKind Kind, FVector Location)
 {
 	if (bOfferPending)
@@ -204,6 +308,11 @@ void URunProgressionSubsystem::HandleEnemyKilled(EEnemyKind Kind, FVector Locati
 	{
 		Pickup->Value = XpCurve.XpPerKill * (Kind == EEnemyKind::Boss ? 10.0f : 1.0f);
 	}
+}
+
+void URunProgressionSubsystem::DebugGrantWeapon(EWeaponType Weapon, int32 Copies)
+{
+	WeaponLevels.FindOrAdd(Weapon) = FMath::Clamp(Copies, 1, MaxCopies(Weapons.FindChecked(Weapon).MaxLevel));
 }
 
 void URunProgressionSubsystem::GrantXp(float Amount)
@@ -228,13 +337,14 @@ void URunProgressionSubsystem::GenerateOffer()
 {
 	Offer.Reset();
 
-	// The pool: everything not cut for good and not yet at the copy cap.
+	// The pool: everything unlocked, not cut for good and not yet at the copy cap.
+	const TArray<FName> Unlocked = GetUnlockedOptions();
 	TArray<FOfferOption> Pool;
 	for (uint8 W = 0; W < static_cast<uint8>(EWeaponType::Count); ++W)
 	{
 		const EWeaponType Type = static_cast<EWeaponType>(W);
 		const int32 Copies = WeaponLevels.FindRef(Type);
-		if (!CutWeapons.Contains(Type) && Copies < MaxCopies(Weapons.FindChecked(Type).MaxLevel))
+		if (IsWeaponAvailable(Type, Unlocked) && !CutWeapons.Contains(Type) && Copies < MaxCopies(Weapons.FindChecked(Type).MaxLevel))
 		{
 			FOfferOption Opt;
 			Opt.bIsWeapon = true;
@@ -248,7 +358,7 @@ void URunProgressionSubsystem::GenerateOffer()
 	{
 		const EPassiveType Type = static_cast<EPassiveType>(P);
 		const int32 Copies = PassiveStacks.FindRef(Type);
-		if (!CutPassives.Contains(Type) && Copies < MaxCopies(Passives.FindChecked(Type).MaxLevel))
+		if (IsPassiveAvailable(Type, Unlocked) && !CutPassives.Contains(Type) && Copies < MaxCopies(Passives.FindChecked(Type).MaxLevel))
 		{
 			FOfferOption Opt;
 			Opt.bIsWeapon = false;
@@ -274,11 +384,33 @@ void URunProgressionSubsystem::GenerateOffer()
 		return;
 	}
 
+	// Options a lost film reel unlocked since the player last saw an offer go first and are marked NEW, so
+	// "carry a reel out, see the new option in the next run" always happens in the first offer.
+	UGameInstance* GameInstance = GetWorld()->GetGameInstance();
+	if (UCampStockSubsystem* Stock = GameInstance ? GameInstance->GetSubsystem<UCampStockSubsystem>() : nullptr)
+	{
+		const TArray<FName> NewIds = Stock->TakeNewOptions();
+		if (NewIds.Num() > 0)
+		{
+			int32 Front = 0;
+			for (int32 i = 0; i < Pool.Num(); ++i)
+			{
+				if (NewIds.Contains(OptionId(Pool[i])))
+				{
+					Pool[i].bIsNewUnlock = true;
+					Pool.Swap(i, Front++);
+				}
+			}
+		}
+	}
+
 	for (int32 i = 0; i < 3; ++i)
 	{
 		Offer.Add(Pool[i]);
 	}
 	bOfferPending = true;
+	bCutUsedThisOffer = false;
+	UGameAudioSubsystem::PlayIn(this, EGameSound::LevelUp);
 	ShowOffer();
 }
 
@@ -321,44 +453,53 @@ void URunProgressionSubsystem::ApplyOption(const FOfferOption& Option)
 		const FString Message = FString::Printf(TEXT("%s is now %d-STAR!"), *OptionName(Option).ToUpper(), StarsAfter);
 		UHudMessageSubsystem::Post(this, Message, FLinearColor(1.0f, 0.85f, 0.2f), 4.0f);
 		UE_LOG(LogTemp, Log, TEXT("%s"), *Message);
+		UGameAudioSubsystem::PlayIn(this, EGameSound::StarUp);
 	}
 }
 
-void URunProgressionSubsystem::CutOffer(int32 Index)
+bool URunProgressionSubsystem::CanCutFromOffer() const
+{
+	// One cut per level-up, only while permanent cuts remain (that rule keeps the pool from shrinking below an offer).
+	return bOfferPending && !bCutUsedThisOffer && PermanentCutsLeft > 0 && Offer.Num() > 1;
+}
+
+void URunProgressionSubsystem::CutFromOffer(int32 Index)
+{
+	if (!CanCutFromOffer() || !Offer.IsValidIndex(Index))
+	{
+		return;
+	}
+
+	UGameAudioSubsystem::PlayIn(this, EGameSound::Cut);
+	// The cut option leaves the pool for good and goes to the cutting-room floor, where the boss takes it.
+	const FOfferOption Cut = Offer[Index];
+	CuttingRoomFloor.Add(Cut);
+	--PermanentCutsLeft;
+	if (Cut.bIsWeapon)
+	{
+		CutWeapons.Add(Cut.Weapon);
+	}
+	else
+	{
+		CutPassives.Add(Cut.Passive);
+	}
+	Offer.RemoveAt(Index);
+	bCutUsedThisOffer = true;
+	UHudMessageSubsystem::Post(this, FString::Printf(TEXT("CUT: %s now belongs to the Boss"), *OptionName(Cut)), FLinearColor(1.0f, 0.4f, 0.4f), 3.0f);
+}
+
+void URunProgressionSubsystem::ChooseOption(int32 Index)
 {
 	if (!bOfferPending || !Offer.IsValidIndex(Index))
 	{
 		return;
 	}
 
-	// The cut option goes to the cutting-room floor; while permanent cuts remain it also leaves the pool.
-	const FOfferOption Cut = Offer[Index];
-	CuttingRoomFloor.Add(Cut);
-	if (PermanentCutsLeft > 0)
-	{
-		--PermanentCutsLeft;
-		if (Cut.bIsWeapon)
-		{
-			CutWeapons.Add(Cut.Weapon);
-		}
-		else
-		{
-			CutPassives.Add(Cut.Passive);
-		}
-		UHudMessageSubsystem::Post(this, FString::Printf(TEXT("CUT for good: %s"), *OptionName(Cut)), FLinearColor(1.0f, 0.4f, 0.4f), 3.0f);
-	}
-
-	// Keep the other two.
-	const TArray<FOfferOption> Kept = Offer;
+	// Take the chosen option. The others stay in the pool and may be offered again; only a cut removes one.
+	const FOfferOption Chosen = Offer[Index];
 	bOfferPending = false;
 	Offer.Reset();
-	for (int32 i = 0; i < Kept.Num(); ++i)
-	{
-		if (i != Index)
-		{
-			ApplyOption(Kept[i]);
-		}
-	}
+	ApplyOption(Chosen);
 
 	if (GEngine)
 	{
@@ -398,12 +539,20 @@ FString URunProgressionSubsystem::OptionName(const FOfferOption& Option) const
 		: StaticEnum<EPassiveType>()->GetDisplayNameTextByValue(static_cast<int64>(Option.Passive)).ToString();
 }
 
+FName URunProgressionSubsystem::OptionId(const FOfferOption& Option) const
+{
+	return Option.bIsWeapon ? FName(WeaponRowName(Option.Weapon)) : FName(PassiveRowName(Option.Passive));
+}
+
 FString URunProgressionSubsystem::DescribeOption(const FOfferOption& Option) const
 {
 	const FString Name = OptionName(Option);
+	const FString NewMark = Option.bIsNewUnlock ? FString(TEXT("NEW! ")) : FString();
 	if (Option.bIsWeapon && Option.bIsNewWeapon)
 	{
-		return FString::Printf(TEXT("NEW weapon: %s"), *Name);
+		// An unlocked weapon is both new to the camp and new to the run: say it once.
+		return Option.bIsNewUnlock ? FString::Printf(TEXT("NEW! %s  (unlocked weapon)"), *Name)
+		                           : FString::Printf(TEXT("NEW weapon: %s"), *Name);
 	}
 
 	// What one more copy does to the star: a star-up, or how far the next one is.
@@ -418,7 +567,43 @@ FString URunProgressionSubsystem::DescribeOption(const FOfferOption& Option) con
 	{
 		StarNote = FString::Printf(TEXT("   (%d more to %d-STAR)"), Stars.CopiesToNextStar(After), StarsAfter + 1);
 	}
-	return FString::Printf(TEXT("%s  Lv%d -> Lv%d%s"), *Name, Option.CurrentLevel, After, *StarNote);
+	return FString::Printf(TEXT("%s%s  Lv%d -> Lv%d%s"), *NewMark, *Name, Option.CurrentLevel, After, *StarNote);
+}
+
+TArray<FOfferCardText> URunProgressionSubsystem::GetOfferCards() const
+{
+	TArray<FOfferCardText> Cards;
+	if (!bOfferPending)
+	{
+		return Cards;
+	}
+	for (const FOfferOption& Option : Offer)
+	{
+		FOfferCardText Card;
+		Card.Title = (Option.bIsNewUnlock ? FString(TEXT("NEW!  ")) : FString()) + OptionName(Option);
+		Card.bHighlight = Option.bIsNewUnlock;
+		if (Option.bIsWeapon && Option.bIsNewWeapon)
+		{
+			Card.Detail = Option.bIsNewUnlock ? FString(TEXT("Unlocked weapon")) : FString(TEXT("New weapon"));
+		}
+		else
+		{
+			const int32 After = Option.CurrentLevel + 1;
+			const int32 StarsAfter = Stars.StarsForCopies(After);
+			Card.Detail = FString::Printf(TEXT("Lv%d  >  Lv%d"), Option.CurrentLevel, After);
+			if (StarsAfter > Stars.StarsForCopies(Option.CurrentLevel) && Option.CurrentLevel > 0)
+			{
+				Card.Note = FString::Printf(TEXT("%d-STAR UP!"), StarsAfter);
+				Card.bHighlight = true;
+			}
+			else if (StarsAfter < 3)
+			{
+				Card.Note = FString::Printf(TEXT("%d more to %d-STAR"), Stars.CopiesToNextStar(After), StarsAfter + 1);
+			}
+		}
+		Cards.Add(Card);
+	}
+	return Cards;
 }
 
 FString URunProgressionSubsystem::GetLoadoutSummary() const
@@ -487,10 +672,11 @@ void URunProgressionSubsystem::Tick(float DeltaTime)
 		if (Dist <= CollectRadius)
 		{
 			GrantXp(Pickup->Value * GetXpGainMultiplier());
+			UGameAudioSubsystem::PlayIn(this, EGameSound::Pickup);
 			Pickups.RemoveAtSwap(i);
 			Pickup->Destroy();
 		}
-		else if (Dist <= MagnetRadius)
+		else if (Dist <= GetMagnetRadius())
 		{
 			Pickup->SetActorLocation(Pickup->GetActorLocation() + (ToHero / Dist) * MagnetSpeed * DeltaTime);
 		}

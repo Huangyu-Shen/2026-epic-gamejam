@@ -1,0 +1,3 @@
+package story-011 (Development): 1037 MB with pdb 358 MB = about 679 MB without
+PERFPROBE packaged 1920x1080 enemies=151 avgFPS=130.3 minFPS=96.3 (weapons are switched off in this probe, so attack effects are not in the number)
+Bolt/Nova ensure (array changed during loop) found in package run and fixed; re-run clean

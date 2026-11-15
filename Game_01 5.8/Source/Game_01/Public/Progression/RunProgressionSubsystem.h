@@ -31,6 +31,10 @@ struct GAME_01_API FOfferOption
 	/** Copies held before this pick (copies are also the level). */
 	UPROPERTY(BlueprintReadOnly, Category = "Progression")
 	int32 CurrentLevel = 0;
+
+	/** True when this option was unlocked by a lost film reel since the player last saw an offer (story 009). */
+	UPROPERTY(BlueprintReadOnly, Category = "Progression")
+	bool bIsNewUnlock = false;
 };
 
 /**
@@ -40,6 +44,19 @@ struct GAME_01_API FOfferOption
  * 3 copies make two stars and 9 make three (FStarTuning). While permanent cuts remain, the cut option
  * leaves the pool for the rest of the run. Resets with the run.
  */
+/** What one level-up card shows. */
+struct FOfferCardText
+{
+	/** The option's name, with "NEW!" when a lost film reel just unlocked it. */
+	FString Title;
+	/** Level change, or "New weapon". */
+	FString Detail;
+	/** Star progress, e.g. "2 more to 2-STAR" or "2-STAR!". Empty when maxed. */
+	FString Note;
+	/** True for a star-up or a newly unlocked option, so the card can glow. */
+	bool bHighlight = false;
+};
+
 UCLASS()
 class GAME_01_API URunProgressionSubsystem : public UTickableWorldSubsystem
 {
@@ -69,6 +86,31 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Progression")
 	float GetXpGainMultiplier() const;
+
+	/** Haste: every weapon's interval is divided by this (1.0 neutral). */
+	UFUNCTION(BlueprintPure, Category = "Progression")
+	float GetAttackSpeedMultiplier() const;
+
+	/** Magnet: distance (cm) within which XP pickups fly to the hero. */
+	UFUNCTION(BlueprintPure, Category = "Progression")
+	float GetMagnetRadius() const;
+
+	/** Reach: multiplier on every weapon's range (1.0 with no stacks). */
+	float GetRangeMultiplier() const;
+
+	/** Armor: share of contact damage the hero ignores, 0 to 0.75. */
+	float GetDamageReduction() const;
+
+	/** Regen: health restored per second. */
+	float GetRegenPerSecond() const;
+
+	/** Crit: chance an attack hits for GetCritMultiplier() times damage, 0 to 0.9. */
+	float GetCritChance() const;
+	float GetCritMultiplier() const;
+
+	/** How many weapons and passives can appear in an offer right now (locked options not counted). */
+	UFUNCTION(BlueprintPure, Category = "Progression")
+	int32 GetPoolSize() const;
 
 	/** Copies of the weapon held; 0 = not owned. Copies are also its level. */
 	UFUNCTION(BlueprintPure, Category = "Progression")
@@ -103,13 +145,27 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Progression")
 	bool IsOfferPending() const { return bOfferPending; }
 
+	/** The pending offer as three short pieces per option, for the level-up cards (empty when no offer is showing). */
+	TArray<FOfferCardText> GetOfferCards() const;
+
 	/** One line per option of the pending offer (empty when no offer is showing), for the level-up panel. */
 	UFUNCTION(BlueprintPure, Category = "Progression")
 	TArray<FString> GetOfferDescriptions() const;
 
-	/** Cuts offer entry Index (0..2), keeps the other two and resumes play. No-op if no offer or a bad index. */
+	/** Takes offer entry Index and resumes play. The others stay in the pool. No-op if no offer or a bad index. */
 	UFUNCTION(BlueprintCallable, Category = "Progression")
-	void CutOffer(int32 Index);
+	void ChooseOption(int32 Index);
+
+	/** Optional: removes offer entry Index from the pool for good and gives it to the boss. The offer stays open. */
+	UFUNCTION(BlueprintCallable, Category = "Progression")
+	void CutFromOffer(int32 Index);
+
+	/** True while a cut is allowed in the pending offer (one per level-up, while permanent cuts remain). */
+	UFUNCTION(BlueprintPure, Category = "Progression")
+	bool CanCutFromOffer() const;
+
+	/** Test harness only (-WeaponShowcase): gives the run Copies copies of a weapon without an offer. */
+	void DebugGrantWeapon(EWeaponType Weapon, int32 Copies);
 
 	/** Adds XP and opens the level-up offer once the threshold is reached. Used by pickups and by the -OfferProbe harness. */
 	void GrantXp(float Amount);
@@ -131,10 +187,16 @@ private:
 
 	void CheckLevelUp();
 	void GenerateOffer();
+	/** The upgrade options the camp has unlocked (empty when there is no camp stock). */
+	TArray<FName> GetUnlockedOptions() const;
+	bool IsWeaponAvailable(EWeaponType Type, const TArray<FName>& Unlocked) const;
+	bool IsPassiveAvailable(EPassiveType Type, const TArray<FName>& Unlocked) const;
 	void ApplyOption(const FOfferOption& Option);
 	void ShowOffer() const;
 	FString DescribeOption(const FOfferOption& Option) const;
 	FString OptionName(const FOfferOption& Option) const;
+	/** The option's stable id: its data-table row name, which is also what a lost film reel unlocks. */
+	FName OptionId(const FOfferOption& Option) const;
 	int32 MaxCopies(int32 RowMaxLevel) const { return FMath::Max(RowMaxLevel, Stars.CopiesForThreeStar); }
 	/** A passive's total effect: stacks x per-stack amount x its star multiplier. */
 	float PassiveTotal(EPassiveType Passive, float PerStack) const;
@@ -152,14 +214,12 @@ private:
 	TMap<EWeaponType, int32> WeaponLevels;
 	TMap<EPassiveType, int32> PassiveStacks;
 	bool bOfferPending = false;
+	bool bCutUsedThisOffer = false;
 	TArray<FOfferOption> Offer;
 	TSet<EWeaponType> CutWeapons;
 	TSet<EPassiveType> CutPassives;
 	int32 PermanentCutsLeft = 0;
 	TArray<FOfferOption> CuttingRoomFloor;
-
-	UPROPERTY(EditAnywhere, Category = "Progression", meta = (ClampMin = "0.0"))
-	float MagnetRadius = 600.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Progression", meta = (ClampMin = "0.0"))
 	float CollectRadius = 80.0f;

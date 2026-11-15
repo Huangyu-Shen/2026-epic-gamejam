@@ -86,7 +86,7 @@ TSharedRef<SWidget> URunHudWidget::RebuildWidget()
 		BottomLeft.Alignment = FVector2D(0.0, 1.0);
 		BottomLeft.Position = FVector2D(16.0, -16.0);
 		UPanelWidget* Help = DirectorUi::MakePanel(WidgetTree, Canvas, BottomLeft);
-		DirectorUi::AddText(WidgetTree, Help, TEXT("WASD move   Space dodge   E search   1-3 cut an option"), 14, DirectorUi::DimColor);
+		DirectorUi::AddText(WidgetTree, Help, TEXT("WASD move   Space dodge   E search   1-3 take an upgrade   4-6 cut one   Esc quit"), 14, DirectorUi::DimColor);
 
 		// Bottom-centre: extraction bar.
 		FUiPlacement Bottom;
@@ -103,17 +103,27 @@ TSharedRef<SWidget> URunHudWidget::RebuildWidget()
 		Centre.Anchor = FVector2D(0.5, 0.5);
 		Centre.Alignment = FVector2D(0.5, 0.5);
 		Centre.Position = FVector2D(0.0, 0.0);
-		Centre.Size = FVector2D(640.0, 0.0); // wide enough for "[2] CUT   Swiftness  Lv5 -> Lv6   (3 more to 3-STAR)"
+		Centre.Size = FVector2D(960.0, 0.0);
 		UPanelWidget* Offer = DirectorUi::MakePanel(WidgetTree, Canvas, Centre, false, &OfferRootRaw);
-		DirectorUi::AddText(WidgetTree, Offer, TEXT("LEVEL UP - CUT one, keep the other two"), 20, DirectorUi::GoodColor);
-		DirectorUi::AddText(WidgetTree, Offer, TEXT("Click or press 1-3 on the one to cut"), 14, DirectorUi::DimColor);
+		DirectorUi::AddText(WidgetTree, Offer, TEXT("LEVEL UP"), 30, DirectorUi::GoodColor);
+		DirectorUi::AddText(WidgetTree, Offer, TEXT("Take one upgrade. Cutting one first removes it from your pool for good and gives it to the Boss."), 16, DirectorUi::TextColor);
+		UPanelWidget* Row = DirectorUi::AddRow(WidgetTree, Offer);
 		for (int32 Index = 0; Index < 3; ++Index)
 		{
-			UUiActionButton* Button = DirectorUi::AddButton(WidgetTree, Offer, TEXT(""), TEXT("Offer"), Index);
-			Button->OnAction.AddDynamic(this, &URunHudWidget::HandleAction);
-			OfferButtons.Add(Button);
+			UWidget* CardRoot = nullptr;
+			UPanelWidget* Card = DirectorUi::AddCard(WidgetTree, Row, FLinearColor(0.5f, 0.6f, 0.9f), 290.0f, &CardRoot);
+			CardRoots.Add(CardRoot);
+			CardTitles.Add(DirectorUi::AddText(WidgetTree, Card, TEXT(""), 26, FLinearColor::White));
+			CardDetails.Add(DirectorUi::AddText(WidgetTree, Card, TEXT(""), 20, DirectorUi::TextColor));
+			CardNotes.Add(DirectorUi::AddText(WidgetTree, Card, TEXT(""), 16, FLinearColor(1.0f, 0.85f, 0.3f)));
+			UUiActionButton* Take = DirectorUi::AddButton(WidgetTree, Card, FString::Printf(TEXT("TAKE   [%d]"), Index + 1), TEXT("Offer"), Index, EUiButtonKind::Primary);
+			Take->OnAction.AddDynamic(this, &URunHudWidget::HandleAction);
+			OfferButtons.Add(Take);
+			UUiActionButton* CutButton = DirectorUi::AddButton(WidgetTree, Card, FString::Printf(TEXT("Cut   [%d]"), Index + 4), TEXT("Cut"), Index, EUiButtonKind::Danger);
+			CutButton->OnAction.AddDynamic(this, &URunHudWidget::HandleAction);
+			CutButtons.Add(CutButton);
 		}
-		CutInfoText = DirectorUi::AddText(WidgetTree, Offer, TEXT(""), 14, DirectorUi::DimColor);
+		CutInfoText = DirectorUi::AddText(WidgetTree, Offer, TEXT(""), 16, DirectorUi::DimColor);
 
 		// Centre: result screen.
 		FUiPlacement ResultPlacement = Centre;
@@ -180,16 +190,12 @@ void URunHudWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 	}
 	RelicText->SetText(FText::FromString(Reels.IsEmpty() ? FString(TEXT("No lost film reel")) : Reels.TrimEnd()));
 
-	// Extraction bar.
-	if (!Zone.IsValid())
+	// Extraction bar: a map can hold more than one extraction point, so show the furthest-filled one.
+	float Progress = 0.0f;
+	for (TActorIterator<AExtractionZone> It(World); It; ++It)
 	{
-		for (TActorIterator<AExtractionZone> It(World); It; ++It)
-		{
-			Zone = *It;
-			break;
-		}
+		Progress = FMath::Max(Progress, It->GetProgress());
 	}
-	const float Progress = Zone.IsValid() ? Zone->GetProgress() : 0.0f;
 	ExtractionBar->SetPercent(Progress);
 	ExtractionRoot->SetVisibility(Progress > 0.0f ? ESlateVisibility::SelfHitTestInvisible : ESlateVisibility::Collapsed);
 
@@ -205,21 +211,27 @@ void URunHudWidget::RefreshOfferPanel()
 
 	if (bShow)
 	{
-		const TArray<FString> Lines = Progression->GetOfferDescriptions();
-		for (int32 Index = 0; Index < OfferButtons.Num(); ++Index)
+		const TArray<FOfferCardText> Cards = Progression->GetOfferCards();
+		const bool bCanCut = Progression->CanCutFromOffer();
+		for (int32 Index = 0; Index < CardRoots.Num(); ++Index)
 		{
-			UUiActionButton* Button = OfferButtons[Index];
-			const bool bHas = Lines.IsValidIndex(Index);
-			Button->SetVisibility(bHas ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
-			if (bHas)
+			const bool bHas = Cards.IsValidIndex(Index);
+			CardRoots[Index]->SetVisibility(bHas ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
+			if (!bHas)
 			{
-				Button->Label->SetText(FText::FromString(FString::Printf(TEXT("[%d] CUT   %s"), Index + 1, *Lines[Index])));
+				continue;
 			}
+			CardTitles[Index]->SetText(FText::FromString(Cards[Index].Title));
+			CardTitles[Index]->SetColorAndOpacity(FSlateColor(Cards[Index].bHighlight ? FLinearColor(1.0f, 0.85f, 0.3f) : FLinearColor::White));
+			CardDetails[Index]->SetText(FText::FromString(Cards[Index].Detail));
+			CardNotes[Index]->SetText(FText::FromString(Cards[Index].Note));
+			CutButtons[Index]->SetVisibility(bCanCut ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
 		}
 		const int32 CutsLeft = Progression->GetPermanentCutsLeft();
-		CutInfoText->SetText(FText::FromString(CutsLeft > 0
-			? FString::Printf(TEXT("Permanent cuts left: %d - what you cut never comes back this run"), CutsLeft)
-			: FString(TEXT("No permanent cuts left - what you cut is only skipped this time"))));
+		CutInfoText->SetText(FText::FromString(Progression->CanCutFromOffer()
+			? FString::Printf(TEXT("Permanent cuts left: %d   (one cut per level-up)"), CutsLeft)
+			: (CutsLeft > 0 ? FString(TEXT("You cut one. Now take one of the others."))
+			                : FString(TEXT("No permanent cuts left.")))));
 	}
 	OfferRoot->SetVisibility(bShow ? ESlateVisibility::Visible : ESlateVisibility::Collapsed);
 }
@@ -258,7 +270,14 @@ void URunHudWidget::HandleAction(FName Action, int32 Index)
 	{
 		if (URunProgressionSubsystem* Progression = GetWorld()->GetSubsystem<URunProgressionSubsystem>())
 		{
-			Progression->CutOffer(Index);
+			Progression->ChooseOption(Index);
+		}
+	}
+	else if (Action == TEXT("Cut"))
+	{
+		if (URunProgressionSubsystem* Progression = GetWorld()->GetSubsystem<URunProgressionSubsystem>())
+		{
+			Progression->CutFromOffer(Index);
 		}
 	}
 	else if (Action == TEXT("Camp"))

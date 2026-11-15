@@ -70,6 +70,16 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "Extraction")
 	TObjectPtr<UStaticMeshComponent> DiscMesh;
 
+	/** A tall bright column so the point can be found from across the map. */
+	UPROPERTY(VisibleAnywhere, Category = "Extraction")
+	TObjectPtr<UStaticMeshComponent> BeaconMesh;
+
+	/** A second disc, drawn above the first, that grows from the middle as the bar fills. */
+	UPROPERTY(VisibleAnywhere, Category = "Extraction")
+	TObjectPtr<UStaticMeshComponent> FillMesh;
+
+	void UpdateFillVisual() const;
+
 	UPROPERTY(VisibleAnywhere, Category = "Extraction")
 	TObjectPtr<UBoxComponent> ZoneVolume;
 

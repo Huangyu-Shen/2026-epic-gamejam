@@ -1,4 +1,5 @@
 #include "Loot/LootContainer.h"
+#include "Audio/GameAudioSubsystem.h"
 #include "Loot/LootBagComponent.h"
 #include "Loot/LootConfig.h"
 #include "Extraction/CampStockSubsystem.h"
@@ -26,6 +27,7 @@ ALootContainer::ALootContainer()
 
 void ALootContainer::ShowOpened()
 {
+	UGameAudioSubsystem::PlayIn(this, EGameSound::Pickup);
 	// Greybox "opened" cue: the container sinks to a flat slab so a searched one is obvious at a glance.
 	FVector Scale = Mesh->GetComponentScale();
 	const float OldHeight = Scale.Z;

@@ -102,6 +102,9 @@ private:
 	void SearchNearestContainerKey();
 	void DodgeKey();
 	void DebugDieKey();
+
+	/** Esc quits the game. */
+	void QuitKey();
 	/** Resets the run systems and applies the camp bonuses and slotted film cards. Called once when the run map loads. */
 	void StartRun();
 	/** Creates the HUD and puts the game in "game + mouse" input mode so its buttons can be clicked. */

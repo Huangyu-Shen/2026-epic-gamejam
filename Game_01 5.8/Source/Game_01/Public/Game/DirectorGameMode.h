@@ -5,6 +5,8 @@
 #include "GameFramework/GameModeBase.h"
 #include "DirectorGameMode.generated.h"
 
+class AHeroCharacter;
+
 /** Tuning for the automated performance probe (command line -PerfProbe). */
 USTRUCT(BlueprintType)
 struct GAME_01_API FPerfProbeTuning
@@ -50,7 +52,14 @@ struct GAME_01_API FOfferProbeTuning
  * each time, saves three screenshots of the level-up panel and the HUD to Saved/OfferProbe/, logs
  * OFFERPROBE lines and exits. With -ReelProbe (or -ReelProbe=die) it puts a lost film reel in the bag, ends the run
  * by extraction (or death), saves screenshots of the HUD and the result screen to Saved/ReelProbe/, logs REELPROBE
- * lines and exits. Without these flags nothing probe-related runs.
+ * lines and exits (-ReelCount=N puts the first N reel types in the bag). The level-up probe also fires the Chain
+ * weapon at a spawned horde and screenshots its first multi-hit (needs the Chain option unlocked in the save slot).
+ * With -PaceProbe a bot plays a whole run: the hero walks in a circle with the weapons firing, always cuts the
+ * first level-up option, and every 30 s of game time a PACEPROBE line logs level, health, enemies and spawn rate;
+ * it also logs the effective tuning values (TUNING lines) and exits on death or after 10 minutes. -PaceSpeed=N
+ * runs it N times faster (default 4). To try numbers without editing the data tables, -PaceSpawnBase=, -PaceSpawnRamp=,
+ * -PaceGruntHealth=, -PaceGruntContact= and -PaceHeroHealth= override the loaded values for that run only.
+ * Without these flags nothing probe-related runs.
  */
 UCLASS()
 class GAME_01_API ADirectorGameMode : public AGameModeBase
@@ -79,11 +88,23 @@ private:
 	/** Runs one step of the lost-reel probe; called on a repeating timer. */
 	void StepReelProbe();
 
+	/** One game-second of the pace bot; logs every 30 s and ends the run on death or at 10 minutes. */
+	void StepPaceProbe();
+
+	/** Logs the effective numbers the game is using (tables or C++ fallbacks), so two builds can be compared. */
+	void LogTuning(const AHeroCharacter& Hero) const;
+
 	FTimerHandle ProbeStartHandle;
 	FTimerHandle OfferProbeHandle;
 	FTimerHandle ReelProbeHandle;
+	FTimerHandle PaceHandle;
+	bool bPaceProbe = false;
+	float PaceSeconds = 0.0f;
+	float PaceAngle = 0.0f;
 	int32 OfferProbeStep = 0;
 	int32 ReelProbeStep = 0;
+	bool bChainShotTaken = false;
+	int32 ChainWaitSteps = 0;
 	bool bReelProbeDies = false;
 	float SampledSeconds = 0.0f;
 	float WorstFrameSeconds = 0.0f;

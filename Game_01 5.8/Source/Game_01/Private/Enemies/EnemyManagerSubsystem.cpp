@@ -181,5 +181,6 @@ void UEnemyManagerSubsystem::Tick(float DeltaTime)
 		NewLocation.X += Push.X * DeltaTime;
 		NewLocation.Y += Push.Y * DeltaTime;
 		Enemies[Index]->SetActorLocationAndRotation(NewLocation, FRotator(0.0, Yaws[Index], 0.0));
+		Enemies[Index]->UpdateHitFeedback(Now);
 	}
 }
