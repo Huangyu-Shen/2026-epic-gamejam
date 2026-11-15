@@ -36,6 +36,14 @@ enum class EMusicTrack : uint8
 	Run
 };
 
+/** The three volume levels the Esc menu changes. */
+enum class EAudioBus : uint8
+{
+	Master,
+	Music,
+	Effects,
+};
+
 /**
  * Single audio entry point. Gameplay calls Play(EGameSound) and StartMusic(EMusicTrack); nothing else in the game
  * touches sound assets. A missing asset is a silent no-op that is counted and logged once, so the call sites can be
@@ -59,6 +67,12 @@ public:
 
 	/** Starts a looping music track. Does nothing if that track is already playing; stops the other track first. */
 	void StartMusic(EMusicTrack Track);
+
+	/** Volume 0 to 1 of a bus: the player's setting for this session, else the value in Director Tuning. */
+	static float GetBusVolume(EAudioBus Bus);
+
+	/** Sets a bus (clamped to 0..1) for this session and applies it to the music that is playing now. */
+	static void SetBusVolume(const UObject* WorldContext, EAudioBus Bus, float Volume);
 
 	/** Number of Play requests for a sound this world, counting capped and asset-less ones. */
 	int32 GetRequestCount(EGameSound Sound) const { return Requests[static_cast<int32>(Sound)]; }

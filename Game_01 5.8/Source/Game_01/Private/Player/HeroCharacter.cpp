@@ -1,4 +1,5 @@
 #include "Player/HeroCharacter.h"
+#include "UI/PauseMenuWidget.h"
 #include "Camp/CampMetaSubsystem.h"
 #include "Combat/AutoWeaponComponent.h"
 #include "Combat/HealthComponent.h"
@@ -107,6 +108,15 @@ void AHeroCharacter::CreateHud()
 		Hud->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
 	}
 
+	// The Esc menu sits above the HUD and stays hidden until Esc is pressed.
+	PauseMenu = CreateWidget<UPauseMenuWidget>(PC);
+	if (PauseMenu)
+	{
+		PauseMenu->SetContext(EPauseContext::Run);
+		PauseMenu->AddToViewport(50);
+		PauseMenu->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
+	}
+
 	PC->bShowMouseCursor = true;
 	FInputModeGameAndUI Mode;
 	Mode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
@@ -116,7 +126,12 @@ void AHeroCharacter::CreateHud()
 
 void AHeroCharacter::QuitKey()
 {
-	FPlatformMisc::RequestExit(false);
+	// A level-up offer comes first: it has its own buttons and keys.
+	const URunProgressionSubsystem* Progression = GetWorld()->GetSubsystem<URunProgressionSubsystem>();
+	if (PauseMenu && !(Progression && Progression->IsOfferPending()))
+	{
+		PauseMenu->Toggle();
+	}
 }
 
 void AHeroCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -126,7 +141,8 @@ void AHeroCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 	PlayerInputComponent->BindKey(EKeys::SpaceBar, IE_Pressed, this, &AHeroCharacter::DodgeKey);
 	PlayerInputComponent->BindKey(EKeys::E, IE_Pressed, this, &AHeroCharacter::SearchNearestContainerKey);
 	PlayerInputComponent->BindKey(EKeys::K, IE_Pressed, this, &AHeroCharacter::DebugDieKey);
-	PlayerInputComponent->BindKey(EKeys::Escape, IE_Pressed, this, &AHeroCharacter::QuitKey);
+	// Esc must also work while the menu has the game paused (that is how it closes again).
+	PlayerInputComponent->BindKey(EKeys::Escape, IE_Pressed, this, &AHeroCharacter::QuitKey).bExecuteWhenPaused = true;
 
 	// Level-up offer: 1/2/3 take that option, 4/5/6 cut it for good (it goes to the boss) and keep the offer open.
 	const FKey TakeKeys[] = { EKeys::One, EKeys::Two, EKeys::Three };

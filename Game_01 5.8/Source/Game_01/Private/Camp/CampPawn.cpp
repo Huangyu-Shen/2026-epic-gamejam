@@ -2,6 +2,7 @@
 #include "Camp/CampBuilding.h"
 #include "Camp/CampMetaSubsystem.h"
 #include "UI/CampWidget.h"
+#include "UI/PauseMenuWidget.h"
 #include "UI/HudMessageSubsystem.h"
 #include "Blueprint/UserWidget.h"
 #include "Camera/CameraComponent.h"
@@ -58,6 +59,15 @@ void ACampPawn::BeginPlay()
 		// Only the panel's controls take clicks; the rest of the screen reaches the 3D scene.
 		CampScreen->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
 	}
+
+	// The Esc menu sits above the camp screen and stays hidden until Esc is pressed.
+	PauseMenu = CreateWidget<UPauseMenuWidget>(PC);
+	if (PauseMenu)
+	{
+		PauseMenu->SetContext(EPauseContext::Camp);
+		PauseMenu->AddToViewport(50);
+		PauseMenu->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
+	}
 }
 
 void ACampPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -70,11 +80,24 @@ void ACampPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 
 void ACampPawn::QuitKey()
 {
-	FPlatformMisc::RequestExit(false);
+	TogglePauseMenu();
+}
+
+void ACampPawn::TogglePauseMenu()
+{
+	if (PauseMenu)
+	{
+		PauseMenu->Toggle();
+	}
 }
 
 void ACampPawn::OnClick()
 {
+	// A click while the menu is open belongs to the menu, not to the buildings behind it.
+	if (PauseMenu && PauseMenu->IsOpen())
+	{
+		return;
+	}
 	APlayerController* PC = Cast<APlayerController>(GetController());
 	if (!PC)
 	{

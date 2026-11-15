@@ -52,7 +52,8 @@ can read a day from top to bottom or open just the part you care about.
 | [11 The new level-up rule and UI](day-3/11-new-level-up-rule-and-ui.md) | Take one of three with an optional cut; 7 to 13 options; the cleaner UI |
 | [12 Sound, free assets, and a bar that never showed](day-3/12-extraction-sound-and-the-two-zones.md) | Audio from free packs, visible weapon effects, the two-zone extraction bug |
 | [13 The boss takes what you cut, and the void](day-3/13-story-012-boss-and-the-void.md) | Story 012 built after its cut-off; the floor edge fix; what was left out of git |
-| [14 Status so far](day-3/14-status-so-far.md) | What is done, not done and not checked |
+| [14 Leaving a run: a button, then an Esc menu](day-3/14-esc-menu-and-leaving-a-run.md) | A button for leaving a run, replaced by the Esc menu the author described; two build problems |
+| [15 Status so far](day-3/15-status-so-far.md) | What is done, not done and not checked |
 
 ### Day 4 — 15 Nov: package and submit (planned)
 

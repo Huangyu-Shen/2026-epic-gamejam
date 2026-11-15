@@ -1,6 +1,6 @@
 # Day 3 (14 Nov) · The boss takes what you cut, and the void
 
-[Dev log index](../README.md) · [← previous](12-extraction-sound-and-the-two-zones.md) · [next →](14-status-so-far.md)
+[Dev log index](../README.md) · [← previous](12-extraction-sound-and-the-two-zones.md) · [next →](14-esc-menu-and-leaving-a-run.md)
 
 ## Committing first
 

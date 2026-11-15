@@ -8,6 +8,7 @@
 
 class UCameraComponent;
 class UCampWidget;
+class UPauseMenuWidget;
 class USceneComponent;
 class USpringArmComponent;
 
@@ -21,6 +22,9 @@ public:
 
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
+	/** Opens or closes the Esc menu (also called by the camp screen's MENU button). */
+	void TogglePauseMenu();
+
 protected:
 	virtual void BeginPlay() override;
 
@@ -28,7 +32,7 @@ private:
 	/** Left click on a building in the scene upgrades it (the panel's buttons do the same). */
 	void OnClick();
 
-	/** Esc quits the game. */
+	/** Esc opens the pause menu. */
 	void QuitKey();
 
 	UPROPERTY(VisibleAnywhere, Category = "Camp")
@@ -42,4 +46,7 @@ private:
 
 	UPROPERTY(Transient)
 	TObjectPtr<UCampWidget> CampScreen;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UPauseMenuWidget> PauseMenu;
 };

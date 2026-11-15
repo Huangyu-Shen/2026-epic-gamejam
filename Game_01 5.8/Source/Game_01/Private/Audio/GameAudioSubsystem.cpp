@@ -7,6 +7,36 @@
 
 DEFINE_LOG_CATEGORY_STATIC(LogGameAudio, Log, All);
 
+namespace
+{
+	/** The player's volume choices; negative means "not changed, use Director Tuning". Lives as long as the game does, across maps. */
+	float GBusOverride[3] = { -1.0f, -1.0f, -1.0f };
+}
+
+float UGameAudioSubsystem::GetBusVolume(EAudioBus Bus)
+{
+	const float Chosen = GBusOverride[static_cast<int32>(Bus)];
+	if (Chosen >= 0.0f)
+	{
+		return Chosen;
+	}
+	const UDirectorTuningSettings* Settings = GetDefault<UDirectorTuningSettings>();
+	return Bus == EAudioBus::Master ? Settings->MasterVolume : (Bus == EAudioBus::Music ? Settings->MusicVolume : Settings->SfxVolume);
+}
+
+void UGameAudioSubsystem::SetBusVolume(const UObject* WorldContext, EAudioBus Bus, float Volume)
+{
+	GBusOverride[static_cast<int32>(Bus)] = FMath::Clamp(Volume, 0.0f, 1.0f);
+	const UWorld* World = WorldContext ? WorldContext->GetWorld() : nullptr;
+	if (UGameAudioSubsystem* Audio = World ? World->GetSubsystem<UGameAudioSubsystem>() : nullptr)
+	{
+		if (Audio->MusicComponent)
+		{
+			Audio->MusicComponent->SetVolumeMultiplier(GetBusVolume(EAudioBus::Master) * GetBusVolume(EAudioBus::Music));
+		}
+	}
+}
+
 bool UGameAudioSubsystem::ShouldCreateSubsystem(UObject* Outer) const
 {
 	// Game worlds only: editor preview worlds and commandlets have no use for sound.
@@ -94,7 +124,7 @@ void UGameAudioSubsystem::Play(EGameSound Sound)
 	if (Asset)
 	{
 		++Played[Index];
-		UGameplayStatics::PlaySound2D(this, Asset, Settings->MasterVolume * Settings->SfxVolume);
+		UGameplayStatics::PlaySound2D(this, Asset, GetBusVolume(EAudioBus::Master) * GetBusVolume(EAudioBus::Effects));
 	}
 }
 
@@ -118,6 +148,6 @@ void UGameAudioSubsystem::StartMusic(EMusicTrack Track)
 	UE_LOG(LogGameAudio, Log, TEXT("MUSIC start %s (%s)"), Track == EMusicTrack::Camp ? TEXT("Camp") : TEXT("Run"), Asset ? TEXT("asset assigned") : TEXT("no asset assigned, silent"));
 	if (Asset)
 	{
-		MusicComponent = UGameplayStatics::SpawnSound2D(this, Asset, Settings->MasterVolume * Settings->MusicVolume, 1.0f, 0.0f, nullptr, false, false);
+		MusicComponent = UGameplayStatics::SpawnSound2D(this, Asset, GetBusVolume(EAudioBus::Master) * GetBusVolume(EAudioBus::Music), 1.0f, 0.0f, nullptr, false, false);
 	}
 }

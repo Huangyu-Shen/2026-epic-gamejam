@@ -19,7 +19,7 @@ Public tuning fields: `InteractRange` 250 cm, `BaseWalkSpeed` 600 cm/s, `CameraD
 | `void HandleDied()` | Bound to `OnDied`, calls `ReportPlayerDied(Bag)` | - |
 | `Tick` | Reads WASD (`IsInputKeyDown`); move speed = `BaseWalkSpeed x passive move-speed multiplier`; during a dash it uses a sweeping `AddActorWorldOffset` (walls stop it) instead of normal movement | Input is zeroed when `CanAct()` is false, but a dash already under way finishes anyway |
 
-Keys: Space dodge, E search (only when `CanAct()`), K suicide (debug, `Health->Kill()`, ignores god mode), Esc (quit the game), 1 to 3 take one of the three level-up options (`ChooseOption`) and 4 to 6 cut one of them (`CutFromOffer`); both do nothing unless an offer is pending. Lost film reels cannot be used, so there is no bag-slot key; `UseRelicSlot` was removed in story 008 (keys 4 to 6 came back in v3 as the cut keys).
+Keys: Space dodge, E search (only when `CanAct()`), K suicide (debug, `Health->Kill()`, ignores god mode), Esc (pause menu: `UPauseMenuWidget`), 1 to 3 take one of the three level-up options (`ChooseOption`) and 4 to 6 cut one of them (`CutFromOffer`); both do nothing unless an offer is pending. Lost film reels cannot be used, so there is no bag-slot key; `UseRelicSlot` was removed in story 008 (keys 4 to 6 came back in v3 as the cut keys).
 
 ## 2. Bag and lost film reels `ULootBagComponent`
 
