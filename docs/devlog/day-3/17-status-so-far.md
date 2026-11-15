@@ -1,6 +1,6 @@
 # Day 3 (14 Nov) · Status so far
 
-[Dev log index](../README.md) · [← previous](15-the-first-real-models.md)
+[Dev log index](../README.md) · [← previous](16-the-forest-floor.md)
 
 This entry is a snapshot. It replaces the earlier one, written after story 010, and it
 will be rewritten as the work goes on.
@@ -19,6 +19,10 @@ will be rewritten as the work goes on.
   package.
 - The boss, the void fix, the design and wiki corrections and the dev log are merged to
   main (pull requests 4 and 5).
+- The floor (a meadow with a rim of trees and rocks), the loot containers (stumps and boulders)
+  and the extraction point (a portal and the green beam) use the forest pack
+  ([entry 16](16-the-forest-floor.md)). Checked in the editor and in a package.
+  **Not committed.**
 - The hero, the five grunt types and the boss use Fab models ([entry 15](15-the-first-real-models.md)).
   Checked in the editor and in a package with the 150-enemy test (about 130 FPS on warm runs, weapons off).
   **Not committed**; the model packs are deliberately not in git.
@@ -29,8 +33,8 @@ will be rewritten as the work goes on.
 
 ## Not done
 
-- Story 011 is still In Progress: the floor, vault, extraction point and camp are still
-  plain shapes, and star-ups only make beams thicker.
+- Story 011 is still In Progress: the camp scene is still plain shapes, the boss attacks are
+  orange balls and a red ring, and star-ups only make beams thicker.
 - Story 013 (package, texts, video, final checks).
 - The design docs do not yet mention the Esc menu and its settings (a PRD Should item the
   author asked for).

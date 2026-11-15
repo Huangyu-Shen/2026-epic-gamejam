@@ -23,6 +23,28 @@ ALootContainer::ALootContainer()
 		Mesh->SetStaticMesh(CubeFinder.Object);
 		Mesh->SetWorldScale3D(FVector(0.6f));
 	}
+
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> StumpFinder(TEXT("/Game/RPGTinyFantasyForest/Mesh/BuildingUtilityDeco/SM_TreeStump.SM_TreeStump"));
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> RockFinder(TEXT("/Game/RPGTinyFantasyForest/Mesh/Rock/SM_RockA.SM_RockA"));
+	CrateModel = StumpFinder.Succeeded() ? StumpFinder.Object : nullptr;
+	VaultModel = RockFinder.Succeeded() ? RockFinder.Object : nullptr;
+}
+
+void ALootContainer::BeginPlay()
+{
+	Super::BeginPlay();
+
+	// The cube's origin is its centre and the pack models' origin is at their base, so drop by the cube's half height.
+	UStaticMesh* Model = ContainerType == ELootContainerType::Vault ? VaultModel.Get() : CrateModel.Get();
+	if (Model)
+	{
+		const float CubeHalf = Mesh->GetComponentScale().Z * 50.0f;
+		Mesh->SetStaticMesh(Model);
+		Mesh->SetMaterial(0, nullptr);
+		Mesh->SetWorldScale3D(FVector(ContainerType == ELootContainerType::Vault ? 0.9f : 1.8f));
+		Mesh->AddWorldOffset(FVector(0.0f, 0.0f, -CubeHalf));
+		bUsesModel = true;
+	}
 }
 
 void ALootContainer::ShowOpened()
@@ -33,7 +55,10 @@ void ALootContainer::ShowOpened()
 	const float OldHeight = Scale.Z;
 	Scale.Z = OldHeight * 0.25f;
 	Mesh->SetWorldScale3D(Scale);
-	Mesh->AddWorldOffset(FVector(0.0f, 0.0f, -50.0f * (OldHeight - Scale.Z)));
+	if (!bUsesModel)
+	{
+		Mesh->AddWorldOffset(FVector(0.0f, 0.0f, -50.0f * (OldHeight - Scale.Z)));
+	}
 }
 
 bool ALootContainer::Interact(AActor* InInstigator)

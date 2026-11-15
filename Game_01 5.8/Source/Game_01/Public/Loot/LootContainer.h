@@ -7,6 +7,7 @@
 
 class ALootContainer;
 class ULootConfig;
+class UStaticMesh;
 class UStaticMeshComponent;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_FourParams(FOnContainerSearched, ALootContainer*, Container, int32, IronGained, bool, bGotRelic, ERelicType, RelicType);
@@ -25,6 +26,8 @@ class GAME_01_API ALootContainer : public AActor
 
 public:
 	ALootContainer();
+
+	virtual void BeginPlay() override;
 
 	/** Which row of the container data this uses. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Loot")
@@ -57,6 +60,16 @@ private:
 
 	UPROPERTY(VisibleInstanceOnly, Transient, Category = "Loot", meta = (AllowPrivateAccess = "true"))
 	bool bSearched = false;
+
+	/** Meshes of the "RPG Tiny Fantasy Forest" pack: a tree stump for crates, a boulder for vaults. Null without the pack. */
+	UPROPERTY()
+	TObjectPtr<UStaticMesh> CrateModel;
+
+	UPROPERTY()
+	TObjectPtr<UStaticMesh> VaultModel;
+
+	/** True once a pack model replaced the cube (its origin is at its base, so opening it does not sink it). */
+	bool bUsesModel = false;
 
 	bool bRolled = false;
 	int32 RolledIron = 0;

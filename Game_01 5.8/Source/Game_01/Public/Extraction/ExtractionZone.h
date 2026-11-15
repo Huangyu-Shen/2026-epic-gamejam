@@ -74,6 +74,10 @@ private:
 	UPROPERTY(VisibleAnywhere, Category = "Extraction")
 	TObjectPtr<UStaticMeshComponent> BeaconMesh;
 
+	/** The pack's portal arch standing in the zone. Empty without the pack; the green beam shows either way. */
+	UPROPERTY(VisibleAnywhere, Category = "Extraction")
+	TObjectPtr<UStaticMeshComponent> PortalMesh;
+
 	/** A second disc, drawn above the first, that grows from the middle as the bar fills. */
 	UPROPERTY(VisibleAnywhere, Category = "Extraction")
 	TObjectPtr<UStaticMeshComponent> FillMesh;

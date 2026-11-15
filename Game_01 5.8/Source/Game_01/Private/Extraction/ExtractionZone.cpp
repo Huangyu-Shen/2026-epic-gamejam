@@ -54,6 +54,23 @@ AExtractionZone::AExtractionZone()
 		FillMesh->SetRelativeScale3D(FVector(0.01f, 0.01f, 0.03f));
 		FillMesh->SetRelativeLocation(FVector(0.0f, 0.0f, -95.0f));
 	}
+	// The portal from the "RPG Tiny Fantasy Forest" pack (Dungeon Mason, Fab) stands in the zone when it is there, next to the green beam, which stays so the exit is easy to find.
+	PortalMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("PortalMesh"));
+	PortalMesh->SetupAttachment(ZoneVolume);
+	PortalMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	PortalMesh->SetCastShadow(false);
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> PortalFinder(TEXT("/Game/RPGTinyFantasyForest/Mesh/BuildingUtilityDeco/SM_PortalA.SM_PortalA"));
+	if (PortalFinder.Succeeded())
+	{
+		PortalMesh->SetStaticMesh(PortalFinder.Object);
+		PortalMesh->SetRelativeLocation(FVector(0.0f, 0.0f, -100.0f));
+		PortalMesh->SetRelativeScale3D(FVector(0.5f));
+	}
+	else
+	{
+		PortalMesh->SetVisibility(false);
+	}
+
 	if (FlatFinder.Succeeded())
 	{
 		DiscMesh->SetMaterial(0, FlatFinder.Object);

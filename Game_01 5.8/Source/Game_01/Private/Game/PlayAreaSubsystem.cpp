@@ -1,4 +1,6 @@
 #include "Game/PlayAreaSubsystem.h"
+#include "Game/DirectorGameMode.h"
+#include "Game/ForestDressing.h"
 #include "Enemies/EnemyTypes.h"
 #include "Engine/StaticMeshActor.h"
 #include "Engine/World.h"
@@ -14,6 +16,8 @@ void UPlayAreaSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 
 	Area = FBox2D(ForceInit);
 	bHasArea = false;
+	AActor* FloorActor = nullptr;
+	float FloorTopZ = 0.0f;
 	for (TActorIterator<AStaticMeshActor> It(&InWorld); It; ++It)
 	{
 		FVector Origin, Extent;
@@ -25,11 +29,19 @@ void UPlayAreaSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 		{
 			Area += FBox2D(FVector2D(Origin.X - Extent.X, Origin.Y - Extent.Y), FVector2D(Origin.X + Extent.X, Origin.Y + Extent.Y));
 			bHasArea = true;
+			FloorActor = *It;
+			FloorTopZ = Origin.Z + Extent.Z;
 		}
 	}
 	if (bHasArea)
 	{
 		UE_LOG(LogEnemies, Display, TEXT("PLAYAREA floor x[%.0f..%.0f] y[%.0f..%.0f]"), Area.Min.X, Area.Max.X, Area.Min.Y, Area.Max.Y);
+
+		// Only the run map gets the forest look (the camp has its own scene).
+		if (Cast<ADirectorGameMode>(InWorld.GetAuthGameMode()))
+		{
+			UE_LOG(LogEnemies, Display, TEXT("FOREST dressing %s"), AForestDressing::Build(&InWorld, Area, FloorTopZ, FloorActor) ? TEXT("built") : TEXT("skipped (pack missing)"));
+		}
 	}
 	else
 	{
