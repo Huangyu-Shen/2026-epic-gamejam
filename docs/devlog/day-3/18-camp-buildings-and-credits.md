@@ -62,3 +62,50 @@ credit section says the same.
 - Clicking the buildings with a real mouse. The invisible cubes are 400 by 400 cm, which is wider
   than before.
 - The licence texts were not read in full, and the CC BY credit wording is mine.
+
+## Update: the buildings on a triangle
+
+The author asked for the three buildings to stand further apart, the clinic (the one at the top of
+the screen) turned a quarter turn, and the three on an equilateral triangle.
+
+- The clinic is at the top (the camera looks along +X, so +X is up on screen), the smithy at the
+  lower right and the warehouse at the lower left. The distance from the centre to each is 700 cm,
+  so the sides are about 1210 cm; before, the buildings were 350 cm from the centre.
+- The clinic first got a 90 degree turn, which I judged from a screenshot of the roof only. The author
+  then looked at it and asked for another 90 degrees so that the porch steps face the camera. It now
+  stands at 180 degrees and the steps are at the bottom of the screen, toward the player.
+- At that distance the old camera cut off the top building, so the camp camera's boom went from
+  1400 to 2300 cm. The camp now looks smaller and further away. Screenshot: file 19 in
+  `production/qa/evidence/story-011-art-audio-feel/`.
+- Not checked: a real mouse click on each building at the new positions, and the packaged build.
+
+## Update 2: the author's layout
+
+The author looked at the screenshots again and said the two buildings at the bottom (they could not
+tell which was the factory and which the barracks) should each turn a quarter turn clockwise, and the
+tall one with the tower at the lower left should move to the upper left. I followed that literally:
+
+- The warehouse (the barracks, the one with the tower) is now at the upper left (600 cm forward and
+  800 cm left of the camp's centre), and the smithy (the factory) stays at the lower right. Both are
+  turned 90 degrees (a positive yaw, which is clockwise seen from above).
+- This is **no longer an equilateral triangle**: the clinic at the top and the warehouse at the upper
+  left are 800 cm apart and about 700 cm from the smithy's side of the screen. The author asked for
+  the move after asking for the triangle, so I took the later request as the one that counts.
+  The file `19-camp-triangle.png` now shows this layout and keeps its old name.
+- Not checked: clicking each building with a real mouse, and the packaged build's camp.
+
+## Update 3: back to a triangle, and the sizes
+
+After the previous layout the author asked for the equilateral triangle again ("or a right triangle with
+the clinic at the apex"), with the smithy at the lower left and the warehouse at the lower right, and
+for the smithy and warehouse models to be bigger, with the clinic's size untouched ("the clinic looks too
+big next to them").
+
+- The smithy and the warehouse swapped sides compared with the first triangle. The three are on the
+  radius 700 cm triangle again. Update 2's layout is therefore gone; I kept its text for the record.
+- The smithy model went from 0.35 to 0.6 of the pack's size (about 720 cm wide) and the warehouse from
+  0.3 to 0.55 (about 660 cm). The clinic is unchanged at 0.45.
+- The invisible click cubes were made to match the new widths (700 and 600 cm); before, the warehouse
+  cube was only 160 cm wide.
+- File `19-camp-triangle.png` shows this layout. Still not checked: clicking each building with a mouse,
+  and the packaged camp.

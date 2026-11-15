@@ -12,6 +12,12 @@
 #include "TimerManager.h"
 #include "UnrealClient.h"
 
+namespace
+{
+	/** Distance (cm) from the camp's centre to each building; the three form an equilateral triangle. */
+	constexpr float CampTriangleRadius = 700.0f;
+}
+
 ACampGameMode::ACampGameMode()
 {
 	DefaultPawnClass = ACampPawn::StaticClass();
@@ -42,10 +48,10 @@ void ACampGameMode::BeginPlay()
 	}
 	if (!bHasBuildings)
 	{
-		auto SpawnBuilding = [&](EBuildingType Type, const FVector& Location)
+		auto SpawnBuilding = [&](EBuildingType Type, const FVector& Location, const FRotator& Rotation)
 		{
 			// Deferred spawn: BuildingType must be set BEFORE BeginPlay, which reads it to sync level/tint.
-			const FTransform Transform(FRotator::ZeroRotator, Location);
+			const FTransform Transform(Rotation, Location);
 			if (ACampBuilding* Building = World->SpawnActorDeferred<ACampBuilding>(
 					ACampBuilding::StaticClass(), Transform, nullptr, nullptr,
 					ESpawnActorCollisionHandlingMethod::AlwaysSpawn))
@@ -54,8 +60,11 @@ void ACampGameMode::BeginPlay()
 				Building->FinishSpawning(Transform);
 			}
 		};
-		SpawnBuilding(EBuildingType::Smithy, FVector(-350.0f, 0.0f, 60.0f));
-		SpawnBuilding(EBuildingType::Clinic, FVector(350.0f, 0.0f, 60.0f));
+		// The three buildings stand on an equilateral triangle (radius 700 cm, centred on the origin): the clinic at the top of the
+		// screen with its porch toward the camera, the smithy at the lower left and the warehouse at the lower right. The smithy and
+		// the warehouse are turned a quarter turn clockwise.
+		SpawnBuilding(EBuildingType::Clinic, FVector(CampTriangleRadius, 0.0f, 60.0f), FRotator(0.0f, 180.0f, 0.0f));
+		SpawnBuilding(EBuildingType::Smithy, FVector(-0.5f * CampTriangleRadius, -0.8660254f * CampTriangleRadius, 60.0f), FRotator(0.0f, 90.0f, 0.0f));
 	}
 
 	bool bHasWarehouse = false;
@@ -68,7 +77,7 @@ void ACampGameMode::BeginPlay()
 	{
 		FActorSpawnParameters Params;
 		Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-		World->SpawnActor<ACampWarehouse>(ACampWarehouse::StaticClass(), FVector(0.0f, -350.0f, 60.0f), FRotator::ZeroRotator, Params);
+		World->SpawnActor<ACampWarehouse>(ACampWarehouse::StaticClass(), FVector(-0.5f * CampTriangleRadius, 0.8660254f * CampTriangleRadius, 60.0f), FRotator(0.0f, 90.0f, 0.0f), Params);
 	}
 
 	if (FParse::Param(FCommandLine::Get(), TEXT("CampShot")))

@@ -71,7 +71,7 @@ void ACampBuilding::BeginPlay()
 	}
 	if (!PartComponents.IsEmpty())
 	{
-		ModelScale = BuildingType == EBuildingType::Clinic ? 0.45f : 0.35f;
+		ModelScale = BuildingType == EBuildingType::Clinic ? 0.45f : 0.6f; // the factory is 1200 cm wide at 1.0
 		bUsesModel = true;
 		Mesh->SetVisibility(false); // the cube stays for the clicks, unseen
 	}
@@ -99,7 +99,8 @@ void ACampBuilding::SetLevel(int32 NewLevel)
 	{
 		// A wide invisible click target; the model grows taller with each level.
 		const float Growth = 1.0f + 0.08f * static_cast<float>(FMath::Max(NewLevel, 0));
-		Mesh->SetRelativeScale3D(FVector(4.0f, 4.0f, 3.0f));
+		const float ClickSize = BuildingType == EBuildingType::Clinic ? 4.0f : 7.0f; // cube side in metres: about the model's width
+		Mesh->SetRelativeScale3D(FVector(ClickSize, ClickSize, 3.0f));
 		ModelRoot->SetWorldScale3D(FVector(ModelScale, ModelScale, ModelScale * Growth));
 		ModelRoot->SetWorldLocation(GetActorLocation() - FVector(0.0f, 0.0f, 60.0f));
 		return;
