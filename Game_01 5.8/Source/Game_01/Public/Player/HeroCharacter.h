@@ -70,9 +70,9 @@ public:
 	UPROPERTY(EditAnywhere, Category = "Hero|Model", meta = (ClampMin = "0.1"))
 	float HeroModelScale = 1.1f;
 
-	/** Degrees added to the model's facing so it looks where it walks. */
+	/** Degrees added to the model's facing so it looks where it walks. The pack's hero faces +Y in its own space, so -90 turns it to the actor's forward (+X). */
 	UPROPERTY(EditAnywhere, Category = "Hero|Model")
-	float HeroModelYaw = 0.0f;
+	float HeroModelYaw = -90.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Hero")
 	FDodgeTuning Dodge;
