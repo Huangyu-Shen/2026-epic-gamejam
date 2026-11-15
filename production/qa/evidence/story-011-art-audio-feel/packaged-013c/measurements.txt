@@ -1,0 +1,14 @@
+Packaged Development build, 2026-11-15, built with the command in project.yaml (commands.build).
+Packages: story-013c (size, plugins, frame rate, smoke), story-013d (the star-up pair). Windows, 1920x1080 windowed.
+
+Size, story-013c:   total 1058 MB, Game_01.pdb 355 MB, without the pdb 703 MB
+Plugins:            ModelContextProtocol, AllToolsets and Terminal are not mounted; GameFeatures is (enabled in Game_01.uproject)
+Ensures at start:   0   Errors in the log: 0
+
+PERFPROBE enemies=151 avgFPS=87.9  minFPS=24.6 weapons=off  (a first run, includes warm-up)
+PERFPROBE enemies=150 avgFPS=108.4 minFPS=58.7 weapons=on   (all six weapons at 2 stars, horde topped up each frame)
+minFPS is the worst single frame.
+
+Run map, twice in a row (-ReelProbe):  "No camp save found" then "Loaded camp save"; both settled an extraction.
+Camp map as the default map:           loads, no ensure, no error.
+Star-up pair (-WeaponShowcase -ShowcaseCopies=1/3/9, Gun and Orbit): star-up-copies1/3/9-gun-and-orbit.png

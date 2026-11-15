@@ -107,18 +107,21 @@ void UDirectorProbeSubsystem::StartWeaponShowcase()
 			return;
 		}
 		Hero->Health->bGodMode = true;
-		Progression->DebugGrantWeapon(EWeaponType::Gun, 3);
-		Progression->DebugGrantWeapon(EWeaponType::Orbit, 3);
+		// -ShowcaseCopies=N (1 = one star, 3 = two stars, 9 = three stars) shows how a star-up changes the look of the same scene.
+		int32 Copies = 3;
+		FParse::Value(FCommandLine::Get(), TEXT("ShowcaseCopies="), Copies);
+		Progression->DebugGrantWeapon(EWeaponType::Gun, Copies);
+		Progression->DebugGrantWeapon(EWeaponType::Orbit, Copies);
 		GetWorld()->GetSubsystem<UEnemySpawnSubsystem>()->SpawnHorde(30, true);
 		UE_LOG(LogEnemies, Display, TEXT("SHOWCASE loadout=[%s]"), *Progression->GetLoadoutSummary());
 		FTimerHandle S1, S2, Quit;
-		GetWorld()->GetTimerManager().SetTimer(S1, FTimerDelegate::CreateWeakLambda(this, [this]()
+		GetWorld()->GetTimerManager().SetTimer(S1, FTimerDelegate::CreateWeakLambda(this, [this, Copies]()
 		{
-			FScreenshotRequest::RequestScreenshot(FPaths::ProjectSavedDir() / TEXT("Showcase") / TEXT("1-gun-and-orbit.png"), true, false);
+			FScreenshotRequest::RequestScreenshot(FPaths::ProjectSavedDir() / TEXT("Showcase") / FString::Printf(TEXT("copies%d-1-gun-and-orbit.png"), Copies), true, false);
 		}), 2.5f, false);
-		GetWorld()->GetTimerManager().SetTimer(S2, FTimerDelegate::CreateWeakLambda(this, [this]()
+		GetWorld()->GetTimerManager().SetTimer(S2, FTimerDelegate::CreateWeakLambda(this, [this, Copies]()
 		{
-			FScreenshotRequest::RequestScreenshot(FPaths::ProjectSavedDir() / TEXT("Showcase") / TEXT("2-gun-and-orbit.png"), true, false);
+			FScreenshotRequest::RequestScreenshot(FPaths::ProjectSavedDir() / TEXT("Showcase") / FString::Printf(TEXT("copies%d-2-gun-and-orbit.png"), Copies), true, false);
 		}), 3.3f, false);
 		GetWorld()->GetTimerManager().SetTimer(Quit, FTimerDelegate::CreateLambda([]() { FPlatformMisc::RequestExit(false); }), 5.0f, false);
 	}), 3.0f, false);
@@ -579,9 +582,22 @@ void UDirectorProbeSubsystem::StartPerfProbe()
 		return;
 	}
 
-	// God mode keeps the hero alive; weapon and scheduler off keep exactly EnemyCount enemies alive.
+	// God mode keeps the hero alive; the scheduler is off so only this probe spawns. By default the weapons are off too, which
+	// keeps exactly EnemyCount enemies alive. With -PerfWeapons every weapon is owned at three stars and fires, and the horde is
+	// topped back up to EnemyCount every frame, so the frame rate includes the attacks, their effects and the kills.
 	Hero->Health->bGodMode = true;
-	Hero->Weapon->bEnabled = false;
+	bPerfWeapons = FParse::Param(FCommandLine::Get(), TEXT("PerfWeapons"));
+	Hero->Weapon->bEnabled = bPerfWeapons;
+	if (bPerfWeapons)
+	{
+		if (URunProgressionSubsystem* Progression = GetWorld()->GetSubsystem<URunProgressionSubsystem>())
+		{
+			for (uint8 W = 0; W < static_cast<uint8>(EWeaponType::Count); ++W)
+			{
+				Progression->DebugGrantWeapon(static_cast<EWeaponType>(W), 3);
+			}
+		}
+	}
 	UEnemySpawnSubsystem* Spawner = GetWorld()->GetSubsystem<UEnemySpawnSubsystem>();
 	Spawner->SetSchedulerEnabled(false);
 	Spawner->SpawnHorde(PerfProbe.EnemyCount, true);
@@ -603,6 +619,17 @@ void UDirectorProbeSubsystem::Tick(float DeltaSeconds)
 		return;
 	}
 
+	UEnemyManagerSubsystem* Manager = GetWorld()->GetSubsystem<UEnemyManagerSubsystem>();
+	if (bPerfWeapons)
+	{
+		const int32 Missing = PerfProbe.EnemyCount - Manager->GetAliveCount();
+		if (Missing > 0)
+		{
+			GetWorld()->GetSubsystem<UEnemySpawnSubsystem>()->SpawnHorde(Missing, true);
+		}
+	}
+	AliveSum += Manager->GetAliveCount();
+
 	const float FrameSeconds = FApp::GetDeltaTime();
 	SampledSeconds += FrameSeconds;
 	WorstFrameSeconds = FMath::Max(WorstFrameSeconds, FrameSeconds);
@@ -610,10 +637,10 @@ void UDirectorProbeSubsystem::Tick(float DeltaSeconds)
 
 	if (SampledSeconds >= PerfProbe.SampleSeconds)
 	{
-		const int32 Alive = GetWorld()->GetSubsystem<UEnemyManagerSubsystem>()->GetAliveCount();
+		const int32 Alive = FMath::RoundToInt(static_cast<float>(AliveSum) / static_cast<float>(FMath::Max(SampleCount, 1)));
 		const float AvgFps = SampleCount / SampledSeconds;
 		const float MinFps = 1.0f / FMath::Max(WorstFrameSeconds, UE_SMALL_NUMBER);
-		UE_LOG(LogEnemies, Display, TEXT("PERFPROBE enemies=%d avgFPS=%.1f minFPS=%.1f samples=%d"), Alive, AvgFps, MinFps, SampleCount);
+		UE_LOG(LogEnemies, Display, TEXT("PERFPROBE enemies=%d avgFPS=%.1f minFPS=%.1f samples=%d weapons=%s"), Alive, AvgFps, MinFps, SampleCount, bPerfWeapons ? TEXT("on") : TEXT("off"));
 		bTickEnabled = false;
 		FPlatformMisc::RequestExit(false);
 	}

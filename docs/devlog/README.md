@@ -4,10 +4,9 @@ A solo entry to the 2026 Epic AI MegaJam, built in Unreal Engine 5.8 (C++) with
 Claude Code driving the editor through the official Unreal MCP plugin.
 
 **Status:** this log is updated every day of the jam. Days 1, 2 and 3 are written. Day 4
-(15 Nov) is in progress: the submission texts are drafted, the code got a first tech-debt pass,
-and the final package is not built yet. Stories 001 to 010 and 012 are closed; story 011 (art,
-audio, feel) has its code done and its packaged-build checks open; story 013 (package and
-submission) is started.
+(15 Nov) is in progress: the submission texts are drafted, the tech debt register is closed except
+one item, and the packaged build has been measured. Stories 001 to 012 are closed; story 013 (package and
+submission) is in progress: the final package, the hand walk-through, the video and the submission remain.
 
 **Public address of this log** (the repository is public):
 <https://github.com/Huangyu-Shen/2026-epic-gamejam/blob/main/docs/devlog/README.md>
@@ -72,6 +71,10 @@ can read a day from top to bottom or open just the part you care about.
 | [05 A tech debt scan and a register](day-4/05-tech-debt-scan-and-register.md) | 89 files scanned, 20 items scored, and why the code wiki waits |
 | [06 The first refactor batch](day-4/06-first-refactor-batch.md) | Probes out of the game mode, a guarded debug key, one save write instead of three, a soft-pause fix |
 | [07 Tests that were seen failing](day-4/07-tests-that-were-seen-failing.md) | Seven new tests, and breaking the code on purpose to see two of them fail |
+| [08 Splitting the progression subsystem](day-4/08-splitting-the-progression-subsystem.md) | 684 lines into three plain modules, 19 tests to 41, and `FireWeapon` into five functions |
+| [09 A bad save file crashed the game](day-4/09-a-bad-save-file-crashed-the-game.md) | A garbage file in the save slot made the engine assert at start; the check, the backups and what is not covered |
+| [10 Closing the register](day-4/10-closing-the-register.md) | The author's question about 12 open items, what was done, what was accepted and why |
+| [11 The first packages since the refactor](day-4/11-the-first-packages-since-the-refactor.md) | A plugin change that only a package could show was wrong, size, frame rate with weapons on, and the star-up pair |
 
 ## The game in one paragraph
 
@@ -115,26 +118,24 @@ process, not a description of what I intended.
 
 ## By the numbers
 
-Counted from the repository on 15 November, late on Day 4, on local `main` (the last two
-commits were not pushed when this was written). Everything is merged: the boss, the floor-edge
-fix, the Esc menu, the Fab models, the camp buildings, the facing fix, the first tech-debt batch
-and the new tests.
+Counted from the repository on 15 November, late on Day 4, on `main`. Everything is merged and pushed:
+the boss, the floor-edge fix, the Esc menu, the Fab models, the camp buildings, the facing fix, the tech-debt
+batches and the new tests.
 
-- 30 commits on `main`, ten of them through pull requests (3 to 12; the last one squashed nine
+- 32 commits on `main`, 16 of them through pull requests (3 to 16; each of the last four squashed several
   commits into one).
-- 93 C++ source files, about 10,900 lines (`.h` and `.cpp` under `Source/`, including 454 lines
-  of tests).
-- 13 story files: 11 closed as complete (stories 001 to 010 and 012; 010 with notes), story 011
-  in progress (code done; the packaged-build checks are open) and story 013 (the submission)
-  started. The Day 2 redesign (cut one, keep two; star merge) was built without a story file, and
-  the Day 3 playtest then replaced the cut rule again.
-- 12 game-design documents (the master PRD and 11 system documents, including the art and audio
-  direction) plus the one-page brief, and a tech debt register of 20 items (6 resolved).
-- 19 automated tests (the star-merge rules, the lost-reel unlock rules, the locked-option rules,
-  the run settlement and the order of an offer). None cover the boss, the weapons added on Day 3,
-  the floor clamp, `GenerateOffer` as a whole or save loading. The earlier stories were verified by
-  playing and by screenshots; automated tests were waived at the project's minimal QA level. That
-  is a gap, and I say so in Day 2.
+- 99 C++ source files, about 11,850 lines (`.h` and `.cpp` under `Source/`, including about 1,160 lines of tests).
+- 13 story files: 12 closed as complete (stories 001 to 012; 010 with notes), and story 013 (the submission)
+  in progress. The Day 2 redesign
+  (cut one, keep two; star merge) was built without a story file, and the Day 3 playtest then replaced the cut
+  rule again.
+- 12 game-design documents (the master PRD and 11 system documents, including the art and audio direction)
+  plus the one-page brief, and a tech debt register of 21 items: 18 resolved, 2 accepted with reasons, 1 open.
+- 46 automated tests (the star-merge rules, the lost-reel and locked-option rules, the run settlement, the
+  loadout, the offer rules and wording, the save checks, the building math). None cover the boss, firing a
+  weapon, the floor clamp or the code that ties the subsystems to the world. The earlier stories were
+  verified by playing and by screenshots; automated tests were waived at the project's minimal QA level.
+  That is a gap, and I say so in Day 2.
 - Performance check: 152 enemies on screen averaged **132 FPS**, with the single
   worst frame at 50 FPS (target was 60 or more). I accepted that as advisory.
 
@@ -187,6 +188,12 @@ Each of these happened in this project; the day entries have the details.
    of its code was merged, and the package command that a story said was written down was not
    there at all. See [Day 4, entry 02](day-4/02-preparing-the-submission-materials.md) and
    [entry 04](day-4/04-housekeeping-config-and-unused-packs.md).
+12. **"Done" means the list is empty, or says why not.** I called a refactor mostly done with 12 items open,
+   and the author asked why. The open items were then done or accepted with a written reason. See
+   [Day 4, entry 10](day-4/10-closing-the-register.md).
+13. **Test the failure path before you trust the recovery.** Writing a garbage file into a save slot to see
+   a backup work showed that the game crashed on it. See
+   [Day 4, entry 09](day-4/09-a-bad-save-file-crashed-the-game.md).
 
 ## Tools
 

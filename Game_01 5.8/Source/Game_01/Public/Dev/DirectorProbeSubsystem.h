@@ -50,7 +50,7 @@ struct GAME_01_API FOfferProbeTuning
  * Runs the automated test probes of the run map. It is created only when a probe flag is on the command line
  * (see GameDebug::HasProbeFlag) and never in a Shipping build, so a normal game has none of this running.
  *
- * Flags: -PerfProbe (150-enemy frame rate, logs PERFPROBE), -OfferProbe (level-up panel, cuts, weapon visuals; logs
+ * Flags: -PerfProbe (150-enemy frame rate, logs PERFPROBE; add -PerfWeapons to fire every weapon at three stars and keep the horde topped up), -OfferProbe (level-up panel, cuts, weapon visuals; logs
  * OFFERPROBE and saves screenshots to Saved/OfferProbe/), -ReelProbe or -ReelProbe=die (a lost film reel through
  * extraction or death; -ReelCount=N), -PaceProbe (a bot plays a whole run; -PaceSpeed=N and the -Pace... overrides),
  * -WeaponShowcase, -PauseProbe, -EdgeProbe, -BossProbe and -ZoneShot (screenshots). Every probe exits the game when done.
@@ -101,6 +101,8 @@ private:
 	FTimerHandle PaceHandle;
 	bool bTickEnabled = false;
 	bool bPaceProbe = false;
+	bool bPerfWeapons = false;
+	int64 AliveSum = 0;
 	float PaceSeconds = 0.0f;
 	float PaceAngle = 0.0f;
 	int32 OfferProbeStep = 0;

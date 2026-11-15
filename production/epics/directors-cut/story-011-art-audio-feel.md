@@ -1,13 +1,13 @@
 # Story 011: Art, audio and feel
 
 > **Epic**: Director's Cut (MVP)
-> **Status**: In Progress
+> **Status**: Complete
 > **Layer**: N/A (minimal)
 > **Type**: Visual/Feel
 > **Estimate**: L
 > **Tier**: Should (`design/prd/master-prd.md` §6 row 11), except replacing the DrawDebug weapon visuals, which is Must for a Shipping package. Code parts must be in before the Day 3 23:00 freeze; swapping assets is allowed after it (PRD §8 rule 4)
 > **Manifest Version**: N/A (minimal — no control manifest)
-> **Last Updated**: 2026-11-14
+> **Last Updated**: 2026-11-15
 
 ## Context
 
@@ -42,14 +42,14 @@ Assets (can continue after the freeze):
 - [x] Hero, grunts and boss stay easy to tell apart at a glance against the floor, with 150 enemies on screen. (screenshot 12-forest-floor-and-horde; a 150-enemy shot with weapons firing does not exist)
 
 Constraints (PRD §5):
-- [ ] The frame rate still holds 60 FPS or more at 1080p with 150 enemies on screen after the asset swap. (PARTLY: packaged probe 151 enemies, avg 130 FPS, min 96, but with weapons off, taken at story-011 time; not re-run after later assets)
-- [ ] The packaged build is under 1 GB without the `.pdb` file. It was about 0.75 GB before any art. (STALE: 679 MB at story-011 time; many packs were imported since, re-measure in story 013)
-- [ ] No trademarks or logos; content suits ages 13+; all text and audio are English. (NOT CHECKED systematically)
+- [x] The frame rate still holds 60 FPS or more at 1080p with 150 enemies on screen after the asset swap. (checked 2026-11-15 in the packaged Development build, windowed 1920x1080: `-PerfProbe -PerfWeapons` keeps 150 enemies alive while all six weapons fire at 2 stars: average 108 FPS, worst single frame 58.7 FPS. With the weapons off: average 88 FPS, worst frame 24.6, the first run after a start, which includes warm-up. The worst-frame figures are below 60 and are advisory, as on Day 3)
+- [x] The packaged build is under 1 GB without the `.pdb` file. It was about 0.75 GB before any art. (checked 2026-11-15: 703 MB without `Game_01.pdb` (355 MB), 1,058 MB with it, package `story-013c`)
+- [x] No trademarks or logos; content suits ages 13+; all text and audio are English. (checked 2026-11-15: no Chinese characters in the source or config, no trademark names found in the source, README or submission text; the cartoon monsters and fantasy combat are my judgement for 13+; the author's play found nothing)
 - [x] Every external asset and every AI tool used is listed in `docs/devlog/README.md` (Assets and Tools sections) with its source and licence. (checked 2026-11-15: audio and model packs listed with licences, CC-BY credit in the Esc menu; two imported packs are marked "not used so far")
 - [x] (Review 2) Before any WeLoveIndies file is imported, the user confirms that a jam with cash prizes counts as non-commercial under that licence. (NOT NEEDED: no WeLoveIndies audio was used; the sounds and music come from Fab packs, see README)
 
 Evidence:
-- [ ] Retained screenshots in `production/qa/evidence/`: camp, a run in combat, a star-up, all taken from the packaged build. (camp and combat exist in `story-011-art-audio-feel/`; no star-up screenshot found; whether each was taken from the packaged build is not stated except 3-packaged-bolt-beam)
+- [x] Retained screenshots in `production/qa/evidence/`: camp, a run in combat, a star-up, all taken from the packaged build. (`production/qa/evidence/story-011-art-audio-feel/packaged-013c/`, package `story-013c`/`story-013d`: `3-camp.png`, `1-combat-gun-and-orbit.png`, `2-combat-gun-and-orbit.png`, `4-result-extracted.png`, and `star-up-copies1/3/9-gun-and-orbit.png`: the same scene at 1, 2 and 3 stars, where the orbit goes from 2 small balls to 6 large ones)
 
 ---
 
@@ -105,3 +105,9 @@ Evidence:
 - Depends on: none of the v2 stories; can run alongside 008-010
 - Soft: `production/epics/directors-cut/story-009-unlockable-upgrades.md` (its weapon needs a look if it ships)
 - Unlocks: None
+
+## Completion Notes
+**Completed**: 2026-11-15
+**Criteria**: all 16 checked. Audio and music were confirmed by the author's play of the packaged build; the numbers and screenshots above were taken from package `story-013c` (frame rate, size, plugins) and `story-013d` (the star-up pair).
+**Deviations**: the worst single frame is below 60 FPS (24.6 to 58.7), advisory. The star-up look is size and count only (the orbit gets more and larger balls), no change of colour or shape.
+**Reviewed by**: self, no independent review

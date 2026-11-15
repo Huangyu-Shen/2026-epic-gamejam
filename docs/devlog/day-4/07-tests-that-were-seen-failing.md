@@ -1,6 +1,6 @@
 # Day 4 (15 Nov) · Tests that were seen failing
 
-[Dev log index](../README.md) · [← previous](06-first-refactor-batch.md)
+[Dev log index](../README.md) · [← previous](06-first-refactor-batch.md) · [next →](08-splitting-the-progression-subsystem.md)
 
 The register says the project had only 12 tests, all on small helper functions. The refactor of
 `RunProgressionSubsystem` that comes next needs more than that, so this entry adds some first.
