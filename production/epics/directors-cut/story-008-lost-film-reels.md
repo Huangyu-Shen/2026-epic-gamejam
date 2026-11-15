@@ -1,13 +1,13 @@
 # Story 008: Lost film reels — relics become unlock keys
 
 > **Epic**: Director's Cut (MVP)
-> **Status**: Complete (editor); packaged-build check below
+> **Status**: Complete
 > **Layer**: N/A (minimal)
 > **Type**: Integration
 > **Estimate**: M
 > **Tier**: Must (`design/prd/master-prd.md` §6 row 5) — not subject to the Day 3 18:00 cut
 > **Manifest Version**: N/A (minimal — no control manifest)
-> **Last Updated**: 2026-11-14 (reviewed against the PRD and the source tree; second review filled the gaps marked "Review 2")
+> **Last Updated**: 2026-11-14
 
 ## Context
 
@@ -120,6 +120,11 @@ All paths are under `Game_01 5.8/Source/Game_01/`.
 ## Completion Notes
 
 **Completed**: 2026-11-14
+**Criteria**: 20/20 passing (covered by 5 unit tests, probe logs and screenshots opened and read; 3 behaviours never played by hand, see below)
+**Deviations**: None blocking. Advisory: probe constants in `ADirectorGameMode::StepReelProbe` (25 Iron) and `ACampGameMode` (4 s and 1.5 s) are literals in harness code, not gameplay. Out of scope for the story's `## Files` list: `DirectorGameMode` and `CampGameMode` (probes), `AutoWeaponComponent.cpp` (dropped the bag buff read), `ExtractionTypes.h` (`OptionsUnlocked`), and comment-only edits in `CampWarehouse.h`, `CampWidget.h`, `HeroCharacter.h`, `RunOutcomeSubsystem.h`.
+**Untested criteria (advisory, qa.level minimal)**: searching a real crate or vault and picking up a reel with E; the vault always holding a reel while one can drop; a reel type already in the bag not dropping again in the same run (the unit tests and the probe's `anotherReelCanDrop` field cover the rules, not a played run).
+**Test Evidence**: 5 automation tests (`ReelUnlockTest.cpp`, suite 9/9) and `production/qa/evidence/story-008-lost-film-reels/` (editor) plus `packaged/`. Tests are waived at qa.level minimal; the screenshots are not. No evidence stamp exists (`RECEIPT: NONE`), so whether the images are older than the code cannot be told.
+**Reviewed by**: self, no independent review (solo mode)
 **Changes to v1 behaviour (say so in the summary):** a reel can no longer be used in a run (keys 1-6 for relics are gone; 1-3 only cut a level-up option); the camp warehouse no longer dismantles relics for Iron; a reel's buff and the heat drop on use are gone. The Fast Cut reel is the only one that drops until story 009 gives the other two an option.
 
 **What was built**

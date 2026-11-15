@@ -1,6 +1,10 @@
 #include "UI/DirectorUi.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/Border.h"
+#include "Components/ButtonSlot.h"
+#include "Components/HorizontalBox.h"
+#include "Components/HorizontalBoxSlot.h"
+#include "Styling/SlateTypes.h"
 #include "Components/CanvasPanel.h"
 #include "Components/CanvasPanelSlot.h"
 #include "Components/PanelWidget.h"
@@ -21,19 +25,24 @@ namespace DirectorUi
 	const FLinearColor GoodColor(0.35f, 0.9f, 0.4f);
 	const FLinearColor BadColor(0.95f, 0.35f, 0.3f);
 
-	static FSlateBrush SolidBrush(const FLinearColor& Tint)
+	/** A rounded rectangle with a thin outline: panels, cards and buttons all share it so their edges are clear. */
+	static FSlateBrush BoxBrush(const FLinearColor& Fill, const FLinearColor& Outline, float OutlineWidth = 1.5f, float Radius = 8.0f)
 	{
 		FSlateBrush Brush;
-		Brush.DrawAs = ESlateBrushDrawType::Image;
-		Brush.TintColor = FSlateColor(Tint);
+		Brush.DrawAs = ESlateBrushDrawType::RoundedBox;
+		Brush.TintColor = FSlateColor(Fill);
+		Brush.OutlineSettings.CornerRadii = FVector4(Radius, Radius, Radius, Radius);
+		Brush.OutlineSettings.RoundingType = ESlateBrushRoundingType::FixedRadius;
+		Brush.OutlineSettings.Color = FSlateColor(Outline);
+		Brush.OutlineSettings.Width = OutlineWidth;
 		return Brush;
 	}
 
 	UPanelWidget* MakePanel(UWidgetTree* Tree, UCanvasPanel* Canvas, const FUiPlacement& Placement, bool bScroll, UWidget** OutRoot)
 	{
 		UBorder* Border = Tree->ConstructWidget<UBorder>();
-		Border->SetBrush(SolidBrush(FLinearColor(0.02f, 0.02f, 0.04f, 0.72f)));
-		Border->SetPadding(FMargin(12.0f));
+		Border->SetBrush(BoxBrush(FLinearColor(0.03f, 0.035f, 0.06f, 0.95f), FLinearColor(0.55f, 0.6f, 0.75f, 0.9f), 2.0f, 10.0f));
+		Border->SetPadding(FMargin(16.0f));
 
 		UPanelWidget* Content = nullptr;
 		if (bScroll)
@@ -117,18 +126,78 @@ namespace DirectorUi
 		return Bar;
 	}
 
-	UUiActionButton* AddButton(UWidgetTree* Tree, UPanelWidget* Parent, const FString& Caption, FName Action, int32 Index)
+	UUiActionButton* AddButton(UWidgetTree* Tree, UPanelWidget* Parent, const FString& Caption, FName Action, int32 Index, EUiButtonKind Kind)
 	{
+		FLinearColor Fill(0.16f, 0.18f, 0.26f);
+		FLinearColor Edge(0.6f, 0.65f, 0.8f);
+		if (Kind == EUiButtonKind::Primary)
+		{
+			Fill = FLinearColor(0.08f, 0.38f, 0.16f);
+			Edge = FLinearColor(0.45f, 1.0f, 0.55f);
+		}
+		else if (Kind == EUiButtonKind::Danger)
+		{
+			Fill = FLinearColor(0.36f, 0.09f, 0.08f);
+			Edge = FLinearColor(1.0f, 0.5f, 0.45f);
+		}
+
 		UUiActionButton* Button = Tree->ConstructWidget<UUiActionButton>();
+		FButtonStyle Style;
+		Style.SetNormal(BoxBrush(Fill, Edge));
+		Style.SetHovered(BoxBrush(Fill * 1.6f + FLinearColor(0.05f, 0.05f, 0.05f, 0.0f), FLinearColor::White, 2.5f));
+		Style.SetPressed(BoxBrush(Fill * 0.7f, Edge));
+		Style.SetDisabled(BoxBrush(FLinearColor(0.1f, 0.1f, 0.12f), FLinearColor(0.3f, 0.3f, 0.35f)));
+		Button->SetStyle(Style);
+
 		Button->Label = Tree->ConstructWidget<UTextBlock>();
 		Button->Label->SetText(FText::FromString(Caption));
+		Button->Label->SetColorAndOpacity(FSlateColor(FLinearColor::White));
+		Button->Label->SetJustification(ETextJustify::Center);
 		FSlateFontInfo Font = Button->Label->GetFont();
-		Font.Size = 16;
+		Font.Size = 18;
+		Font.TypefaceFontName = TEXT("Bold");
 		Button->Label->SetFont(Font);
-		Button->AddChild(Button->Label);
+		if (UButtonSlot* Slot = Cast<UButtonSlot>(Button->AddChild(Button->Label)))
+		{
+			Slot->SetPadding(FMargin(16.0f, 9.0f));
+			Slot->SetHorizontalAlignment(HAlign_Center);
+		}
 		Button->Init(Action, Index);
 		Parent->AddChild(Button);
+		if (UVerticalBoxSlot* BoxSlot = Cast<UVerticalBoxSlot>(Button->Slot))
+		{
+			BoxSlot->SetPadding(FMargin(0.0f, 4.0f));
+		}
 		return Button;
+	}
+
+	UPanelWidget* AddRow(UWidgetTree* Tree, UPanelWidget* Parent)
+	{
+		UHorizontalBox* Row = Tree->ConstructWidget<UHorizontalBox>();
+		Parent->AddChild(Row);
+		return Row;
+	}
+
+	UPanelWidget* AddCard(UWidgetTree* Tree, UPanelWidget* Row, const FLinearColor& Accent, float Width, UWidget** OutRoot)
+	{
+		USizeBox* Size = Tree->ConstructWidget<USizeBox>();
+		Size->SetWidthOverride(Width);
+		UBorder* Card = Tree->ConstructWidget<UBorder>();
+		Card->SetBrush(BoxBrush(FLinearColor(0.07f, 0.08f, 0.13f, 1.0f), Accent, 2.5f, 10.0f));
+		Card->SetPadding(FMargin(14.0f));
+		UVerticalBox* Content = Tree->ConstructWidget<UVerticalBox>();
+		Card->SetContent(Content);
+		Size->AddChild(Card);
+		Row->AddChild(Size);
+		if (UHorizontalBoxSlot* Slot = Cast<UHorizontalBoxSlot>(Size->Slot))
+		{
+			Slot->SetPadding(FMargin(6.0f, 0.0f));
+		}
+		if (OutRoot)
+		{
+			*OutRoot = Size;
+		}
+		return Content;
 	}
 
 	void ReturnFocusToGame()

@@ -1,0 +1,77 @@
+## editor run 1
+LogEnemies: Display: TUNING hero maxHealth=150 campDamage=+0 campHealth=+0 xpToLevel2=30
+LogEnemies: Display: TUNING grunt health=25 speed=330 contact=6/0.8s range=90  boss health=1500 speed=180 contact=35
+LogEnemies: Display: TUNING spawn base=0.50/s ramp=+0.60/s per minute maxAlive=200 ring=1500-1900
+LogEnemies: Display: TUNING weapon 0 damage=20+10/level interval=0.35s range=220 locked=0
+LogEnemies: Display: TUNING weapon 1 damage=12+7/level interval=0.55s range=900 locked=0
+LogEnemies: Display: TUNING weapon 2 damage=14+8/level interval=0.80s range=320 locked=0
+LogEnemies: Display: TUNING weapon 3 damage=12+6/level interval=1.10s range=700 locked=1
+LogEnemies: Display: PACEPROBE t=30s level=2 hp=140/170 alive=9 spawnRate=0.81/s loadout=[Blade Lv1*   Swiftness Lv1*   Vitality Lv1*]
+LogEnemies: Display: PACEPROBE t=60s level=4 hp=142/190 alive=10 spawnRate=1.10/s loadout=[Blade Lv1*   Bolt Lv2*   Swiftness Lv1*   Might Lv1*   Vitality Lv2*]
+LogEnemies: Display: PACEPROBE t=90s level=7 hp=180/240 alive=5 spawnRate=1.37/s loadout=[Blade Lv1*   Bolt Lv4**   Swiftness Lv1*   Might Lv2*   Vitality Lv3**   Greed Lv2*]
+LogEnemies: Display: PACEPROBE t=120s level=8 hp=210/270 alive=7 spawnRate=1.67/s loadout=[Blade Lv1*   Bolt Lv4**   Swiftness Lv1*   Might Lv3**   Vitality Lv4**   Greed Lv2*]
+LogEnemies: Display: PACEPROBE t=150s level=10 hp=210/270 alive=9 spawnRate=1.96/s loadout=[Blade Lv1*   Bolt Lv5**   Swiftness Lv1*   Might Lv5**   Vitality Lv4**   Greed Lv3**]
+LogEnemies: Display: PACEPROBE t=180s level=11 hp=198/270 alive=10 spawnRate=2.25/s loadout=[Blade Lv1*   Bolt Lv5**   Swiftness Lv1*   Might Lv6**   Vitality Lv4**   Greed Lv4**]
+LogEnemies: Display: PACEPROBE t=210s level=13 hp=222/300 alive=12 spawnRate=2.54/s loadout=[Blade Lv1*   Bolt Lv7**   Swiftness Lv1*   Might Lv6**   Vitality Lv5**   Greed Lv5**]
+LogEnemies: Display: PACEPROBE t=240s level=14 hp=246/330 alive=16 spawnRate=2.83/s loadout=[Blade Lv1*   Bolt Lv8**   Swiftness Lv1*   Might Lv6**   Vitality Lv6**   Greed Lv5**]
+LogEnemies: Display: PACEPROBE t=270s level=15 hp=270/360 alive=17 spawnRate=3.12/s loadout=[Blade Lv1*   Bolt Lv9***   Swiftness Lv1*   Might Lv6**   Vitality Lv7**   Greed Lv5**]
+LogEnemies: Display: PACEPROBE t=300s level=16 hp=252/360 alive=22 spawnRate=3.42/s loadout=[Blade Lv1*   Bolt Lv9***   Swiftness Lv1*   Might Lv7**   Vitality Lv7**   Greed Lv6**]
+LogEnemies: Display: PACEPROBE t=330s level=17 hp=228/390 alive=21 spawnRate=3.72/s loadout=[Blade Lv1*   Bolt Lv9***   Swiftness Lv1*   Might Lv7**   Vitality Lv8**   Greed Lv7**]
+LogEnemies: Display: PACEPROBE t=360s level=18 hp=186/390 alive=21 spawnRate=4.02/s loadout=[Blade Lv1*   Bolt Lv9***   Swiftness Lv1*   Might Lv8**   Vitality Lv8**   Greed Lv8**]
+LogEnemies: Display: PACEPROBE t=390s level=19 hp=150/390 alive=27 spawnRate=4.32/s loadout=[Blade Lv1*   Bolt Lv9***   Swiftness Lv1*   Might Lv9***   Vitality Lv8**   Greed Lv9***]
+LogEnemies: Display: PACEPROBE t=420s level=20 hp=330/600 alive=25 spawnRate=4.62/s loadout=[Blade Lv1*   Bolt Lv9***   Swiftness Lv1*   Might Lv9***   Vitality Lv9***   Greed Lv9***]
+LogEnemies: Display: PACEPROBE t=450s level=21 hp=300/600 alive=38 spawnRate=4.92/s loadout=[Blade Lv1*   Bolt Lv9***   Swiftness Lv1*   Might Lv9***   Vitality Lv9***   Greed Lv9***]
+LogEnemies: Display: PACEPROBE t=480s level=22 hp=258/600 alive=34 spawnRate=5.22/s loadout=[Blade Lv1*   Bolt Lv9***   Swiftness Lv1*   Might Lv9***   Vitality Lv9***   Greed Lv9***]
+LogEnemies: Display: PACEPROBE t=510s level=22 hp=192/600 alive=50 spawnRate=5.52/s loadout=[Blade Lv1*   Bolt Lv9***   Swiftness Lv1*   Might Lv9***   Vitality Lv9***   Greed Lv9***]
+LogEnemies: Display: PACEPROBE t=540s level=23 hp=120/600 alive=59 spawnRate=5.82/s loadout=[Blade Lv1*   Bolt Lv9***   Swiftness Lv1*   Might Lv9***   Vitality Lv9***   Greed Lv9***]
+LogEnemies: Display: PACEPROBE t=566s level=24 hp=0/600 alive=74 spawnRate=6.07/s loadout=[Blade Lv1*   Bolt Lv9***   Swiftness Lv1*   Might Lv9***   Vitality Lv9***   Greed Lv9***]
+LogEnemies: Display: PACEPROBE END outcome=2 (1 extracted, 2 died, 0 still running) at t=566s level=24
+## editor run 2
+LogEnemies: Display: TUNING hero maxHealth=150 campDamage=+0 campHealth=+0 xpToLevel2=30
+LogEnemies: Display: TUNING grunt health=25 speed=330 contact=6/0.8s range=90  boss health=1500 speed=180 contact=35
+LogEnemies: Display: TUNING spawn base=0.50/s ramp=+0.60/s per minute maxAlive=200 ring=1500-1900
+LogEnemies: Display: TUNING weapon 0 damage=20+10/level interval=0.35s range=220 locked=0
+LogEnemies: Display: TUNING weapon 1 damage=12+7/level interval=0.55s range=900 locked=0
+LogEnemies: Display: TUNING weapon 2 damage=14+8/level interval=0.80s range=320 locked=0
+LogEnemies: Display: TUNING weapon 3 damage=12+6/level interval=1.10s range=700 locked=1
+LogEnemies: Display: PACEPROBE t=30s level=2 hp=138/150 alive=14 spawnRate=0.81/s loadout=[Blade Lv1*   Swiftness Lv1*   Greed Lv1*]
+LogEnemies: Display: PACEPROBE t=60s level=4 hp=120/150 alive=28 spawnRate=1.10/s loadout=[Blade Lv1*   Nova Lv1*   Swiftness Lv1*   Might Lv2*   Greed Lv2*]
+LogEnemies: Display: PACEPROBE t=90s level=7 hp=66/150 alive=24 spawnRate=1.38/s loadout=[Blade Lv1*   Nova Lv3**   Swiftness Lv4**   Might Lv2*   Greed Lv3**]
+LogEnemies: Display: PACEPROBE t=120s level=8 hp=60/150 alive=42 spawnRate=1.68/s loadout=[Blade Lv1*   Nova Lv4**   Swiftness Lv5**   Might Lv2*   Greed Lv3**]
+LogEnemies: Display: PACEPROBE t=150s level=9 hp=30/150 alive=53 spawnRate=1.98/s loadout=[Blade Lv1*   Nova Lv4**   Swiftness Lv6**   Might Lv3**   Greed Lv3**]
+LogEnemies: Display: PACEPROBE t=180s level=9 hp=24/150 alive=103 spawnRate=2.28/s loadout=[Blade Lv1*   Nova Lv4**   Swiftness Lv6**   Might Lv3**   Greed Lv3**]
+LogEnemies: Display: PACEPROBE t=210s level=9 hp=24/150 alive=168 spawnRate=2.58/s loadout=[Blade Lv1*   Nova Lv4**   Swiftness Lv6**   Might Lv3**   Greed Lv3**]
+LogEnemies: Display: PACEPROBE t=240s level=9 hp=24/150 alive=200 spawnRate=2.88/s loadout=[Blade Lv1*   Nova Lv4**   Swiftness Lv6**   Might Lv3**   Greed Lv3**]
+LogEnemies: Display: PACEPROBE t=270s level=9 hp=24/150 alive=200 spawnRate=3.18/s loadout=[Blade Lv1*   Nova Lv4**   Swiftness Lv6**   Might Lv3**   Greed Lv3**]
+LogEnemies: Display: PACEPROBE t=300s level=9 hp=24/150 alive=200 spawnRate=3.48/s loadout=[Blade Lv1*   Nova Lv4**   Swiftness Lv6**   Might Lv3**   Greed Lv3**]
+LogEnemies: Display: PACEPROBE t=330s level=9 hp=24/150 alive=200 spawnRate=3.78/s loadout=[Blade Lv1*   Nova Lv4**   Swiftness Lv6**   Might Lv3**   Greed Lv3**]
+LogEnemies: Display: PACEPROBE t=360s level=9 hp=24/150 alive=200 spawnRate=4.08/s loadout=[Blade Lv1*   Nova Lv4**   Swiftness Lv6**   Might Lv3**   Greed Lv3**]
+## editor run 3
+LogEnemies: Display: TUNING hero maxHealth=150 campDamage=+0 campHealth=+0 xpToLevel2=30
+LogEnemies: Display: TUNING grunt health=25 speed=330 contact=6/0.8s range=90  boss health=1500 speed=180 contact=35
+LogEnemies: Display: TUNING spawn base=0.50/s ramp=+0.60/s per minute maxAlive=200 ring=1500-1900
+LogEnemies: Display: TUNING weapon 0 damage=20+10/level interval=0.35s range=220 locked=0
+LogEnemies: Display: TUNING weapon 1 damage=12+7/level interval=0.55s range=900 locked=0
+LogEnemies: Display: TUNING weapon 2 damage=14+8/level interval=0.80s range=320 locked=0
+LogEnemies: Display: TUNING weapon 3 damage=12+6/level interval=1.10s range=700 locked=1
+LogEnemies: Display: PACEPROBE t=30s level=2 hp=128/170 alive=9 spawnRate=0.80/s loadout=[Blade Lv1*   Might Lv1*   Vitality Lv1*]
+LogEnemies: Display: PACEPROBE t=60s level=4 hp=100/190 alive=7 spawnRate=1.09/s loadout=[Blade Lv1*   Bolt Lv1*   Nova Lv2*   Might Lv1*   Vitality Lv2*]
+LogEnemies: Display: PACEPROBE t=90s level=6 hp=168/270 alive=4 spawnRate=1.38/s loadout=[Blade Lv1*   Bolt Lv3**   Nova Lv2*   Might Lv1*   Vitality Lv4**]
+LogEnemies: Display: PACEPROBE t=120s level=7 hp=198/300 alive=7 spawnRate=1.67/s loadout=[Blade Lv1*   Bolt Lv3**   Nova Lv3**   Might Lv1*   Vitality Lv5**]
+LogEnemies: Display: PACEPROBE t=150s level=9 hp=198/300 alive=7 spawnRate=1.95/s loadout=[Blade Lv1*   Bolt Lv4**   Nova Lv5**   Swiftness Lv1*   Might Lv1*   Vitality Lv5**]
+LogEnemies: Display: PACEPROBE t=180s level=10 hp=228/330 alive=10 spawnRate=2.25/s loadout=[Blade Lv1*   Bolt Lv4**   Nova Lv5**   Swiftness Lv2*   Might Lv1*   Vitality Lv6**]
+LogEnemies: Display: PACEPROBE t=210s level=11 hp=234/360 alive=11 spawnRate=2.54/s loadout=[Blade Lv1*   Bolt Lv4**   Nova Lv6**   Swiftness Lv2*   Might Lv1*   Vitality Lv7**]
+LogEnemies: Display: PACEPROBE t=240s level=11 hp=228/360 alive=18 spawnRate=2.84/s loadout=[Blade Lv1*   Bolt Lv4**   Nova Lv6**   Swiftness Lv2*   Might Lv1*   Vitality Lv7**]
+LogEnemies: Display: PACEPROBE t=270s level=12 hp=252/390 alive=17 spawnRate=3.13/s loadout=[Blade Lv1*   Bolt Lv5**   Nova Lv6**   Swiftness Lv2*   Might Lv1*   Vitality Lv8**]
+LogEnemies: Display: PACEPROBE t=300s level=13 hp=450/600 alive=22 spawnRate=3.42/s loadout=[Blade Lv1*   Bolt Lv5**   Nova Lv7**   Swiftness Lv2*   Might Lv1*   Vitality Lv9***]
+LogEnemies: Display: PACEPROBE t=330s level=14 hp=414/600 alive=22 spawnRate=3.71/s loadout=[Blade Lv1*   Bolt Lv6**   Nova Lv7**   Swiftness Lv3**   Might Lv1*   Vitality Lv9***]
+LogEnemies: Display: PACEPROBE t=360s level=14 hp=402/600 alive=30 spawnRate=4.02/s loadout=[Blade Lv1*   Bolt Lv6**   Nova Lv7**   Swiftness Lv3**   Might Lv1*   Vitality Lv9***]
+LogEnemies: Display: PACEPROBE t=390s level=15 hp=384/600 alive=33 spawnRate=4.31/s loadout=[Blade Lv1*   Bolt Lv7**   Nova Lv7**   Swiftness Lv4**   Might Lv1*   Vitality Lv9***]
+LogEnemies: Display: PACEPROBE t=420s level=15 hp=360/600 alive=40 spawnRate=4.61/s loadout=[Blade Lv1*   Bolt Lv7**   Nova Lv7**   Swiftness Lv4**   Might Lv1*   Vitality Lv9***]
+LogEnemies: Display: PACEPROBE t=450s level=16 hp=330/600 alive=57 spawnRate=4.91/s loadout=[Blade Lv1*   Bolt Lv8**   Nova Lv8**   Swiftness Lv4**   Might Lv1*   Vitality Lv9***]
+LogEnemies: Display: PACEPROBE t=480s level=16 hp=300/600 alive=63 spawnRate=5.21/s loadout=[Blade Lv1*   Bolt Lv8**   Nova Lv8**   Swiftness Lv4**   Might Lv1*   Vitality Lv9***]
+LogEnemies: Display: PACEPROBE t=510s level=16 hp=252/600 alive=63 spawnRate=5.51/s loadout=[Blade Lv1*   Bolt Lv8**   Nova Lv8**   Swiftness Lv4**   Might Lv1*   Vitality Lv9***]
+LogEnemies: Display: PACEPROBE t=540s level=17 hp=204/600 alive=56 spawnRate=5.80/s loadout=[Blade Lv1*   Bolt Lv9***   Nova Lv8**   Swiftness Lv5**   Might Lv1*   Vitality Lv9***]
+LogEnemies: Display: PACEPROBE t=570s level=17 hp=168/600 alive=63 spawnRate=6.10/s loadout=[Blade Lv1*   Bolt Lv9***   Nova Lv8**   Swiftness Lv5**   Might Lv1*   Vitality Lv9***]
+LogEnemies: Display: PACEPROBE t=600s level=17 hp=72/600 alive=65 spawnRate=6.40/s loadout=[Blade Lv1*   Bolt Lv9***   Nova Lv8**   Swiftness Lv5**   Might Lv1*   Vitality Lv9***]
+LogEnemies: Display: PACEPROBE END outcome=0 (1 extracted, 2 died, 0 still running) at t=600s level=17

@@ -30,7 +30,7 @@ TSharedRef<SWidget> UCampWidget::RebuildWidget()
 		Left.Position = FVector2D(16.0, 16.0);
 		Left.Size = FVector2D(460.0, 0.0);
 		Left.bFillHeight = true;
-		Left.BottomMargin = 90.0f; // leaves room for the START RUN panel
+		Left.BottomMargin = 100.0f; // leaves room for the START RUN panel
 		Content = DirectorUi::MakePanel(WidgetTree, Canvas, Left, /*bScroll=*/true);
 		Toasts.Build(WidgetTree, Canvas);
 
@@ -41,8 +41,17 @@ TSharedRef<SWidget> UCampWidget::RebuildWidget()
 		Bottom.Position = FVector2D(16.0, -16.0);
 		Bottom.Size = FVector2D(460.0, 0.0);
 		UPanelWidget* StartPanel = DirectorUi::MakePanel(WidgetTree, Canvas, Bottom);
-		UUiActionButton* Start = DirectorUi::AddButton(WidgetTree, StartPanel, TEXT("START RUN"), TEXT("Start"));
+		UUiActionButton* Start = DirectorUi::AddButton(WidgetTree, StartPanel, TEXT("START RUN"), TEXT("Start"), 0, EUiButtonKind::Primary);
 		Start->OnAction.AddDynamic(this, &UCampWidget::HandleAction);
+
+		// Quit sits alone in the top-right corner, away from START RUN, so the two are never confused.
+		FUiPlacement QuitPlacement;
+		QuitPlacement.Anchor = FVector2D(1.0, 0.0);
+		QuitPlacement.Alignment = FVector2D(1.0, 0.0);
+		QuitPlacement.Position = FVector2D(-16.0, 16.0);
+		UPanelWidget* QuitPanel = DirectorUi::MakePanel(WidgetTree, Canvas, QuitPlacement);
+		UUiActionButton* Quit = DirectorUi::AddButton(WidgetTree, QuitPanel, TEXT("QUIT   (Esc)"), TEXT("Quit"), 0, EUiButtonKind::Danger);
+		Quit->OnAction.AddDynamic(this, &UCampWidget::HandleAction);
 	}
 	return Super::RebuildWidget();
 }
@@ -209,6 +218,10 @@ void UCampWidget::HandleAction(FName Action, int32 Index)
 				bMessageIsError = true;
 			}
 		}
+	}
+	else if (Action == TEXT("Quit"))
+	{
+		FPlatformMisc::RequestExit(false);
 	}
 	else if (Action == TEXT("Start"))
 	{

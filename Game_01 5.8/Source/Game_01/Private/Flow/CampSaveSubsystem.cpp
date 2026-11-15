@@ -56,7 +56,7 @@ void UCampSaveSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 				UE_LOG(LogCampSave, Log, TEXT("Migrated a v%d save: %d relics [%s] -> %d unlocked options"),
 					Save->SaveVersion, Save->WarehouseRelics.Num(), *RelicNames, Unlocked.Num());
 			}
-			Stock->RestoreState(Save->Iron, Unlocked);
+			Stock->RestoreState(Save->Iron, Unlocked, Save->NewOptions);
 			Meta->RestoreLevels(Save->BuildingLevels);
 			bApplyingLoad = false;
 			UE_LOG(LogCampSave, Log, TEXT("Loaded camp save: Iron %d, %d unlocked options, %d building entries"),
@@ -113,6 +113,7 @@ bool UCampSaveSubsystem::SaveNow()
 	Save->SaveVersion = UCampSaveGame::CurrentSaveVersion;
 	Save->Iron = Stock->GetIron();
 	Save->UnlockedOptions = Stock->GetUnlockedOptions();
+	Save->NewOptions = Stock->GetNewOptions();
 	Save->BuildingLevels = Meta->GetLevels();
 
 	const bool bOk = UGameplayStatics::SaveGameToSlot(Save, GetSlotName(), 0);

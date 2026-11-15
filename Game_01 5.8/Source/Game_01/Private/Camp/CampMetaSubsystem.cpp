@@ -1,4 +1,5 @@
 #include "Camp/CampMetaSubsystem.h"
+#include "Audio/GameAudioSubsystem.h"
 #include "Extraction/CampStockSubsystem.h"
 #include "Game/DirectorTuningSettings.h"
 #include "Engine/DataTable.h"
@@ -101,6 +102,7 @@ bool UCampMetaSubsystem::TryUpgrade(EBuildingType Type, FText& Reason)
 	int32& Level = Levels.FindOrAdd(Type);
 	++Level;
 	UE_LOG(LogCamp, Log, TEXT("%s upgraded to level %d for %d Iron"), *BuildingDisplayName(Type).ToString(), Level, Cost);
+	UGameAudioSubsystem::PlayIn(GetGameInstance(), EGameSound::Upgrade);
 	OnMetaChanged.Broadcast();
 	return true;
 }

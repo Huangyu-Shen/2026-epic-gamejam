@@ -5,17 +5,26 @@
 #include "Engine/DataTable.h"
 #include "ProgressionTypes.generated.h"
 
-/** The three weapons, each with a distinct auto-attack pattern. */
+/**
+ * The weapons, each with a distinct auto-attack pattern. Chain is locked until a lost film reel unlocks it
+ * (story 009); its row name, "Chain", is the option id stored in the save.
+ */
 UENUM(BlueprintType)
 enum class EWeaponType : uint8
 {
 	Blade UMETA(DisplayName = "Blade"),   // nearest single target
 	Bolt  UMETA(DisplayName = "Bolt"),    // piercing line
 	Nova  UMETA(DisplayName = "Nova"),    // radial burst
+	Chain UMETA(DisplayName = "Chain"),   // hits the nearest enemy, then jumps to others nearby
+	Gun   UMETA(DisplayName = "Gun"),     // long-range bullets at the nearest enemy
+	Orbit UMETA(DisplayName = "Orbit"),  // balls that circle the hero and hurt what they touch
 	Count UMETA(Hidden),
 };
 
-/** The four passives; each applies its effect immediately on pick. */
+/**
+ * The passives; each applies its effect immediately on pick. Haste and Magnet are locked until a lost film
+ * reel unlocks them (story 009); their row names are the option ids stored in the save.
+ */
 UENUM(BlueprintType)
 enum class EPassiveType : uint8
 {
@@ -23,6 +32,12 @@ enum class EPassiveType : uint8
 	Might     UMETA(DisplayName = "Might"),     // +damage
 	Vitality  UMETA(DisplayName = "Vitality"),  // +max health
 	Greed     UMETA(DisplayName = "Greed"),     // +XP gain
+	Haste     UMETA(DisplayName = "Haste"),     // faster attacks
+	Magnet    UMETA(DisplayName = "Magnet"),    // wider XP pickup radius
+	Reach     UMETA(DisplayName = "Reach"),     // longer weapon range
+	Armor     UMETA(DisplayName = "Armor"),     // less contact damage
+	Regen     UMETA(DisplayName = "Regen"),     // health regeneration
+	Crit      UMETA(DisplayName = "Crit"),      // chance for double damage
 	Count     UMETA(Hidden),
 };
 
@@ -43,6 +58,10 @@ struct GAME_01_API FXpCurveRow : public FTableRowBase
 	/** XP one enemy drop is worth (before the Greed multiplier). */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Progression", meta = (ClampMin = "0.0"))
 	float XpPerKill = 5.0f;
+
+	/** Distance (cm) within which XP pickups fly to the hero, before the Magnet passive. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Progression", meta = (ClampMin = "0.0"))
+	float BaseMagnetRadius = 600.0f;
 };
 
 /** One weapon's stats and level cap. Usable as a DataTable row; defaults are the Blade. */
@@ -76,6 +95,26 @@ struct GAME_01_API FWeaponRow : public FTableRowBase
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon", meta = (ClampMin = "1"))
 	int32 MaxLevel = 5;
+
+	/** Chain only: how many further enemies the hit jumps to after the first. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon", meta = (ClampMin = "0"))
+	int32 ChainJumps = 0;
+
+	/** Chain only: the longest jump (cm) from one enemy to the next. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon", meta = (ClampMin = "0.0"))
+	float ChainRange = 0.0f;
+
+	/** Gun: bullet speed (cm/s). Orbit: how fast the balls circle (degrees per second). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon", meta = (ClampMin = "0.0"))
+	float ProjectileSpeed = 0.0f;
+
+	/** Gun: bullets per shot at level 1. Orbit: balls at level 1. One more every second level, to a cap. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon", meta = (ClampMin = "1"))
+	int32 ProjectileCount = 1;
+
+	/** True: not in the level-up pool until a lost film reel unlocks the option named by this row. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
+	bool bStartsLocked = false;
 };
 
 /** One passive's per-stack effect and cap. Usable as a DataTable row. */
@@ -105,6 +144,38 @@ struct GAME_01_API FPassiveRow : public FTableRowBase
 	/** Greed: added to the XP-gain multiplier per stack. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Passive")
 	float XpGainAdd = 0.0f;
+
+	/** Haste: added to the attack-speed multiplier per stack (every weapon's interval is divided by it). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Passive", meta = (ClampMin = "0.0"))
+	float AttackSpeedAdd = 0.0f;
+
+	/** Magnet: distance (cm) added to the XP pickup radius per stack. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Passive", meta = (ClampMin = "0.0"))
+	float MagnetRadiusAdd = 0.0f;
+
+	/** Reach: added to every weapon's range multiplier per stack. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Passive", meta = (ClampMin = "0.0"))
+	float RangeAdd = 0.0f;
+
+	/** Armor: share of contact damage removed per stack (the total is capped at 75%). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Passive", meta = (ClampMin = "0.0"))
+	float DamageReductionAdd = 0.0f;
+
+	/** Regen: health restored per second per stack. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Passive", meta = (ClampMin = "0.0"))
+	float RegenPerSecondAdd = 0.0f;
+
+	/** Crit: chance added per stack that an attack does CritMultiplier times damage (the total is capped at 90%). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Passive", meta = (ClampMin = "0.0"))
+	float CritChanceAdd = 0.0f;
+
+	/** Crit: damage multiplier of a critical hit. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Passive", meta = (ClampMin = "1.0"))
+	float CritMultiplier = 2.0f;
+
+	/** True: not in the level-up pool until a lost film reel unlocks the option named by this row. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Passive")
+	bool bStartsLocked = false;
 };
 
 /**
@@ -177,4 +248,14 @@ struct GAME_01_API FStarTuning
 
 	/** How many cuts in one run remove an option for good: the pool never shrinks below MinPoolSize. */
 	int32 PermanentCutsForPool(int32 PoolSize) const { return FMath::Max(PoolSize - MinPoolSize, 0); }
+};
+
+/** Which options may appear in a level-up offer (story 009). Pure, so it is unit tested without a world. */
+struct GAME_01_API FOptionUnlock
+{
+	/** An option is in the pool unless it starts locked and a lost film reel has not unlocked its id. */
+	static bool IsAvailable(bool bStartsLocked, FName OptionId, const TArray<FName>& Unlocked)
+	{
+		return !bStartsLocked || Unlocked.Contains(OptionId);
+	}
 };

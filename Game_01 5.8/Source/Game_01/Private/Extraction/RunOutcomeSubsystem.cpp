@@ -1,4 +1,5 @@
 #include "Extraction/RunOutcomeSubsystem.h"
+#include "Audio/GameAudioSubsystem.h"
 #include "Loot/LootConfig.h"
 #include "Extraction/CampStockSubsystem.h"
 #include "Flow/CampSaveSubsystem.h"
@@ -76,5 +77,6 @@ void URunOutcomeSubsystem::EndRun(ULootBagComponent* Bag, ERunOutcome NewOutcome
 		: FString::Printf(TEXT("DIED: lost %d Iron and %d lost reels"), LastResult.IronLost, LastResult.RelicsLost.Num());
 	UE_LOG(LogExtraction, Log, TEXT("%s"), *Summary);
 
+	UGameAudioSubsystem::PlayIn(this, bExtracted ? EGameSound::Extraction : EGameSound::PlayerDeath);
 	OnRunEnded.Broadcast(LastResult);
 }

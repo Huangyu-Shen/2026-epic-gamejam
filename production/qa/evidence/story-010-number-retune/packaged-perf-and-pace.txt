@@ -1,0 +1,31 @@
+## packaged Development build, 1920x1080 windowed, -PerfProbe
+LogEnemies: Display: PERFPROBE enemies=151 avgFPS=118.3 minFPS=13.0 samples=1184
+## packaged build, -PaceProbe on a fresh save
+LogEnemies: Display: TUNING hero maxHealth=150 campDamage=+0 campHealth=+0 xpToLevel2=30
+LogEnemies: Display: TUNING grunt health=25 speed=330 contact=6/0.8s range=90  boss health=1500 speed=180 contact=35
+LogEnemies: Display: TUNING spawn base=0.50/s ramp=+0.60/s per minute maxAlive=200 ring=1500-1900
+LogEnemies: Display: TUNING weapon 0 damage=20+10/level interval=0.35s range=220 locked=0
+LogEnemies: Display: TUNING weapon 1 damage=12+7/level interval=0.55s range=900 locked=0
+LogEnemies: Display: TUNING weapon 2 damage=14+8/level interval=0.80s range=320 locked=0
+LogEnemies: Display: TUNING weapon 3 damage=12+6/level interval=1.10s range=700 locked=1
+LogEnemies: Display: PACEPROBE t=30s level=2 hp=126/150 alive=8 spawnRate=0.81/s loadout=[Blade Lv2*   Greed Lv1*]
+LogEnemies: Display: PACEPROBE t=60s level=5 hp=148/190 alive=17 spawnRate=1.09/s loadout=[Blade Lv2*   Nova Lv2*   Vitality Lv2*   Greed Lv3**]
+LogEnemies: Display: PACEPROBE t=90s level=8 hp=252/300 alive=10 spawnRate=1.37/s loadout=[Blade Lv3**   Nova Lv4**   Vitality Lv5**   Greed Lv3**]
+LogEnemies: Display: PACEPROBE t=120s level=10 hp=276/330 alive=14 spawnRate=1.66/s loadout=[Blade Lv4**   Nova Lv5**   Vitality Lv6**   Greed Lv4**]
+LogEnemies: Display: PACEPROBE t=150s level=12 hp=294/360 alive=11 spawnRate=1.95/s loadout=[Blade Lv6**   Nova Lv5**   Vitality Lv7**   Greed Lv5**]
+LogEnemies: Display: PACEPROBE t=180s level=13 hp=270/360 alive=19 spawnRate=2.24/s loadout=[Blade Lv7**   Nova Lv6**   Vitality Lv7**   Greed Lv5**]
+LogEnemies: Display: PACEPROBE t=210s level=14 hp=276/390 alive=18 spawnRate=2.54/s loadout=[Blade Lv7**   Nova Lv7**   Vitality Lv8**   Greed Lv5**]
+LogEnemies: Display: PACEPROBE t=240s level=15 hp=252/390 alive=15 spawnRate=2.83/s loadout=[Blade Lv8**   Nova Lv7**   Vitality Lv8**   Greed Lv6**]
+LogEnemies: Display: PACEPROBE t=270s level=16 hp=444/600 alive=23 spawnRate=3.13/s loadout=[Blade Lv8**   Nova Lv7**   Vitality Lv9***   Greed Lv7**]
+LogEnemies: Display: PACEPROBE t=300s level=17 hp=420/600 alive=27 spawnRate=3.42/s loadout=[Blade Lv9***   Nova Lv7**   Vitality Lv9***   Greed Lv8**]
+LogEnemies: Display: PACEPROBE t=330s level=19 hp=414/600 alive=25 spawnRate=3.72/s loadout=[Blade Lv9***   Nova Lv9***   Vitality Lv9***   Greed Lv9***]
+LogEnemies: Display: PACEPROBE t=360s level=20 hp=396/600 alive=16 spawnRate=4.02/s loadout=[Blade Lv9***   Nova Lv9***   Vitality Lv9***   Greed Lv9***]
+LogEnemies: Display: PACEPROBE t=390s level=21 hp=390/600 alive=25 spawnRate=4.32/s loadout=[Blade Lv9***   Nova Lv9***   Vitality Lv9***   Greed Lv9***]
+LogEnemies: Display: PACEPROBE t=420s level=21 hp=372/600 alive=25 spawnRate=4.62/s loadout=[Blade Lv9***   Nova Lv9***   Vitality Lv9***   Greed Lv9***]
+LogEnemies: Display: PACEPROBE t=450s level=22 hp=360/600 alive=23 spawnRate=4.92/s loadout=[Blade Lv9***   Nova Lv9***   Vitality Lv9***   Greed Lv9***]
+LogEnemies: Display: PACEPROBE t=480s level=23 hp=342/600 alive=32 spawnRate=5.22/s loadout=[Blade Lv9***   Nova Lv9***   Vitality Lv9***   Greed Lv9***]
+LogEnemies: Display: PACEPROBE t=510s level=23 hp=312/600 alive=31 spawnRate=5.52/s loadout=[Blade Lv9***   Nova Lv9***   Vitality Lv9***   Greed Lv9***]
+LogEnemies: Display: PACEPROBE t=540s level=24 hp=270/600 alive=39 spawnRate=5.82/s loadout=[Blade Lv9***   Nova Lv9***   Vitality Lv9***   Greed Lv9***]
+LogEnemies: Display: PACEPROBE t=570s level=24 hp=252/600 alive=38 spawnRate=6.12/s loadout=[Blade Lv9***   Nova Lv9***   Vitality Lv9***   Greed Lv9***]
+LogEnemies: Display: PACEPROBE t=600s level=25 hp=240/600 alive=42 spawnRate=6.42/s loadout=[Blade Lv9***   Nova Lv9***   Vitality Lv9***   Greed Lv9***]
+LogEnemies: Display: PACEPROBE END outcome=0 (1 extracted, 2 died, 0 still running) at t=600s level=25

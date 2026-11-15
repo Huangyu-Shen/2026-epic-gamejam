@@ -36,6 +36,10 @@ public:
 	UPROPERTY()
 	TArray<FName> UnlockedOptions;
 
+	/** Unlocked options the player has not yet seen in a level-up offer (story 009). Added without a version bump: an older v2 file simply has none. */
+	UPROPERTY()
+	TArray<FName> NewOptions;
+
 	UPROPERTY()
 	TMap<EBuildingType, int32> BuildingLevels;
 };

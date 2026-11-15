@@ -1,6 +1,6 @@
 # Day 3 (14 Nov) · Keeping the documentation true to the code
 
-[Dev log index](../README.md) · [← previous](03-a-bug-only-the-real-save-showed.md) · [next →](05-status-so-far.md)
+[Dev log index](../README.md) · [← previous](03-a-bug-only-the-real-save-showed.md) · [next →](05-checking-the-code-wiki-against-the-source.md)
 
 Changing a system makes the documents about it wrong. After story 008, the code
 wiki, the loot design document and the story files all described relics that no

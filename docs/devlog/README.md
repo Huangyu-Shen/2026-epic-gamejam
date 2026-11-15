@@ -4,7 +4,8 @@ A solo entry to the 2026 Epic AI MegaJam, built in Unreal Engine 5.8 (C++) with
 Claude Code driving the editor through the official Unreal MCP plugin.
 
 **Status:** this log is updated every day of the jam. Days 1 and 2 are written,
-Day 3 is in progress, and Day 4 has a plan on record.
+Day 3 is in progress (stories 008, 009 and 010 closed, 010 with 8 criteria deferred to a human playtest), and Day 4 has a plan
+on record.
 
 **Public address of this log** (the repository is public):
 <https://github.com/Huangyu-Shen/2026-epic-gamejam/blob/main/docs/devlog/README.md>
@@ -42,7 +43,12 @@ can read a day from top to bottom or open just the part you care about.
 | [02 Story 008: lost film reels](day-3/02-story-008-lost-film-reels.md) | Relics become unlock keys; data tables; probes in the editor and the package |
 | [03 A bug only my real save showed](day-3/03-a-bug-only-the-real-save-showed.md) | A save-version default that silently skipped the migration |
 | [04 Keeping the docs honest](day-3/04-keeping-the-docs-honest.md) | Updating the wiki and design docs, and checking the sub-agent's work |
-| [05 Status so far](day-3/05-status-so-far.md) | What is done, not done and not checked |
+| [05 Checking the code wiki against the source](day-3/05-checking-the-code-wiki-against-the-source.md) | Four agents re-verify nine pages; the old errors and the code defects they found |
+| [06 Story 009: unlockable options](day-3/06-story-009-unlockable-options.md) | Haste, Magnet and Chain; NEW! in the next run; two problems the probes showed |
+| [07 When the agent was blocked](day-3/07-when-the-agent-was-blocked.md) | A command refused by the permission checker, and what the agent did |
+| [08 Story 010: the first number pass](day-3/08-story-010-first-number-pass.md) | A bot measures the pace; five sets tried; four numbers changed |
+| [09 Closing the stories](day-3/09-closing-the-stories.md) | How stories 008–010 were closed, with the gaps written down |
+| [10 Status so far](day-3/10-status-so-far.md) | What is done, not done and not checked |
 
 ### Day 4 — 15 Nov: package and submit (planned)
 
@@ -94,14 +100,16 @@ process, not a description of what I intended.
 Counted from the repository on 14 November, part-way through Day 3. Work from
 Day 3 is not committed yet, so these are working-tree counts.
 
-- 17 commits on `main` as of the evening of Day 2, two of them through pull
-  requests.
-- 74 C++ source files, about 6,950 lines (`.h` and `.cpp` under `Source/`).
-- 8 stories shipped: the 7 for the first version of the loop, plus story 008 on
-  Day 3; the Day 2 redesign (cut one, keep two; star merge) was built without a
-  story file.
+- 18 commits on `main`, three of them through pull requests; the work of stories 009
+  and 010 and the wiki re-check is not committed yet.
+- 72 C++ source files, about 7,140 lines (`.h` and `.cpp` under `Source/`, not
+  counting the 302 lines of tests).
+- 9 stories shipped: the 7 for the first version of the loop, plus stories 008 and
+  009 on Day 3, and a first pass at story 010; the Day 2 redesign (cut one, keep
+  two; star merge) was built without a story file.
 - 13 story files in all, and 12 design documents (one master PRD and 11 system docs).
-- 9 automated tests (the star-merge and cut rules, and the lost-reel unlock rules).
+- 12 automated tests (the star-merge and cut rules, the lost-reel unlock rules, and
+  the locked-option rules).
   The earlier stories were verified by playing and by screenshots; automated tests
   were waived at the project's minimal QA level. That is a gap, and I say so in
   Day 2.
@@ -141,7 +149,15 @@ Each of these happened in this project; the day entries have the details.
    in both cases the checks that mattered (links, leftovers, unverified claims)
    were run afterwards by me and the main agent. See
    [Day 2, entry 06](day-2/06-english-sweep-and-gitignore.md) and
-   [Day 3, entry 04](day-3/04-keeping-the-docs-honest.md).
+   [Day 3, entry 04](day-3/04-keeping-the-docs-honest.md) and
+   [entry 05](day-3/05-checking-the-code-wiki-against-the-source.md).
+8. **Measure the pace with a bot before arguing about feel.** A bot that only walks in
+   circles showed that a three-to-ten-minute run was impossible on the numbers the
+   game had. It does not tell me whether the game is fun, but it found a problem
+   that no earlier check had. See
+   [Day 3, entry 08](day-3/08-story-010-first-number-pass.md).
+9. **A blocked agent should stop and say so.** See
+   [Day 3, entry 07](day-3/07-when-the-agent-was-blocked.md).
 
 ## Tools
 
@@ -176,7 +192,21 @@ The rules allow preparing tools and ask us to declare what was made earlier.
 
 ## Assets and credits
 
-All visuals so far are Unreal Engine primitive shapes (cubes and cylinders) with
-no external assets and no audio. The open-source game catalogue
+Visuals are Unreal Engine primitive shapes (cubes, cylinders) with one flat-colour
+material made for this project. The open-source game catalogue
 (github.com/Trilarion/opensourcegames) was read for research and not used as a
-code base (Day 2 explains why). This section will list anything added later.
+code base (Day 2 explains why).
+
+Audio, all from Fab and imported on 14 November. None was made with AI according to
+the listings. Licences are as shown on each Fab page; I read the pages, not the full
+licence texts, and I am not giving legal advice.
+
+| Pack | Author | Licence on its Fab page | Used for |
+|---|---|---|---|
+| Path of Adventure - Free Music Pack for JRPG | Kounine | Creative Commons CC-BY (credit required) | Run music (Battle loop) and camp music (Village loop) |
+| 50 Free Game Sounds Pack | PlaceHolder Inc | Fab standard licence, personal tier (free) | The nine sound effects |
+| Atmospheric Worlds - FREE Game Music Pack | Marika Schanz | Fab standard licence; the page says free for commercial and non-commercial use | Imported, not used so far |
+| Small Sound Kit | Sound Works 12 | Fab standard licence | Imported, not used so far |
+
+**Credit (CC-BY):** music by Kounine, "Path of Adventure - Free Music Pack for JRPG",
+Creative Commons CC-BY, via Fab.

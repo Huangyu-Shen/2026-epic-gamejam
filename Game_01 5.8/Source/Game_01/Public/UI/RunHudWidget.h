@@ -56,6 +56,11 @@ private:
 	// Level-up panel.
 	UPROPERTY() TObjectPtr<UWidget> OfferRoot;
 	UPROPERTY() TArray<TObjectPtr<UUiActionButton>> OfferButtons;
+	UPROPERTY() TArray<TObjectPtr<UUiActionButton>> CutButtons;
+	UPROPERTY() TArray<TObjectPtr<UWidget>> CardRoots;
+	UPROPERTY() TArray<TObjectPtr<UTextBlock>> CardTitles;
+	UPROPERTY() TArray<TObjectPtr<UTextBlock>> CardDetails;
+	UPROPERTY() TArray<TObjectPtr<UTextBlock>> CardNotes;
 	UPROPERTY() TObjectPtr<UTextBlock> CutInfoText;
 
 	// Result screen.

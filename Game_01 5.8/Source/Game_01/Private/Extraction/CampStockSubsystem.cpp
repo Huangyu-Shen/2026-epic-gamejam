@@ -18,9 +18,15 @@ bool UCampStockSubsystem::UnlockOption(FName Option)
 	{
 		return false;
 	}
+	NewOptions.AddUnique(Option);
 	UE_LOG(LogExtraction, Log, TEXT("Upgrade option unlocked: %s (%d unlocked)"), *Option.ToString(), UnlockedOptions.Num());
 	OnStockChanged.Broadcast();
 	return true;
+}
+
+TArray<FName> UCampStockSubsystem::TakeNewOptions()
+{
+	return MoveTemp(NewOptions);
 }
 
 bool UCampStockSubsystem::SpendIron(int32 Amount)
@@ -39,13 +45,21 @@ bool UCampStockSubsystem::SpendIron(int32 Amount)
 	return true;
 }
 
-void UCampStockSubsystem::RestoreState(int32 InIron, const TArray<FName>& InUnlockedOptions)
+void UCampStockSubsystem::RestoreState(int32 InIron, const TArray<FName>& InUnlockedOptions, const TArray<FName>& InNewOptions)
 {
 	Iron = FMath::Max(InIron, 0);
 	UnlockedOptions.Reset();
+	NewOptions.Reset();
 	for (const FName Option : InUnlockedOptions)
 	{
 		FReelUnlocks::AddOption(UnlockedOptions, Option);
+	}
+	for (const FName Option : InNewOptions)
+	{
+		if (UnlockedOptions.Contains(Option))
+		{
+			NewOptions.AddUnique(Option);
+		}
 	}
 	UE_LOG(LogExtraction, Log, TEXT("Camp stock restored: Iron %d, %d unlocked options"), Iron, UnlockedOptions.Num());
 	OnStockChanged.Broadcast();

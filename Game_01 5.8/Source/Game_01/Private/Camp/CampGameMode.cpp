@@ -1,4 +1,5 @@
 #include "Camp/CampGameMode.h"
+#include "Audio/GameAudioSubsystem.h"
 #include "Camp/CampBuilding.h"
 #include "Camp/CampPawn.h"
 #include "Camp/CampWarehouse.h"
@@ -24,6 +25,11 @@ void ACampGameMode::BeginPlay()
 	if (!World)
 	{
 		return;
+	}
+
+	if (UGameAudioSubsystem* Audio = World->GetSubsystem<UGameAudioSubsystem>())
+	{
+		Audio->StartMusic(EMusicTrack::Camp);
 	}
 
 	// Spawn the two buildings and the warehouse if the level does not already contain them

@@ -1,0 +1,3 @@
+Reviewed-Content-Hash: Game_01 5.8/Source/Game_01/Private/Combat/AutoWeaponComponent.cpp 75ca38b1cfa3dc3ce051fbbe7b0f2870272faa9f
+Reviewed-Content-Hash: Game_01 5.8/Source/Game_01/Private/Combat/WeaponEffect.cpp 95287a215dfbcca616e16811557ed1e11a05d8ba
+Reviewed-Content-Hash: Game_01 5.8/Source/Game_01/Private/Enemies/Enemy.cpp d1258d06a566e2e7ab11aeb9289f7305f6a25cec

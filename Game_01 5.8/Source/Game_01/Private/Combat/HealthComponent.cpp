@@ -65,6 +65,14 @@ void UHealthComponent::Kill()
 	OnDied.Broadcast();
 }
 
+void UHealthComponent::Heal(float Amount)
+{
+	if (Amount > 0.0f && !IsDead())
+	{
+		Health = FMath::Min(Health + Amount, Tuning.MaxHealth);
+	}
+}
+
 void UHealthComponent::ResetHealth()
 {
 	Health = Tuning.MaxHealth;

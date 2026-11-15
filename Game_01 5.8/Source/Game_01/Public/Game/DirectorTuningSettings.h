@@ -4,6 +4,7 @@
 #include "CoreMinimal.h"
 #include "Engine/DataTable.h"
 #include "Engine/DeveloperSettings.h"
+#include "Audio/GameAudioSubsystem.h"
 #include "Progression/ProgressionTypes.h"
 #include "DirectorTuningSettings.generated.h"
 
@@ -70,4 +71,32 @@ public:
 	/** Table of FBuildingRow. Rows "Smithy" and "Clinic" define the camp buildings. */
 	UPROPERTY(EditAnywhere, Config, Category = "Tuning", meta = (RequiredAssetDataTags = "RowStructure=/Script/Game_01.BuildingRow"))
 	TSoftObjectPtr<UDataTable> BuildingTable;
+
+	/** Sound effect for each EGameSound. An empty entry means that event is silent. Loaded with the game, so the cook includes them. */
+	UPROPERTY(EditAnywhere, Config, Category = "Audio")
+	TMap<EGameSound, TSoftObjectPtr<USoundBase>> Sounds;
+
+	/** Music for the camp. Use a sound that loops. */
+	UPROPERTY(EditAnywhere, Config, Category = "Audio")
+	TSoftObjectPtr<USoundBase> CampMusic;
+
+	/** Music for a run. Use a sound that loops. */
+	UPROPERTY(EditAnywhere, Config, Category = "Audio")
+	TSoftObjectPtr<USoundBase> RunMusic;
+
+	/** Overall level, 0 to 1. There is no settings screen, so these are set once here. */
+	UPROPERTY(EditAnywhere, Config, Category = "Audio", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+	float MasterVolume = 0.8f;
+
+	/** Music level relative to the master; kept under the effects. */
+	UPROPERTY(EditAnywhere, Config, Category = "Audio", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+	float MusicVolume = 0.35f;
+
+	/** Effects level relative to the master. */
+	UPROPERTY(EditAnywhere, Config, Category = "Audio", meta = (ClampMin = "0.0", ClampMax = "1.0"))
+	float SfxVolume = 0.7f;
+
+	/** At most this many attack, hit and death sounds start per second, so 150 enemies do not make a wall of noise. */
+	UPROPERTY(EditAnywhere, Config, Category = "Audio", meta = (ClampMin = "1"))
+	int32 MaxCrowdSoundsPerSecond = 16;
 };

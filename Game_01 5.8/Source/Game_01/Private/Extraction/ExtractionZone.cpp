@@ -1,4 +1,7 @@
 #include "Extraction/ExtractionZone.h"
+#include "Audio/GameAudioSubsystem.h"
+#include "Materials/MaterialInstanceDynamic.h"
+#include "UI/HudMessageSubsystem.h"
 #include "Extraction/RunOutcomeSubsystem.h"
 #include "Loot/LootBagComponent.h"
 #include "Components/BoxComponent.h"
@@ -32,11 +35,58 @@ AExtractionZone::AExtractionZone()
 		DiscMesh->SetRelativeScale3D(FVector(4.0f, 4.0f, 0.02f));
 		DiscMesh->SetRelativeLocation(FVector(0.0f, 0.0f, -100.0f));
 	}
+
+	BeaconMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BeaconMesh"));
+	BeaconMesh->SetupAttachment(ZoneVolume);
+	BeaconMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	BeaconMesh->SetCastShadow(false);
+	FillMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("FillMesh"));
+	FillMesh->SetupAttachment(ZoneVolume);
+	FillMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	FillMesh->SetCastShadow(false);
+	static ConstructorHelpers::FObjectFinder<UMaterialInterface> FlatFinder(TEXT("/Game/Materials/M_FlatColor.M_FlatColor"));
+	if (CylinderFinder.Succeeded())
+	{
+		BeaconMesh->SetStaticMesh(CylinderFinder.Object);
+		BeaconMesh->SetRelativeScale3D(FVector(0.6f, 0.6f, 14.0f));
+		BeaconMesh->SetRelativeLocation(FVector(0.0f, 0.0f, 600.0f));
+		FillMesh->SetStaticMesh(CylinderFinder.Object);
+		FillMesh->SetRelativeScale3D(FVector(0.01f, 0.01f, 0.03f));
+		FillMesh->SetRelativeLocation(FVector(0.0f, 0.0f, -95.0f));
+	}
+	if (FlatFinder.Succeeded())
+	{
+		DiscMesh->SetMaterial(0, FlatFinder.Object);
+		BeaconMesh->SetMaterial(0, FlatFinder.Object);
+		FillMesh->SetMaterial(0, FlatFinder.Object);
+	}
+}
+
+void AExtractionZone::UpdateFillVisual() const
+{
+	const float Size = FMath::Max(Progress, 0.01f) * 4.0f;
+	FillMesh->SetRelativeScale3D(FVector(Size, Size, 0.03f));
 }
 
 void AExtractionZone::BeginPlay()
 {
 	Super::BeginPlay();
+
+	// Bright green so it is the one thing on the map that looks like a way out.
+	static const FLinearColor ZoneColor(0.1f, 1.0f, 0.3f);
+	static const FLinearColor FillColor(0.9f, 1.0f, 0.2f);
+	if (UMaterialInstanceDynamic* Material = DiscMesh->CreateDynamicMaterialInstance(0))
+	{
+		Material->SetVectorParameterValue(TEXT("Color"), ZoneColor);
+	}
+	if (UMaterialInstanceDynamic* Material = BeaconMesh->CreateDynamicMaterialInstance(0))
+	{
+		Material->SetVectorParameterValue(TEXT("Color"), ZoneColor);
+	}
+	if (UMaterialInstanceDynamic* Material = FillMesh->CreateDynamicMaterialInstance(0))
+	{
+		Material->SetVectorParameterValue(TEXT("Color"), FillColor);
+	}
 	ZoneVolume->OnComponentBeginOverlap.AddDynamic(this, &AExtractionZone::HandleBeginOverlap);
 	ZoneVolume->OnComponentEndOverlap.AddDynamic(this, &AExtractionZone::HandleEndOverlap);
 
@@ -71,6 +121,11 @@ void AExtractionZone::TryEnter(AActor* OtherActor)
 	{
 		Occupant = Bag;
 		SetActorTickEnabled(true);
+		if (const URunOutcomeSubsystem* Run = GetWorld()->GetSubsystem<URunOutcomeSubsystem>(); Run && Run->IsRunActive())
+		{
+			UGameAudioSubsystem::PlayIn(this, EGameSound::ExtractStart);
+			UHudMessageSubsystem::Post(this, TEXT("EXTRACTING - stay inside the green circle"), FLinearColor(0.3f, 1.0f, 0.4f), 3.0f);
+		}
 	}
 }
 
@@ -95,6 +150,7 @@ void AExtractionZone::Interrupt()
 	if (Progress > 0.0f)
 	{
 		Progress = 0.0f;
+		UpdateFillVisual();
 		OnExtractionInterrupted.Broadcast();
 	}
 }
@@ -122,7 +178,12 @@ void AExtractionZone::Tick(float DeltaSeconds)
 		if (Progress >= 1.0f)
 		{
 			Progress = 0.0f;
+			UpdateFillVisual();
 			Run->ReportExtracted(Bag);
+		}
+		else
+		{
+			UpdateFillVisual();
 		}
 		return;
 	}
@@ -130,6 +191,7 @@ void AExtractionZone::Tick(float DeltaSeconds)
 	// Nobody inside and not resetting: drain the bar.
 	Progress = FMath::Max(0.0f, Progress - Tuning.ProgressDecayPerSecond * DeltaSeconds);
 	OnExtractionProgress.Broadcast(Progress);
+	UpdateFillVisual();
 	if (Progress <= 0.0f)
 	{
 		Interrupt();

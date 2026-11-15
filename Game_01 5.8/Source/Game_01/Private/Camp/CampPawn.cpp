@@ -65,6 +65,12 @@ void ACampPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
 	PlayerInputComponent->BindKey(EKeys::LeftMouseButton, IE_Pressed, this, &ACampPawn::OnClick);
+	PlayerInputComponent->BindKey(EKeys::Escape, IE_Pressed, this, &ACampPawn::QuitKey);
+}
+
+void ACampPawn::QuitKey()
+{
+	FPlatformMisc::RequestExit(false);
 }
 
 void ACampPawn::OnClick()

@@ -75,6 +75,14 @@ struct FToastPanel
 	void Update(const UGameInstance* GameInstance);
 };
 
+/** How a button is coloured: the main action, a risky action, or a quiet one. */
+enum class EUiButtonKind : uint8
+{
+	Normal,
+	Primary,
+	Danger
+};
+
 namespace DirectorUi
 {
 	/** Shared palette. */
@@ -95,7 +103,14 @@ namespace DirectorUi
 
 	UProgressBar* AddBar(UWidgetTree* Tree, UPanelWidget* Parent, const FLinearColor& Fill, float Width, float Height);
 
-	UUiActionButton* AddButton(UWidgetTree* Tree, UPanelWidget* Parent, const FString& Caption, FName Action, int32 Index = 0);
+	UUiActionButton* AddButton(UWidgetTree* Tree, UPanelWidget* Parent, const FString& Caption, FName Action, int32 Index = 0,
+		EUiButtonKind Kind = EUiButtonKind::Normal);
+
+	/** Adds a horizontal row to a vertical box and returns it, for side-by-side cards. */
+	UPanelWidget* AddRow(UWidgetTree* Tree, UPanelWidget* Parent);
+
+	/** Adds a bordered card of a fixed width to a row and returns the vertical box its content goes into. */
+	UPanelWidget* AddCard(UWidgetTree* Tree, UPanelWidget* Row, const FLinearColor& Accent, float Width, UWidget** OutRoot = nullptr);
 
 	/** Gives keyboard focus back to the game so Space/WASD never "press" a button that was just clicked. */
 	void ReturnFocusToGame();

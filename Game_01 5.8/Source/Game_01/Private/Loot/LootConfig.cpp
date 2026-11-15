@@ -5,8 +5,7 @@
 ULootConfig::ULootConfig()
 {
 	// Editable inline defaults (used only when no tables are assigned).
-	// One row per reel type. Only the first reel is mapped to an option until story 009 adds more options
-	// (a reel with no option never drops).
+	// One row per reel type. Each unlocks one upgrade option (story 009); a reel with no option never drops.
 	FRelicRow FastCut;
 	FastCut.RelicType = ERelicType::Swiftstep;
 	FastCut.DisplayName = FText::FromString(TEXT("Fast Cut"));
@@ -15,10 +14,12 @@ ULootConfig::ULootConfig()
 	FRelicRow WideShot;
 	WideShot.RelicType = ERelicType::Warbrand;
 	WideShot.DisplayName = FText::FromString(TEXT("Wide Shot"));
+	WideShot.UnlocksOption = TEXT("Magnet");
 
 	FRelicRow ChainScene;
 	ChainScene.RelicType = ERelicType::Aegis;
 	ChainScene.DisplayName = FText::FromString(TEXT("Chain Scene"));
+	ChainScene.UnlocksOption = TEXT("Chain");
 
 	DefaultRelics = { FastCut, WideShot, ChainScene };
 

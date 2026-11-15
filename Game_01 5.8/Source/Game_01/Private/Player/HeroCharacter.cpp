@@ -47,6 +47,11 @@ AHeroCharacter::AHeroCharacter()
 		BodyMesh->SetStaticMesh(CylinderFinder.Object);
 		BodyMesh->SetRelativeScale3D(FVector(0.7f, 0.7f, 1.76f));
 	}
+	static ConstructorHelpers::FObjectFinder<UMaterialInterface> FlatFinder(TEXT("/Game/Materials/M_FlatColor.M_FlatColor"));
+	if (FlatFinder.Succeeded())
+	{
+		BodyMesh->SetMaterial(0, FlatFinder.Object);
+	}
 
 	// Fixed top-down camera that does not turn with the pawn.
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
@@ -108,6 +113,11 @@ void AHeroCharacter::CreateHud()
 	PC->SetInputMode(Mode);
 }
 
+void AHeroCharacter::QuitKey()
+{
+	FPlatformMisc::RequestExit(false);
+}
+
 void AHeroCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
@@ -115,17 +125,26 @@ void AHeroCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 	PlayerInputComponent->BindKey(EKeys::SpaceBar, IE_Pressed, this, &AHeroCharacter::DodgeKey);
 	PlayerInputComponent->BindKey(EKeys::E, IE_Pressed, this, &AHeroCharacter::SearchNearestContainerKey);
 	PlayerInputComponent->BindKey(EKeys::K, IE_Pressed, this, &AHeroCharacter::DebugDieKey);
+	PlayerInputComponent->BindKey(EKeys::Escape, IE_Pressed, this, &AHeroCharacter::QuitKey);
 
-	// 1/2/3 cut a level-up option while the offer is showing (brief v2). A lost film reel cannot be used.
-	const FKey OfferKeys[] = { EKeys::One, EKeys::Two, EKeys::Three };
-	for (int32 Index = 0; Index < UE_ARRAY_COUNT(OfferKeys); ++Index)
+	// Level-up offer: 1/2/3 take that option, 4/5/6 cut it for good (it goes to the boss) and keep the offer open.
+	const FKey TakeKeys[] = { EKeys::One, EKeys::Two, EKeys::Three };
+	const FKey CutKeys[] = { EKeys::Four, EKeys::Five, EKeys::Six };
+	for (int32 Index = 0; Index < UE_ARRAY_COUNT(TakeKeys); ++Index)
 	{
-		FInputKeyBinding Binding(FInputChord(OfferKeys[Index]), IE_Pressed);
-		Binding.KeyDelegate.GetDelegateForManualSet().BindWeakLambda(this, [this, Index]()
+		FInputKeyBinding Take(FInputChord(TakeKeys[Index]), IE_Pressed);
+		Take.KeyDelegate.GetDelegateForManualSet().BindWeakLambda(this, [this, Index]()
 		{
-			GetWorld()->GetSubsystem<URunProgressionSubsystem>()->CutOffer(Index);
+			GetWorld()->GetSubsystem<URunProgressionSubsystem>()->ChooseOption(Index);
 		});
-		PlayerInputComponent->KeyBindings.Add(Binding);
+		PlayerInputComponent->KeyBindings.Add(Take);
+
+		FInputKeyBinding Cut(FInputChord(CutKeys[Index]), IE_Pressed);
+		Cut.KeyDelegate.GetDelegateForManualSet().BindWeakLambda(this, [this, Index]()
+		{
+			GetWorld()->GetSubsystem<URunProgressionSubsystem>()->CutFromOffer(Index);
+		});
+		PlayerInputComponent->KeyBindings.Add(Cut);
 	}
 }
 
@@ -196,6 +215,10 @@ void AHeroCharacter::StartRun()
 
 float AHeroCharacter::ReceiveEnemyDamage(float Amount)
 {
+	if (const URunProgressionSubsystem* Progression = GetWorld()->GetSubsystem<URunProgressionSubsystem>())
+	{
+		Amount *= 1.0f - Progression->GetDamageReduction();
+	}
 	return Health->ApplyDamage(Amount);
 }
 
@@ -238,6 +261,16 @@ bool AHeroCharacter::SearchNearestContainer()
 void AHeroCharacter::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
+
+	// Regen passive: health back while a run is on and no level-up offer has the game paused.
+	if (const URunProgressionSubsystem* Progression = GetWorld()->GetSubsystem<URunProgressionSubsystem>())
+	{
+		const URunOutcomeSubsystem* Run = GetWorld()->GetSubsystem<URunOutcomeSubsystem>();
+		if (!Progression->IsOfferPending() && Run && Run->IsRunActive())
+		{
+			Health->Heal(Progression->GetRegenPerSecond() * DeltaSeconds);
+		}
+	}
 
 	MoveInput = FVector::ZeroVector;
 	if (CanAct())
