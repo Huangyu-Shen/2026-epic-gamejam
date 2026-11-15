@@ -24,7 +24,7 @@ ACampPawn::ACampPawn()
 	Boom->SetupAttachment(Root);
 	Boom->SetUsingAbsoluteRotation(true);
 	Boom->SetRelativeRotation(FRotator(-75.0f, 0.0f, 0.0f));
-	Boom->TargetArmLength = 1400.0f;
+	Boom->TargetArmLength = 2300.0f;
 	Boom->bDoCollisionTest = false;
 
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("Camera"));

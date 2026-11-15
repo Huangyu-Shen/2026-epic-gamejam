@@ -35,7 +35,8 @@ ACampWarehouse::ACampWarehouse()
 	if (RidgeFinder.Succeeded())
 	{
 		Model->SetStaticMesh(RidgeFinder.Object);
-		Model->SetWorldScale3D(FVector(0.3f));
+		Model->SetWorldScale3D(FVector(0.55f));
+		Mesh->SetRelativeScale3D(FVector(6.0f, 6.0f, 1.0f)); // the invisible click cube, about the model's width
 		Mesh->SetVisibility(false);
 	}
 }
