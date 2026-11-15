@@ -1,6 +1,6 @@
-# Director's Cut — Dev Log
+# Cut Survivors — Dev Log
 
-A solo entry to the 2026 Epic AI MegaJam, built in Unreal Engine 5.8 (C++) with
+A solo entry to the 2026 Epic AI MegaJam (theme: Director's Cut), built in Unreal Engine 5.8 (C++) with
 Claude Code driving the editor through the official Unreal MCP plugin.
 
 **Status:** this log is updated every day of the jam. Days 1, 2 and 3 are written. Day 4

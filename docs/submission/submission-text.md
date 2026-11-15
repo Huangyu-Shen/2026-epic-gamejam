@@ -6,7 +6,7 @@ upload or submit. Check every line against the final build before pasting; items
 
 ## Title
 
-Director's Cut
+Cut Survivors
 
 ## Short description
 
@@ -81,7 +81,7 @@ copied. The game project was created after the jam started.
 - Dev log: <https://github.com/Huangyu-Shen/2026-epic-gamejam/blob/main/docs/devlog/README.md>
   (**CHECK**: open it logged out and make sure the images load)
 - Gameplay video: <https://youtu.be/G_sneXNheig> (30 to 60 seconds: a cut, a star-up, an extraction)
-- Build (zip): `KnightOnNight_DirectorsCut.zip`, 433.7 MB (454,813,988 bytes), commit `f88cea3`, SHA-256 `803315084F708883A95C8F4103664C5D391C965D20B97B7B260111E38AA7767B`
+- Build (zip): `CutSurvivors.zip`, 433.7 MB (454,813,988 bytes), commit `f88cea3`, SHA-256 `803315084F708883A95C8F4103664C5D391C965D20B97B7B260111E38AA7767B`
 
 ## Known limits (be honest in the form if it asks)
 

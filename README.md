@@ -1,6 +1,8 @@
 <div align="center">
 
-# 2026 Epic AI MegaJam
+# Cut Survivors
+
+### 2026 Epic AI MegaJam entry (theme: Director's Cut)
 
 > A solo Unreal Engine 5.8 entry for the 2026 Epic AI MegaJam (theme: Director's Cut), built in four days with Claude Code and a team of game-studio agents: a fantasy top-down horde-survival game with extraction, where every level-up is an editing decision.
 
