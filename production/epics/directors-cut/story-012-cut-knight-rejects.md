@@ -27,19 +27,19 @@
 
 ## Acceptance Criteria
 
-- [ ] In a run with The Cut Knight card slotted, the boss gains what the player cuts in that run. Runs without the card have no boss and are unchanged.
-- [ ] The boss spawns at run start, before any cut, so it gains each cut at the moment the player makes it.
-- [ ] A cut weapon gives the boss that weapon's attack aimed at the hero; a cut passive raises the matching boss stat.
-- [ ] Both permanent and skipped cuts count (everything in the run's cut list). Nothing carries over from earlier runs.
-- [ ] With no cuts made yet, the boss fights as it does today (contact damage only).
-- [ ] (Review 2) The boss gets the base version of a cut option, with no stars, whatever the player owns of it. Cutting the same weapon again raises that attack's damage by one step instead of adding a second copy of the attack.
-- [ ] (Review 2) A cut that has no mapping (for example an option added by story 009) still counts: it gives the boss a small generic health bonus, so no cut is silently ignored.
-- [ ] (Review 2) Boss attacks aimed at the hero can be seen coming and dodged: each has a visible wind-up or travel time. Their damage to the hero is its own data value, not the player weapon's damage, which is sized for enemy health.
-- [ ] (Review 2) If the boss dies, it stays dead; later cuts do nothing and no HUD line is shown for them.
-- [ ] How much each cut adds, and the cap on the total, are data, not code.
-- [ ] The HUD tells the player when the boss gains a cut (one line per cut).
-- [ ] A normal build that used all its permanent cuts can still beat the boss.
-- [ ] Retained screenshot in `production/qa/evidence/`: the boss using a cut weapon, with the HUD line.
+- [x] In a run with The Cut Knight card slotted, the boss gains what the player cuts in that run. Runs without the card have no boss and are unchanged. (checked by the author's play; "no card, no boss" by code only)
+- [x] The boss spawns at run start, before any cut, so it gains each cut at the moment the player makes it. (author's play)
+- [ ] A cut weapon gives the boss that weapon's attack aimed at the hero; a cut passive raises the matching boss stat. (UNTESTED in part: weapons seen in screenshots; Might, Swiftness and Haste not observed)
+- [ ] Both permanent and skipped cuts count (everything in the run's cut list). Nothing carries over from earlier runs. (OBSOLETE: since v3 a cut is refused once permanent cuts run out, so there are no skipped cuts)
+- [x] With no cuts made yet, the boss fights as it does today (contact damage only). (author's play)
+- [ ] (Review 2) The boss gets the base version of a cut option, with no stars, whatever the player owns of it. Cutting the same weapon again raises that attack's damage by one step instead of adding a second copy of the attack. (UNTESTED: only in code, each weapon was cut once in the probe)
+- [x] (Review 2) A cut that has no mapping (for example an option added by story 009) still counts: it gives the boss a small generic health bonus, so no cut is silently ignored. (probe log: Greed gave health)
+- [x] (Review 2) Boss attacks aimed at the hero can be seen coming and dodged: each has a visible wind-up or travel time. Their damage to the hero is its own data value, not the player weapon's damage, which is sized for enemy health. (author's play)
+- [ ] (Review 2) If the boss dies, it stays dead; later cuts do nothing and no HUD line is shown for them. (UNTESTED: only in code, the boss was never killed in a test)
+- [x] How much each cut adds, and the cap on the total, are data, not code. (advisory: code defaults under Director Tuning > BossRejects, not a data table)
+- [x] The HUD tells the player when the boss gains a cut (one line per cut). (screenshot 1-gun-balls; its text is the old wording, see Completion Notes)
+- [ ] A normal build that used all its permanent cuts can still beat the boss. (UNTESTED: the author collected only 1 to 2 cuts)
+- [x] Retained screenshot in `production/qa/evidence/`: the boss using a cut weapon, with the HUD line. (production/qa/evidence/story-012-cut-knight/)
 
 ---
 
@@ -111,7 +111,9 @@ Built as `UBossRejectsSubsystem` (new), hooked from `UEnemySpawnSubsystem::Spawn
 
 ## Completion Notes
 **Completed**: 2026-11-15
-**Criteria**: accepted by the author after playing the packaged build (1-2 cuts per run): boss attacks and red rings are readable and dodgeable; the boss does not kill the hero at the start of a run; HUD line per cut shown.
+**Criteria**: 8 of 13 checked, 1 obsolete (4), 3 untested (6, 9, 12) and 1 partly tested (3). Re-checked by /story-done on 2026-11-15: accepted by the author after playing the packaged build (1-2 cuts per run): boss attacks and red rings are readable and dodgeable; the boss does not kill the hero at the start of a run; HUD line per cut shown.
+**Untested criteria**: 3 (passive stats Might, Swiftness, Haste), 6 (repeat cut raises damage), 9 (dead boss stays dead), 12 (a build with all cuts can still beat the boss).
+**Evidence note**: the screenshots were taken before the HUD wording was fixed ("it a new attack" became "it gets a new attack"); `BossRejectsSubsystem.cpp` shows as changed since the evidence stamp. Re-capture if exact wording matters.
 **Deviations**: None. Not checked: a build that spent all its cuts beating the boss (the author only collected 1-2 cuts). No automated test (waived at `qa.level: minimal`).
 **Test Evidence**: `production/qa/evidence/story-012-cut-knight/` (1 to 3 boss attacks, 4 void fix).
 **Reviewed by**: self, no independent review
