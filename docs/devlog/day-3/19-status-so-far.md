@@ -19,28 +19,30 @@ will be rewritten as the work goes on.
   package.
 - The boss, the void fix, the design and wiki corrections and the dev log are merged to
   main (pull requests 4 and 5).
+- Merged to `main` since (pull requests 6 to 11, checked in `git log` on 15 Nov): the Esc menu,
+  the Fab models for the hero, grunts and boss, the forest floor and props, wood and stone loot,
+  and the camp buildings with the CC BY credits in the Esc menu. The model packs themselves are
+  deliberately not in git ([entry 13](13-story-012-boss-and-the-void.md)).
 - The camp's clinic is a house and its smithy and warehouse are factory and barracks models
-  ([entry 18](18-camp-buildings-and-credits.md)); the CC BY credits are in the Esc menu. **Not committed.**
+  ([entry 18](18-camp-buildings-and-credits.md)).
 - Loot is wood (crates) and stone (vaults); the Smithy costs stone, the Clinic wood; the camp has
   the forest floor; sizes and the portal changed ([entry 17](17-wood-stone-and-the-camp.md)).
-  **Not committed.**
 - The floor (a meadow with a rim of trees and rocks), the loot containers (stumps and boulders)
   and the extraction point (a portal and the green beam) use the forest pack
   ([entry 16](16-the-forest-floor.md)). Checked in the editor and in a package.
-  **Not committed.**
 - The hero, the five grunt types and the boss use Fab models ([entry 15](15-the-first-real-models.md)).
   Checked in the editor and in a package with the 150-enemy test (about 130 FPS on warm runs, weapons off).
-  **Not committed**; the model packs are deliberately not in git.
 - Leaving a run: an Esc menu in the camp and in a run (Resume, Settings with three
   volume levels, Return to camp in a run, Quit game). Built after the author described it
-  ([entry 14](14-esc-menu-and-leaving-a-run.md)). Checked in the editor with a test flag;
-  **not committed**, and the packaging of it was started but not tried by hand.
+  ([entry 14](14-esc-menu-and-leaving-a-run.md)). Checked in the editor with a test flag.
 
 ## Not done
 
-- Story 011 is still In Progress: the boss attacks are orange balls and a red ring, and star-ups
-  only make beams thicker.
-- Story 013 (package, texts, video, final checks).
+- Story 011 is still In Progress. Its code part is merged; the packaged-build checks are open
+  (see [Day 4, entry 02](../day-4/02-preparing-the-submission-materials.md)). The boss attacks
+  are still orange balls and a red ring, and star-ups still scale damage and reach without
+  changing the weapon's look.
+- Story 013 (package, texts, video, final checks) is started; see the Day 4 entries.
 - The design docs do not yet mention the Esc menu and its settings (a PRD Should item the
   author asked for).
 - None of the wiki's known-issues findings was fixed.

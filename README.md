@@ -9,7 +9,7 @@
 
 <br />
 
-[Features](#-features) · [Quick Start](#-quick-start) · [Usage](#-usage) · [License](#-license)
+[Features](#-features) · [Controls](#-controls) · [Quick Start](#-quick-start) · [Usage](#-usage) · [License](#-license)
 
 </div>
 
@@ -18,9 +18,11 @@
 ## ✨ Features
 
 - **Pick one, or cut one first.** Each level-up offers three options. You take one, and you may first cut one of the three: it leaves your pool for the run and goes to the boss. Options you neither take nor cut stay in the pool. Three copies of an option merge into a 2-star version, nine into a 3-star one. The pool never shrinks below four options.
+- **The boss takes what you cut.** With the Cut Knight film card slotted, a boss starts the run and gains each option you cut: a cut weapon becomes an attack aimed at you, a cut passive raises one of its stats.
 - **Film cards.** Before a run, slot film cards that force a horde or a boss in exchange for a bigger payout.
 - **Heat and extraction.** Rare loot in the bag raises heat, which makes enemies stronger. Reach the extraction zone alive to bank what you carry; die and you lose the bag.
-- **Camp.** Iron from successful runs upgrades the Smithy, Clinic and Warehouse. Progress is auto-saved.
+- **Lost film reels.** Carry a reel out alive and a new option joins the level-up pool for every later run.
+- **Camp.** Wood and stone from successful runs upgrade the Smithy (weapon damage) and the Clinic (max health); the Warehouse stores your unlocked options. Progress is auto-saved.
 - **Built with AI.** Claude Code drives the editor through the Unreal MCP plugin and organises design and implementation with Claude Code Game Studios agents and skills.
 
 Design and status: [design/game-brief.md](design/game-brief.md) (v2 brief), [design/prd/master-prd.md](design/prd/master-prd.md) (scope gate). Requirements plan: [docs/plans/2026-11-12-1143-feat-directors-cut-extraction-survivors-plan.md](docs/plans/2026-11-12-1143-feat-directors-cut-extraction-survivors-plan.md). Jam schedule: [PLAN.md](PLAN.md). Code overview: [docs/wiki/README.md](docs/wiki/README.md).
@@ -28,6 +30,10 @@ Design and status: [design/game-brief.md](design/game-brief.md) (v2 brief), [des
 **Dev log (public):** <https://github.com/Huangyu-Shen/2026-epic-gamejam/blob/main/docs/devlog/README.md>, one folder per day under [docs/devlog/](docs/devlog/README.md).
 
 > Some per-system design documents in `design/gdd/` still describe the first version of the design (keep-or-use-it relics, four camp buildings). The brief and the master PRD are current.
+
+## 🎮 Controls
+
+WASD move · Space dodge · E search a container · 1–3 take an upgrade · 4–6 cut one first · Esc menu (resume, volume, return to camp, quit).
 
 ## 🚀 Quick Start
 

@@ -28,28 +28,28 @@
 ## Acceptance Criteria
 
 Code, before the freeze (do these first):
-- [ ] Weapon attacks are drawn with real visuals. No gameplay visual depends on DrawDebug (today `AutoWeaponComponent.cpp` does), and the attacks show in the packaged build.
-- [ ] On star-up, a weapon's look (projectile, area or size) grows together with its numbers.
-- [ ] One audio entry point exists and gameplay code calls it for: attack, enemy hit, enemy death, pickup, level-up, cut, star-up, extraction, player death. No sound code exists today.
-- [ ] Hits give feedback the player can see and hear (at least a flash or knock, plus a sound).
-- [ ] Music plays in the camp and in the run: 2 tracks (PRD §6 row 11). (Review 2) Each track loops, and travelling camp to run and back never leaves two tracks playing at once or restarts the same track on top of itself.
-- [ ] (Review 2) Sound stays readable in a crowd: the number of hit and death sounds playing at once is capped (a concurrency limit), so 150 enemies do not produce a wall of noise or a frame drop.
-- [ ] (Review 2) Volumes are set once in data, since there is no settings screen: music sits under the effects, and nothing clips at the default Windows volume.
-- [ ] (Review 2) Sounds and music are referenced so that the cook includes them. Assets reached only through a soft pointer in settings are skipped by the cooker without an error (this already happened with the run map), so either reference them hard or put their folder in the always-cook list, then confirm in the packaged build by ear.
+- [x] Weapon attacks are drawn with real visuals. No gameplay visual depends on DrawDebug (today `AutoWeaponComponent.cpp` does), and the attacks show in the packaged build. (checked 2026-11-15 by code: `AWeaponEffect` uses meshes; DrawDebug remains only in `StandInCharacter`; screenshot 3-packaged-bolt-beam)
+- [ ] On star-up, a weapon's look (projectile, area or size) grows together with its numbers. (PARTLY: `AutoWeaponComponent.cpp:54` scales damage and reach with stars; no change of look found; no star-up screenshot)
+- [x] One audio entry point exists and gameplay code calls it for: attack, enemy hit, enemy death, pickup, level-up, cut, star-up, extraction, player death. (checked by code: `GameAudioSubsystem`, called from 11 files; 11 sounds assigned in `DefaultGame.ini`)
+- [x] Hits give feedback the player can see and hear (at least a flash or knock, plus a sound). (checked 2026-11-15 in `Enemy.cpp:102-125` and by the author's play: EnemyHit sound plus a 0.1 s scale pop to 1.2x that carries the model along. The white colour flash only changes the hidden `Body` material, so it shows on cube enemies but not on modelled ones)
+- [ ] Music plays in the camp and in the run: 2 tracks (PRD §6 row 11). (Review 2) Each track loops, and travelling camp to run and back never leaves two tracks playing at once or restarts the same track on top of itself. (UNTESTED by ear: code has `StartMusic` with same-track check and fade-out; the user confirms looping and no overlap)
+- [x] (Review 2) Sound stays readable in a crowd: the number of hit and death sounds playing at once is capped (a concurrency limit), so 150 enemies do not produce a wall of noise or a frame drop. (code: `MaxCrowdSoundsPerSecond = 16`; "wall of noise" by ear NOT CHECKED)
+- [ ] (Review 2) Volumes are set once in data, since there is no settings screen: music sits under the effects, and nothing clips at the default Windows volume. (data: master 0.8, music 0.35, sfx 0.7; clipping UNTESTED by ear. Note: since #6 the Esc menu has volume settings)
+- [ ] (Review 2) Sounds and music are referenced so that the cook includes them. Assets reached only through a soft pointer in settings are skipped by the cooker without an error (this already happened with the run map), so either reference them hard or put their folder in the always-cook list, then confirm in the packaged build by ear. (config done: `/Game/Free_Sounds_Pack/cue` and `/Game/PathOfAdventure/Loop/CUE` are in `DirectoriesToAlwaysCook`; NOT confirmed in a package by ear)
 
 Assets (can continue after the freeze):
-- [ ] Hero, enemies, boss, pickups, vault, extraction point and map read as one style: a unified material and palette replaces the greybox look. The hero's colour is correct (it is grey today; the Color parameter does nothing).
-- [ ] Hero, grunts and boss stay easy to tell apart at a glance against the floor, with 150 enemies on screen.
+- [x] Hero, enemies, boss, pickups, vault, extraction point and map read as one style: a unified material and palette replaces the greybox look. The hero's colour is correct. (checked 2026-11-15 on screenshots 12 and 19: the hero is a modelled knight, not grey)
+- [x] Hero, grunts and boss stay easy to tell apart at a glance against the floor, with 150 enemies on screen. (screenshot 12-forest-floor-and-horde; a 150-enemy shot with weapons firing does not exist)
 
 Constraints (PRD §5):
-- [ ] The frame rate still holds 60 FPS or more at 1080p with 150 enemies on screen after the asset swap.
-- [ ] The packaged build is under 1 GB without the `.pdb` file. It was about 0.75 GB before any art.
-- [ ] No trademarks or logos; content suits ages 13+; all text and audio are English.
-- [ ] Every external asset and every AI tool used is listed in `docs/devlog/README.md` (Assets and Tools sections) with its source and licence. WeLoveIndies audio is non-commercial only.
-- [ ] (Review 2) Before any WeLoveIndies file is imported, the user confirms that a jam with cash prizes counts as non-commercial under that licence. This has not been checked. If it is unclear, use engine built-ins or another source with a licence that plainly allows it.
+- [ ] The frame rate still holds 60 FPS or more at 1080p with 150 enemies on screen after the asset swap. (PARTLY: packaged probe 151 enemies, avg 130 FPS, min 96, but with weapons off, taken at story-011 time; not re-run after later assets)
+- [ ] The packaged build is under 1 GB without the `.pdb` file. It was about 0.75 GB before any art. (STALE: 679 MB at story-011 time; many packs were imported since, re-measure in story 013)
+- [ ] No trademarks or logos; content suits ages 13+; all text and audio are English. (NOT CHECKED systematically)
+- [x] Every external asset and every AI tool used is listed in `docs/devlog/README.md` (Assets and Tools sections) with its source and licence. (checked 2026-11-15: audio and model packs listed with licences, CC-BY credit in the Esc menu; two imported packs are marked "not used so far")
+- [x] (Review 2) Before any WeLoveIndies file is imported, the user confirms that a jam with cash prizes counts as non-commercial under that licence. (NOT NEEDED: no WeLoveIndies audio was used; the sounds and music come from Fab packs, see README)
 
 Evidence:
-- [ ] Retained screenshots in `production/qa/evidence/`: camp, a run in combat, a star-up, all taken from the packaged build.
+- [ ] Retained screenshots in `production/qa/evidence/`: camp, a run in combat, a star-up, all taken from the packaged build. (camp and combat exist in `story-011-art-audio-feel/`; no star-up screenshot found; whether each was taken from the packaged build is not stated except 3-packaged-bolt-beam)
 
 ---
 
