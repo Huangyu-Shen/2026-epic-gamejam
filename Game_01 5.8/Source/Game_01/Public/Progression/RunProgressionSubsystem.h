@@ -5,58 +5,21 @@
 #include "Subsystems/WorldSubsystem.h"
 #include "Enemies/EnemyTypes.h"
 #include "Progression/ProgressionTypes.h"
+#include "Progression/OfferRules.h"
+#include "Progression/OfferText.h"
+#include "Progression/RunLoadout.h"
 #include "RunProgressionSubsystem.generated.h"
 
 class AXpPickup;
 
-/** One option in a level-up offer: a new weapon, another copy of a weapon, or another copy of a passive. */
-USTRUCT(BlueprintType)
-struct GAME_01_API FOfferOption
-{
-	GENERATED_BODY()
-
-	UPROPERTY(BlueprintReadOnly, Category = "Progression")
-	bool bIsWeapon = false;
-
-	UPROPERTY(BlueprintReadOnly, Category = "Progression")
-	EWeaponType Weapon = EWeaponType::Blade;
-
-	UPROPERTY(BlueprintReadOnly, Category = "Progression")
-	EPassiveType Passive = EPassiveType::Swiftness;
-
-	/** True when a weapon is offered that the run does not own yet. */
-	UPROPERTY(BlueprintReadOnly, Category = "Progression")
-	bool bIsNewWeapon = false;
-
-	/** Copies held before this pick (copies are also the level). */
-	UPROPERTY(BlueprintReadOnly, Category = "Progression")
-	int32 CurrentLevel = 0;
-
-	/** True when this option was unlocked by a lost film reel since the player last saw an offer (story 009). */
-	UPROPERTY(BlueprintReadOnly, Category = "Progression")
-	bool bIsNewUnlock = false;
-};
-
 /**
  * Owns in-run growth: XP, level, the level-up offer and the weapon/passive loadout.
  * Enemies drop XP pickups on death; collecting enough XP soft-pauses the game and shows three options.
- * Brief v2: the player CUTS one option and keeps the other two. Each kept option adds one copy;
- * 3 copies make two stars and 9 make three (FStarTuning). While permanent cuts remain, the cut option
- * leaves the pool for the rest of the run. Resets with the run.
+ * Each level-up offers three options: the player takes one (it adds a copy) and may first cut one. 3 copies make
+ * two stars and 9 make three (FStarTuning). While permanent cuts remain, a cut option leaves the pool for the rest of the
+ * run and goes to the boss. Resets with the run. The loadout, the offer rules and the offer wording live in
+ * FRunLoadout, FOfferRules and FOfferText; this class adds the world: sounds, messages, XP pickups and the hero.
  */
-/** What one level-up card shows. */
-struct FOfferCardText
-{
-	/** The option's name, with "NEW!" when a lost film reel just unlocked it. */
-	FString Title;
-	/** Level change, or "New weapon". */
-	FString Detail;
-	/** Star progress, e.g. "2 more to 2-STAR" or "2-STAR!". Empty when maxed. */
-	FString Note;
-	/** True for a star-up or a newly unlocked option, so the card can glow. */
-	bool bHighlight = false;
-};
-
 UCLASS()
 class GAME_01_API URunProgressionSubsystem : public UTickableWorldSubsystem
 {
@@ -114,36 +77,36 @@ public:
 
 	/** Copies of the weapon held; 0 = not owned. Copies are also its level. */
 	UFUNCTION(BlueprintPure, Category = "Progression")
-	int32 GetWeaponLevel(EWeaponType Weapon) const { return WeaponLevels.FindRef(Weapon); }
+	int32 GetWeaponLevel(EWeaponType Weapon) const { return Loadout.WeaponCopies(Weapon); }
 
 	/** 0 = not owned, otherwise 1 to 3 stars. */
 	UFUNCTION(BlueprintPure, Category = "Progression")
-	int32 GetWeaponStars(EWeaponType Weapon) const { return Stars.StarsForCopies(WeaponLevels.FindRef(Weapon)); }
+	int32 GetWeaponStars(EWeaponType Weapon) const { return Loadout.WeaponStars(Weapon); }
 
 	UFUNCTION(BlueprintPure, Category = "Progression")
-	int32 GetPassiveStars(EPassiveType Passive) const { return Stars.StarsForCopies(PassiveStacks.FindRef(Passive)); }
+	int32 GetPassiveStars(EPassiveType Passive) const { return Loadout.PassiveStarsFor(Passive); }
 
 	/** Star multipliers for a weapon the run owns (1.0 at one star). */
-	float GetWeaponStarDamageMultiplier(EWeaponType Weapon) const { return Stars.WeaponDamageMultiplier(GetWeaponStars(Weapon)); }
-	float GetWeaponStarRangeMultiplier(EWeaponType Weapon) const { return Stars.WeaponRangeMultiplier(GetWeaponStars(Weapon)); }
+	float GetWeaponStarDamageMultiplier(EWeaponType Weapon) const { return Loadout.WeaponStarDamageMultiplier(Weapon); }
+	float GetWeaponStarRangeMultiplier(EWeaponType Weapon) const { return Loadout.WeaponStarRangeMultiplier(Weapon); }
 
 	/** Cuts left this run that remove the cut option from the pool for good. */
 	UFUNCTION(BlueprintPure, Category = "Progression")
-	int32 GetPermanentCutsLeft() const { return PermanentCutsLeft; }
+	int32 GetPermanentCutsLeft() const { return Rules.PermanentCutsLeft; }
 
 	/** Everything cut this run, oldest first (permanent or not). Kept for the boss that fights with the cut footage. */
-	const TArray<FOfferOption>& GetCuttingRoomFloor() const { return CuttingRoomFloor; }
+	const TArray<FOfferOption>& GetCuttingRoomFloor() const { return Rules.CuttingRoomFloor; }
 
 	/** One line for the HUD: every owned weapon and passive with its level and stars. */
 	UFUNCTION(BlueprintPure, Category = "Progression")
 	FString GetLoadoutSummary() const;
 
 	/** The weapon's stats (never null; defaults are filled at init). */
-	const FWeaponRow& GetWeaponRow(EWeaponType Weapon) const { return Weapons.FindChecked(Weapon); }
+	const FWeaponRow& GetWeaponRow(EWeaponType Weapon) const { return Loadout.Weapons.FindChecked(Weapon); }
 
 	/** True while the level-up offer is showing and the game is soft-paused. */
 	UFUNCTION(BlueprintPure, Category = "Progression")
-	bool IsOfferPending() const { return bOfferPending; }
+	bool IsOfferPending() const { return Rules.bPending; }
 
 	/** The pending offer as three short pieces per option, for the level-up cards (empty when no offer is showing). */
 	TArray<FOfferCardText> GetOfferCards() const;
@@ -168,7 +131,7 @@ public:
 	void DebugGrantWeapon(EWeaponType Weapon, int32 Copies);
 
 	/** Test harness only (-BossProbe): puts an option on the cutting-room floor as if the player had cut it. */
-	void DebugCut(const FOfferOption& Option) { CuttingRoomFloor.Add(Option); }
+	void DebugCut(const FOfferOption& Option) { Rules.CuttingRoomFloor.Add(Option); }
 
 	/** Adds XP and opens the level-up offer once the threshold is reached. Used by pickups and by the -OfferProbe harness. */
 	void GrantXp(float Amount);
@@ -192,46 +155,25 @@ private:
 	void GenerateOffer();
 	/** The upgrade options the camp has unlocked (empty when there is no camp stock). */
 	TArray<FName> GetUnlockedOptions() const;
-	bool IsWeaponAvailable(EWeaponType Type, const TArray<FName>& Unlocked) const;
-	bool IsPassiveAvailable(EPassiveType Type, const TArray<FName>& Unlocked) const;
 	void ApplyOption(const FOfferOption& Option);
 	void ShowOffer() const;
-	FString DescribeOption(const FOfferOption& Option) const;
-	FString OptionName(const FOfferOption& Option) const;
-public:
-	/** The option's stable id: its data-table row name, which is also what a lost film reel unlocks. */
-	static FName OptionId(const FOfferOption& Option);
-
-	/**
-	 * Marks every option whose id is in NewIds as a NEW unlock and moves those options to the front of the pool
-	 * (their relative order is not kept). Pure: used by GenerateOffer, and testable without a world.
-	 */
-	static void MoveNewUnlocksToFront(TArray<FOfferOption>& Pool, const TArray<FName>& NewIds);
-
-private:
-	int32 MaxCopies(int32 RowMaxLevel) const { return FMath::Max(RowMaxLevel, Stars.CopiesForThreeStar); }
-	/** A passive's total effect: stacks x per-stack amount x its star multiplier. */
-	float PassiveTotal(EPassiveType Passive, float PerStack) const;
 
 	// Loaded tuning (defaults are always present; tables override).
 	FXpCurveRow XpCurve;
-	TMap<EWeaponType, FWeaponRow> Weapons;
-	TMap<EPassiveType, FPassiveRow> Passives;
-	FStarTuning Stars;
+
+	/** What the run owns and what it is worth (tuning rows, copies, stars, passive effects). */
+	FRunLoadout Loadout;
 
 	// Run state.
 	int32 Level = 1;
 	float Xp = 0.0f;
 	float XpToNext = 30.0f;
-	TMap<EWeaponType, int32> WeaponLevels;
-	TMap<EPassiveType, int32> PassiveStacks;
-	bool bOfferPending = false;
-	bool bCutUsedThisOffer = false;
-	TArray<FOfferOption> Offer;
-	TSet<EWeaponType> CutWeapons;
-	TSet<EPassiveType> CutPassives;
-	int32 PermanentCutsLeft = 0;
-	TArray<FOfferOption> CuttingRoomFloor;
+
+	/** The level-up offer, the cuts and the choice (pure rules, see OfferRules.h). */
+	FOfferRules Rules;
+
+	/** The shuffle of the offer pool, seeded differently each session. */
+	FRandomStream Random;
 
 	UPROPERTY(EditAnywhere, Category = "Progression", meta = (ClampMin = "0.0"))
 	float CollectRadius = 80.0f;
