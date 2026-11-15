@@ -100,141 +100,155 @@ int32 UAutoWeaponComponent::FireWeapon(EWeaponType Type, int32 Level, const FWea
 		CampDamage = Camp->GetWeaponDamageBonus();
 	}
 
-	const float Damage = RollCrit((Row.Damage + Row.DamagePerLevel * static_cast<float>(Level - 1) + CampDamage) * DamageMultiplier);
-	const FVector Origin = GetOwner()->GetActorLocation();
-	int32 Hits = 0;
+	const FFireContext Context{ Manager, GetOwner()->GetActorLocation(), Row, Level,
+		RollCrit((Row.Damage + Row.DamagePerLevel * static_cast<float>(Level - 1) + CampDamage) * DamageMultiplier) };
 
 	switch (Type)
 	{
-	case EWeaponType::Blade:
-	{
-		AEnemy* Target = Manager->FindNearestEnemy(Origin, Row.Range);
-		if (!Target)
-		{
-			break;
-		}
-		AWeaponEffect::SpawnBeam(GetWorld(), Origin, Target->GetActorLocation(), FLinearColor(1.0f, 0.85f, 0.1f), 14.0f * CurrentReach, 0.12f);
-		Target->ApplyDamage(Damage);
-		Hits = 1;
-		break;
+	case EWeaponType::Blade: return FireBlade(Context);
+	case EWeaponType::Bolt:  return FireBolt(Context);
+	case EWeaponType::Nova:  return FireNova(Context);
+	case EWeaponType::Chain: return FireChain(Context);
+	case EWeaponType::Gun:   return FireGun(Context);
+	default:                 return 0;
 	}
-	case EWeaponType::Bolt:
-	{
-		FVector2D Dir = FVector2D(GetOwner()->GetActorForwardVector()).GetSafeNormal();
-		if (AEnemy* Nearest = Manager->FindNearestEnemy(Origin, Row.Range))
-		{
-			Dir = (FVector2D(Nearest->GetActorLocation()) - FVector2D(Origin)).GetSafeNormal();
-		}
-		const FVector2D Perp(-Dir.Y, Dir.X);
-		// Collect first, damage after: a kill removes the enemy from the manager's list mid-loop.
-		TArray<AEnemy*, TInlineAllocator<32>> Targets;
-		for (AEnemy* Enemy : Manager->GetEnemies())
-		{
-			const FVector2D To = FVector2D(Enemy->GetActorLocation()) - FVector2D(Origin);
-			const float Along = FVector2D::DotProduct(To, Dir);
-			if (Along >= 0.0f && Along <= Row.Range && FMath::Abs(FVector2D::DotProduct(To, Perp)) <= Row.LineHalfWidth)
-			{
-				Targets.Add(Enemy);
-			}
-		}
-		for (AEnemy* Enemy : Targets)
-		{
-			Enemy->ApplyDamage(Damage);
-			++Hits;
-		}
-		AWeaponEffect::SpawnBeam(GetWorld(), Origin, Origin + FVector(Dir, 0.0f) * Row.Range, FLinearColor(0.1f, 0.9f, 1.0f), 20.0f * CurrentReach, 0.12f);
-		break;
-	}
-	case EWeaponType::Nova:
-	{
-		const float RangeSq = Row.Range * Row.Range;
-		TArray<AEnemy*, TInlineAllocator<32>> Targets;
-		for (AEnemy* Enemy : Manager->GetEnemies())
-		{
-			if (FVector::DistSquared2D(Enemy->GetActorLocation(), Origin) <= RangeSq)
-			{
-				Targets.Add(Enemy);
-			}
-		}
-		for (AEnemy* Enemy : Targets)
-		{
-			Enemy->ApplyDamage(Damage);
-			++Hits;
-		}
-		AWeaponEffect::SpawnRing(GetWorld(), Origin, Row.Range, FLinearColor(1.0f, 0.2f, 0.9f), 14.0f * CurrentReach, 0.15f);
-		break;
-	}
-	case EWeaponType::Chain:
-	{
-		// Pick the whole path first (nearest enemy in reach, then the nearest not-yet-hit enemy within one
-		// jump of the last), and only then deal damage: a kill removes an enemy from the manager's list.
-		AEnemy* Current = Manager->FindNearestEnemy(Origin, Row.Range);
-		if (!Current)
-		{
-			break;
-		}
-		TArray<AEnemy*> Path;
-		Path.Add(Current);
-		const float JumpSq = Row.ChainRange * Row.ChainRange;
-		for (int32 Jump = 0; Jump < Row.ChainJumps; ++Jump)
-		{
-			AEnemy* Next = nullptr;
-			float BestSq = JumpSq;
-			for (AEnemy* Candidate : Manager->GetEnemies())
-			{
-				if (!IsValid(Candidate) || Path.Contains(Candidate))
-				{
-					continue;
-				}
-				const float DistSq = FVector::DistSquared2D(Candidate->GetActorLocation(), Current->GetActorLocation());
-				if (DistSq <= BestSq)
-				{
-					BestSq = DistSq;
-					Next = Candidate;
-				}
-			}
-			if (!Next)
-			{
-				break;
-			}
-			Path.Add(Next);
-			Current = Next;
-		}
+}
 
-		FVector From = Origin;
-		for (AEnemy* Enemy : Path)
-		{
-			const FVector To = Enemy->GetActorLocation();
-			AWeaponEffect::SpawnBeam(GetWorld(), From, To, FLinearColor(0.2f, 1.0f, 0.3f), 10.0f * CurrentReach, 0.3f);
-			From = To;
-			Enemy->ApplyDamage(Damage);
-			++Hits;
-		}
-		break;
-	}
-	case EWeaponType::Gun:
+int32 UAutoWeaponComponent::DamageAll(const TArray<AEnemy*, TInlineAllocator<32>>& Targets, float Damage)
+{
+	// The targets were collected first: a kill removes the enemy from the manager's list.
+	int32 Hits = 0;
+	for (AEnemy* Enemy : Targets)
 	{
-		AEnemy* Target = Manager->FindNearestEnemy(Origin, Row.Range);
-		if (!Target)
-		{
-			break;
-		}
-		// One bullet at level 1, one more every second level, fanned out a little.
-		const int32 Bullets = FMath::Min(Row.ProjectileCount + (Level - 1) / 2, 5);
-		const FVector ToTarget = (Target->GetActorLocation() - Origin).GetSafeNormal2D();
-		constexpr float SpreadDegrees = 9.0f;
-		for (int32 Bullet = 0; Bullet < Bullets; ++Bullet)
-		{
-			const float Offset = (static_cast<float>(Bullet) - static_cast<float>(Bullets - 1) * 0.5f) * SpreadDegrees;
-			AGunBullet::Fire(GetWorld(), Origin, ToTarget.RotateAngleAxis(Offset, FVector::UpVector), Row.ProjectileSpeed, Row.Range, Damage, 70.0f * CurrentReach, FLinearColor(1.0f, 0.65f, 0.1f));
-		}
-		Hits = 1; // a shot was fired: the sound and the probe hook count it
-		break;
-	}
-	default:
-		break;
+		Enemy->ApplyDamage(Damage);
+		++Hits;
 	}
 	return Hits;
+}
+
+int32 UAutoWeaponComponent::FireBlade(const FFireContext& Context)
+{
+	AEnemy* Target = Context.Manager->FindNearestEnemy(Context.Origin, Context.Row.Range);
+	if (!Target)
+	{
+		return 0;
+	}
+	AWeaponEffect::SpawnBeam(GetWorld(), Context.Origin, Target->GetActorLocation(), FLinearColor(1.0f, 0.85f, 0.1f), 14.0f * CurrentReach, 0.12f);
+	Target->ApplyDamage(Context.Damage);
+	return 1;
+}
+
+int32 UAutoWeaponComponent::FireBolt(const FFireContext& Context)
+{
+	const FWeaponRow& Row = Context.Row;
+	FVector2D Dir = FVector2D(GetOwner()->GetActorForwardVector()).GetSafeNormal();
+	if (AEnemy* Nearest = Context.Manager->FindNearestEnemy(Context.Origin, Row.Range))
+	{
+		Dir = (FVector2D(Nearest->GetActorLocation()) - FVector2D(Context.Origin)).GetSafeNormal();
+	}
+	const FVector2D Perp(-Dir.Y, Dir.X);
+	// Collect first, damage after: a kill removes the enemy from the manager's list mid-loop.
+	TArray<AEnemy*, TInlineAllocator<32>> Targets;
+	for (AEnemy* Enemy : Context.Manager->GetEnemies())
+	{
+		const FVector2D To = FVector2D(Enemy->GetActorLocation()) - FVector2D(Context.Origin);
+		const float Along = FVector2D::DotProduct(To, Dir);
+		if (Along >= 0.0f && Along <= Row.Range && FMath::Abs(FVector2D::DotProduct(To, Perp)) <= Row.LineHalfWidth)
+		{
+			Targets.Add(Enemy);
+		}
+	}
+	const int32 Hits = DamageAll(Targets, Context.Damage);
+	AWeaponEffect::SpawnBeam(GetWorld(), Context.Origin, Context.Origin + FVector(Dir, 0.0f) * Row.Range, FLinearColor(0.1f, 0.9f, 1.0f), 20.0f * CurrentReach, 0.12f);
+	return Hits;
+}
+
+int32 UAutoWeaponComponent::FireNova(const FFireContext& Context)
+{
+	const float RangeSq = Context.Row.Range * Context.Row.Range;
+	TArray<AEnemy*, TInlineAllocator<32>> Targets;
+	for (AEnemy* Enemy : Context.Manager->GetEnemies())
+	{
+		if (FVector::DistSquared2D(Enemy->GetActorLocation(), Context.Origin) <= RangeSq)
+		{
+			Targets.Add(Enemy);
+		}
+	}
+	const int32 Hits = DamageAll(Targets, Context.Damage);
+	AWeaponEffect::SpawnRing(GetWorld(), Context.Origin, Context.Row.Range, FLinearColor(1.0f, 0.2f, 0.9f), 14.0f * CurrentReach, 0.15f);
+	return Hits;
+}
+
+int32 UAutoWeaponComponent::FireChain(const FFireContext& Context)
+{
+	const FWeaponRow& Row = Context.Row;
+
+	// Pick the whole path first (nearest enemy in reach, then the nearest not-yet-hit enemy within one
+	// jump of the last), and only then deal damage: a kill removes an enemy from the manager's list.
+	AEnemy* Current = Context.Manager->FindNearestEnemy(Context.Origin, Row.Range);
+	if (!Current)
+	{
+		return 0;
+	}
+	TArray<AEnemy*> Path;
+	Path.Add(Current);
+	const float JumpSq = Row.ChainRange * Row.ChainRange;
+	for (int32 Jump = 0; Jump < Row.ChainJumps; ++Jump)
+	{
+		AEnemy* Next = nullptr;
+		float BestSq = JumpSq;
+		for (AEnemy* Candidate : Context.Manager->GetEnemies())
+		{
+			if (!IsValid(Candidate) || Path.Contains(Candidate))
+			{
+				continue;
+			}
+			const float DistSq = FVector::DistSquared2D(Candidate->GetActorLocation(), Current->GetActorLocation());
+			if (DistSq <= BestSq)
+			{
+				BestSq = DistSq;
+				Next = Candidate;
+			}
+		}
+		if (!Next)
+		{
+			break;
+		}
+		Path.Add(Next);
+		Current = Next;
+	}
+
+	int32 Hits = 0;
+	FVector From = Context.Origin;
+	for (AEnemy* Enemy : Path)
+	{
+		const FVector To = Enemy->GetActorLocation();
+		AWeaponEffect::SpawnBeam(GetWorld(), From, To, FLinearColor(0.2f, 1.0f, 0.3f), 10.0f * CurrentReach, 0.3f);
+		From = To;
+		Enemy->ApplyDamage(Context.Damage);
+		++Hits;
+	}
+	return Hits;
+}
+
+int32 UAutoWeaponComponent::FireGun(const FFireContext& Context)
+{
+	const FWeaponRow& Row = Context.Row;
+	AEnemy* Target = Context.Manager->FindNearestEnemy(Context.Origin, Row.Range);
+	if (!Target)
+	{
+		return 0;
+	}
+	// One bullet at level 1, one more every second level, fanned out a little.
+	const int32 Bullets = FMath::Min(Row.ProjectileCount + (Context.Level - 1) / 2, 5);
+	const FVector ToTarget = (Target->GetActorLocation() - Context.Origin).GetSafeNormal2D();
+	constexpr float SpreadDegrees = 9.0f;
+	for (int32 Bullet = 0; Bullet < Bullets; ++Bullet)
+	{
+		const float Offset = (static_cast<float>(Bullet) - static_cast<float>(Bullets - 1) * 0.5f) * SpreadDegrees;
+		AGunBullet::Fire(GetWorld(), Context.Origin, ToTarget.RotateAngleAxis(Offset, FVector::UpVector), Row.ProjectileSpeed, Row.Range, Context.Damage, 70.0f * CurrentReach, FLinearColor(1.0f, 0.65f, 0.1f));
+	}
+	return 1; // a shot was fired: the sound and the probe hook count it
 }
 
 float UAutoWeaponComponent::RollCrit(float Damage) const
