@@ -381,19 +381,7 @@ void URunProgressionSubsystem::GenerateOffer()
 	UGameInstance* GameInstance = GetWorld()->GetGameInstance();
 	if (UCampStockSubsystem* Stock = GameInstance ? GameInstance->GetSubsystem<UCampStockSubsystem>() : nullptr)
 	{
-		const TArray<FName> NewIds = Stock->TakeNewOptions();
-		if (NewIds.Num() > 0)
-		{
-			int32 Front = 0;
-			for (int32 i = 0; i < Pool.Num(); ++i)
-			{
-				if (NewIds.Contains(OptionId(Pool[i])))
-				{
-					Pool[i].bIsNewUnlock = true;
-					Pool.Swap(i, Front++);
-				}
-			}
-		}
+		MoveNewUnlocksToFront(Pool, Stock->TakeNewOptions());
 	}
 
 	for (int32 i = 0; i < 3; ++i)
@@ -522,9 +510,22 @@ FString URunProgressionSubsystem::OptionName(const FOfferOption& Option) const
 		: StaticEnum<EPassiveType>()->GetDisplayNameTextByValue(static_cast<int64>(Option.Passive)).ToString();
 }
 
-FName URunProgressionSubsystem::OptionId(const FOfferOption& Option) const
+FName URunProgressionSubsystem::OptionId(const FOfferOption& Option)
 {
 	return Option.bIsWeapon ? FName(WeaponRowName(Option.Weapon)) : FName(PassiveRowName(Option.Passive));
+}
+
+void URunProgressionSubsystem::MoveNewUnlocksToFront(TArray<FOfferOption>& Pool, const TArray<FName>& NewIds)
+{
+	int32 Front = 0;
+	for (int32 i = 0; i < Pool.Num(); ++i)
+	{
+		if (NewIds.Contains(OptionId(Pool[i])))
+		{
+			Pool[i].bIsNewUnlock = true;
+			Pool.Swap(i, Front++);
+		}
+	}
 }
 
 FString URunProgressionSubsystem::DescribeOption(const FOfferOption& Option) const

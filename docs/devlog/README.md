@@ -4,9 +4,10 @@ A solo entry to the 2026 Epic AI MegaJam, built in Unreal Engine 5.8 (C++) with
 Claude Code driving the editor through the official Unreal MCP plugin.
 
 **Status:** this log is updated every day of the jam. Days 1, 2 and 3 are written. Day 4
-(15 Nov) is the package-and-submit day and is in progress. Stories 001 to 010 and 012 are
-closed; story 011 (art, audio, feel) is in progress with its code done and its packaged-build
-checks open; story 013 (package and submission) is started.
+(15 Nov) is in progress: the submission texts are drafted, the code got a first tech-debt pass,
+and the final package is not built yet. Stories 001 to 010 and 012 are closed; story 011 (art,
+audio, feel) has its code done and its packaged-build checks open; story 013 (package and
+submission) is started.
 
 **Public address of this log** (the repository is public):
 <https://github.com/Huangyu-Shen/2026-epic-gamejam/blob/main/docs/devlog/README.md>
@@ -60,12 +61,17 @@ can read a day from top to bottom or open just the part you care about.
 | [18 Camp buildings and credits](day-3/18-camp-buildings-and-credits.md) | A house and a factory for the camp from two more Fab packs; the CC BY credit inside the game |
 | [19 Status so far](day-3/19-status-so-far.md) | What is done, not done and not checked |
 
-### Day 4 — 15 Nov: package and submit (in progress)
+### Day 4 — 15 Nov: submission texts, a tech-debt pass, then the package (in progress)
 
 | Entry | What it covers |
 |---|---|
 | [01 Plan](day-4/01-plan.md) | The submission checklist, written in advance |
 | [02 Preparing the submission materials](day-4/02-preparing-the-submission-materials.md) | Closing the paperwork on stories 011 and 012, what the docs got wrong, and what is still open |
+| [03 The hero and the enemies faced the wrong way](day-4/03-the-hero-and-the-enemies-faced-the-wrong-way.md) | A quarter turn off on every model; why, and the one-number fix |
+| [04 Config that pointed at the wrong project, and 1.1 GB of unused packs](day-4/04-housekeeping-config-and-unused-packs.md) | The missing package command, what the engine GUID is, a delete the permission system refused |
+| [05 A tech debt scan and a register](day-4/05-tech-debt-scan-and-register.md) | 89 files scanned, 20 items scored, and why the code wiki waits |
+| [06 The first refactor batch](day-4/06-first-refactor-batch.md) | Probes out of the game mode, a guarded debug key, one save write instead of three, a soft-pause fix |
+| [07 Tests that were seen failing](day-4/07-tests-that-were-seen-failing.md) | Seven new tests, and breaking the code on purpose to see two of them fail |
 
 ## The game in one paragraph
 
@@ -109,24 +115,26 @@ process, not a description of what I intended.
 
 ## By the numbers
 
-Counted from the repository on 15 November, during Day 4, on `main`. The boss, the floor
-edge fix, the Esc menu, the Fab models and the camp buildings are all merged (pull
-requests 3 to 11).
+Counted from the repository on 15 November, late on Day 4, on local `main` (the last two
+commits were not pushed when this was written). Everything is merged: the boss, the floor-edge
+fix, the Esc menu, the Fab models, the camp buildings, the facing fix, the first tech-debt batch
+and the new tests.
 
-- 27 commits on `main`, nine of them through pull requests (3 to 11).
-- 89 C++ source files, about 10,600 lines (`.h` and `.cpp` under `Source/`, including
-  the 303 lines of tests).
-- 13 story files: 11 closed as complete (stories 001 to 010 and 012; 010 with notes),
-  story 011 in progress (code done; the packaged-build checks are open) and story 013
-  (the submission) started. The Day 2 redesign (cut one, keep two; star merge) was built
-  without a story file, and the Day 3 playtest then replaced the cut rule again.
+- 30 commits on `main`, ten of them through pull requests (3 to 12; the last one squashed nine
+  commits into one).
+- 93 C++ source files, about 10,900 lines (`.h` and `.cpp` under `Source/`, including 454 lines
+  of tests).
+- 13 story files: 11 closed as complete (stories 001 to 010 and 012; 010 with notes), story 011
+  in progress (code done; the packaged-build checks are open) and story 013 (the submission)
+  started. The Day 2 redesign (cut one, keep two; star merge) was built without a story file, and
+  the Day 3 playtest then replaced the cut rule again.
 - 12 game-design documents (the master PRD and 11 system documents, including the art and audio
-  direction) plus the one-page brief.
-- 12 automated tests (the star-merge rules, the lost-reel unlock rules, and the
-  locked-option rules). None cover the boss, the weapons added on Day 3 or the floor
-  clamp. The earlier stories were verified by playing and by screenshots; automated
-  tests were waived at the project's minimal QA level. That is a gap, and I say so in
-  Day 2.
+  direction) plus the one-page brief, and a tech debt register of 20 items (6 resolved).
+- 19 automated tests (the star-merge rules, the lost-reel unlock rules, the locked-option rules,
+  the run settlement and the order of an offer). None cover the boss, the weapons added on Day 3,
+  the floor clamp, `GenerateOffer` as a whole or save loading. The earlier stories were verified by
+  playing and by screenshots; automated tests were waived at the project's minimal QA level. That
+  is a gap, and I say so in Day 2.
 - Performance check: 152 enemies on screen averaged **132 FPS**, with the single
   worst frame at 50 FPS (target was 60 or more). I accepted that as advisory.
 
@@ -172,6 +180,13 @@ Each of these happened in this project; the day entries have the details.
    [Day 3, entry 08](day-3/08-story-010-first-number-pass.md).
 9. **A blocked agent should stop and say so.** See
    [Day 3, entry 07](day-3/07-when-the-agent-was-blocked.md).
+10. **A test you have never seen fail is a guess.** On Day 4 I broke the code in two places on
+   purpose, and exactly the two tests meant to catch it failed. See
+   [Day 4, entry 07](day-4/07-tests-that-were-seen-failing.md).
+11. **The checklists go stale faster than the code.** Story 011 had 20 unticked boxes after most
+   of its code was merged, and the package command that a story said was written down was not
+   there at all. See [Day 4, entry 02](day-4/02-preparing-the-submission-materials.md) and
+   [entry 04](day-4/04-housekeeping-config-and-unused-packs.md).
 
 ## Tools
 
