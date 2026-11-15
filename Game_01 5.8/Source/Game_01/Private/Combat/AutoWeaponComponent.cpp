@@ -1,4 +1,5 @@
 #include "Combat/AutoWeaponComponent.h"
+#include "Engine/GameInstance.h"
 #include "Camp/CampMetaSubsystem.h"
 #include "Combat/HealthComponent.h"
 #include "Audio/GameAudioSubsystem.h"
@@ -20,7 +21,6 @@ UAutoWeaponComponent::UAutoWeaponComponent()
 void UAutoWeaponComponent::BeginPlay()
 {
 	Super::BeginPlay();
-	OwnerBag = GetOwner()->FindComponentByClass<ULootBagComponent>();
 	OwnerHealth = GetOwner()->FindComponentByClass<UHealthComponent>();
 }
 
@@ -95,7 +95,7 @@ int32 UAutoWeaponComponent::FireWeapon(EWeaponType Type, int32 Level, const FWea
 
 	// Smithy camp bonus (story 006): flat damage added to every weapon.
 	float CampDamage = 0.0f;
-	if (const UCampMetaSubsystem* Camp = GetWorld()->GetGameInstance()->GetSubsystem<UCampMetaSubsystem>())
+	if (const UCampMetaSubsystem* Camp = UGameInstance::GetSubsystem<UCampMetaSubsystem>(GetWorld()->GetGameInstance()))
 	{
 		CampDamage = Camp->GetWeaponDamageBonus();
 	}
@@ -323,7 +323,7 @@ void UAutoWeaponComponent::TickOrbit(float DeltaTime, int32 Level, const FWeapon
 	}
 	const float CampDamage = [this]()
 	{
-		const UCampMetaSubsystem* Camp = GetWorld()->GetGameInstance()->GetSubsystem<UCampMetaSubsystem>();
+		const UCampMetaSubsystem* Camp = UGameInstance::GetSubsystem<UCampMetaSubsystem>(GetWorld()->GetGameInstance());
 		return Camp ? Camp->GetWeaponDamageBonus() : 0.0f;
 	}();
 	for (AEnemy* Enemy : Targets)

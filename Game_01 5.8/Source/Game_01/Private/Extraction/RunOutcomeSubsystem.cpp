@@ -38,12 +38,17 @@ void URunOutcomeSubsystem::EndRun(ULootBagComponent* Bag, ERunOutcome NewOutcome
 	{
 		return;
 	}
+	if (!Bag)
+	{
+		UE_LOG(LogExtraction, Warning, TEXT("EndRun called without a bag; the run stays active."));
+		return;
+	}
 	bRunActive = false;
 	Outcome = NewOutcome;
 
-	LastResult = FRunSettlement::Compute(Bag->GetWoodCount(), Bag->GetStoneCount(), Bag->GetRelics(), EarningsMultiplier, NewOutcome);
+	LastResult =FRunSettlement::Compute(Bag->GetWoodCount(), Bag->GetStoneCount(), Bag->GetRelics(), EarningsMultiplier, NewOutcome);
 
-	if (UCampStockSubsystem* Camp = GetWorld()->GetGameInstance()->GetSubsystem<UCampStockSubsystem>())
+	if (UCampStockSubsystem* Camp = UGameInstance::GetSubsystem<UCampStockSubsystem>(GetWorld()->GetGameInstance()))
 	{
 		Camp->AddIron(LastResult.IronGained);
 		Camp->AddStone(LastResult.StoneGained);
@@ -61,7 +66,7 @@ void URunOutcomeSubsystem::EndRun(ULootBagComponent* Bag, ERunOutcome NewOutcome
 		}
 	}
 	// One save slot, written after every run (the stock listener fires only when the stock changed).
-	if (UCampSaveSubsystem* Save = GetWorld()->GetGameInstance()->GetSubsystem<UCampSaveSubsystem>())
+	if (UCampSaveSubsystem* Save = UGameInstance::GetSubsystem<UCampSaveSubsystem>(GetWorld()->GetGameInstance()))
 	{
 		Save->SaveNow();
 	}
