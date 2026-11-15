@@ -1,6 +1,6 @@
 # Day 4 (15 Nov) · Preparing the submission materials
 
-[Dev log index](../README.md) · [← previous](01-plan.md)
+[Dev log index](../README.md) · [← previous](01-plan.md) · [next →](03-the-hero-and-the-enemies-faced-the-wrong-way.md)
 
 Written on the afternoon of 15 Nov, before the final package. Nothing here is a claim that the
 final build works; it is what the paperwork said, what the code and the files said, and what
