@@ -220,8 +220,8 @@ licence texts, and I am not giving legal advice.
 |---|---|---|---|
 | Path of Adventure - Free Music Pack for JRPG | Kounine | Creative Commons CC-BY (credit required) | Run music (Battle loop) and camp music (Village loop) |
 | 50 Free Game Sounds Pack | PlaceHolder Inc | Fab standard licence, personal tier (free) | The nine sound effects |
-| Atmospheric Worlds - FREE Game Music Pack | Marika Schanz | Fab standard licence; the page says free for commercial and non-commercial use | Imported, not used so far |
-| Small Sound Kit | Sound Works 12 | Fab standard licence | Imported, not used so far |
+| Atmospheric Worlds - FREE Game Music Pack | Marika Schanz | Fab standard licence; the page says free for commercial and non-commercial use | Imported, never used, deleted on 15 Nov |
+| Small Sound Kit | Sound Works 12 | Fab standard licence | Imported, never used, deleted on 15 Nov |
 
 3D models, from Fab, imported on 15 November. The licence is shown on each Fab page; I did not
 open the licence text of these two, and I am not giving legal advice. The packs themselves are not
@@ -232,10 +232,10 @@ in the repository (see Day 3, entry 13 for why).
 | RPG Hero Squad PBR Polyart | Dungeon Mason | Free; Unreal format only | The hero: the RPG Hero model (Polyart version), its sword and shield, and the Run and Walk animations |
 | Monster for Survival Game PBR Polyart | Dungeon Mason | Free; Unreal format only; 1273 to 7523 triangles per monster | Enemies: slime, mushroom, cactus, turtle shell and beholder for the grunts, the chest monster for the boss |
 | RPG Tiny Fantasy Forest | Dungeon Mason | Free; Unreal format only | The floor (grass land mass), the ring of trees and rocks, grass and flowers, the stump and boulder containers and the extraction portal |
-| Battle Wizard (PBR and Polyart), Four Evil Dragons (two packs) | Dungeon Mason | Free | Imported, not used so far |
+| Battle Wizard (PBR and Polyart), Four Evil Dragons (two packs) | Dungeon Mason | Free | Imported, never used, deleted on 15 Nov |
 | Cozy Low Poly House | Demolition Studios | Free; Unreal format only | The clinic in the camp (the house, roof, porch, chimney and foundation parts) |
 | WW2 RTS & SLG Production Buildings Pack | Winyunq | Free under CC BY 4.0 (credit, link the licence, indicate changes); Unreal 5.8 asset package included | The smithy (the factory with the chimney and water tower) and the warehouse (the barracks), as static meshes scaled to about 0.3 times |
-| ZenUV Modular Sci-Fi Kit (Sergey Tyapkin), 5 Free Stylized Sci-Fi Skyscrapers (Meanopoly) | | Free | Imported, not used (science fiction does not fit the theme) |
+| ZenUV Modular Sci-Fi Kit (Sergey Tyapkin), 5 Free Stylized Sci-Fi Skyscrapers (Meanopoly) | | Free | Imported, never used (science fiction does not fit the theme), deleted on 15 Nov |
 
 Two other packs I looked at (Creative Characters FREE and Animals FREE, by ithappy) were
 dropped: the author found they do not support Unreal 5.

@@ -54,10 +54,10 @@ licence texts.
 | Cozy Low Poly House | Demolition Studios | Free; Unreal format only | The clinic in the camp |
 | WW2 RTS & SLG Production Buildings Pack | Winyunq | CC BY 4.0 | The smithy and the warehouse in the camp |
 
-Imported but not used in the game: Atmospheric Worlds (Marika Schanz), Small Sound Kit
-(Sound Works 12), Battle Wizard and Four Evil Dragons (Dungeon Mason), ZenUV Modular Sci-Fi Kit
-(Sergey Tyapkin), 5 Free Stylized Sci-Fi Skyscrapers (Meanopoly). **CHECK**: if they are removed
-from `Content/` before the final package, delete this paragraph's "imported" wording.
+Imported and then deleted on 15 November, never used in the game, so they are not in the build:
+Atmospheric Worlds (Marika Schanz), Small Sound Kit (Sound Works 12), Battle Wizard and Four Evil
+Dragons (Dungeon Mason), ZenUV Modular Sci-Fi Kit (Sergey Tyapkin), 5 Free Stylized Sci-Fi
+Skyscrapers (Meanopoly).
 
 ## Credits (also shown in the game, at the bottom of the Esc menu)
 

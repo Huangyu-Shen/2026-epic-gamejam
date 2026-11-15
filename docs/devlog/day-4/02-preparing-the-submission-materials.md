@@ -53,9 +53,9 @@ rev-list`, `find` and `wc`, not from memory.
 - Packaged-build checks that only the author can do: sound and music by ear, no leftover debug
   text, a frame-rate run with weapons on.
 - The gameplay video (30 to 60 seconds: a cut, a star-up, an extraction).
-- The imported packs that are not used (the two sci-fi packs, Battle Wizard, Four Evil Dragons,
-  two music and sound packs) are still in `Content/`. They are listed as unused; removing them
-  would shrink the package and is the author's call.
+- The imported packs that were not used (the two sci-fi packs, Battle Wizard, Four Evil Dragons,
+  two music and sound packs, about 1.1 GB) were deleted from `Content/` on the author's
+  decision, after I checked that nothing referenced them. `Content/` is now about 464 MB.
 - No licence has been chosen for the repository.
 
 ## What I did not do
