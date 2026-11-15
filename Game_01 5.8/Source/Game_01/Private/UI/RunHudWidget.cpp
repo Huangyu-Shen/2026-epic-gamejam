@@ -86,7 +86,7 @@ TSharedRef<SWidget> URunHudWidget::RebuildWidget()
 		BottomLeft.Alignment = FVector2D(0.0, 1.0);
 		BottomLeft.Position = FVector2D(16.0, -16.0);
 		UPanelWidget* Help = DirectorUi::MakePanel(WidgetTree, Canvas, BottomLeft);
-		DirectorUi::AddText(WidgetTree, Help, TEXT("WASD move   Space dodge   E search   1-3 take an upgrade   4-6 cut one   Esc quit"), 14, DirectorUi::DimColor);
+		DirectorUi::AddText(WidgetTree, Help, TEXT("WASD move   Space dodge   E search   1-3 take an upgrade   4-6 cut one   Esc menu"), 14, DirectorUi::DimColor);
 
 		// Bottom-centre: extraction bar.
 		FUiPlacement Bottom;

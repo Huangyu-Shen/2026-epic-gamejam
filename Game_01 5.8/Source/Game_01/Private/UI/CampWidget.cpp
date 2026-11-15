@@ -2,6 +2,7 @@
 #include "UI/DirectorUi.h"
 #include "Blueprint/WidgetTree.h"
 #include "Camp/CampMetaSubsystem.h"
+#include "Camp/CampPawn.h"
 #include "Components/CanvasPanel.h"
 #include "Components/PanelWidget.h"
 #include "Editing/FilmCardSubsystem.h"
@@ -44,13 +45,13 @@ TSharedRef<SWidget> UCampWidget::RebuildWidget()
 		UUiActionButton* Start = DirectorUi::AddButton(WidgetTree, StartPanel, TEXT("START RUN"), TEXT("Start"), 0, EUiButtonKind::Primary);
 		Start->OnAction.AddDynamic(this, &UCampWidget::HandleAction);
 
-		// Quit sits alone in the top-right corner, away from START RUN, so the two are never confused.
+		// The menu button sits alone in the top-right corner, away from START RUN, so the two are never confused.
 		FUiPlacement QuitPlacement;
 		QuitPlacement.Anchor = FVector2D(1.0, 0.0);
 		QuitPlacement.Alignment = FVector2D(1.0, 0.0);
 		QuitPlacement.Position = FVector2D(-16.0, 16.0);
 		UPanelWidget* QuitPanel = DirectorUi::MakePanel(WidgetTree, Canvas, QuitPlacement);
-		UUiActionButton* Quit = DirectorUi::AddButton(WidgetTree, QuitPanel, TEXT("QUIT   (Esc)"), TEXT("Quit"), 0, EUiButtonKind::Danger);
+		UUiActionButton* Quit = DirectorUi::AddButton(WidgetTree, QuitPanel, TEXT("MENU   (Esc)"), TEXT("Menu"));
 		Quit->OnAction.AddDynamic(this, &UCampWidget::HandleAction);
 	}
 	return Super::RebuildWidget();
@@ -219,9 +220,13 @@ void UCampWidget::HandleAction(FName Action, int32 Index)
 			}
 		}
 	}
-	else if (Action == TEXT("Quit"))
+	else if (Action == TEXT("Menu"))
 	{
-		FPlatformMisc::RequestExit(false);
+		// The same menu Esc opens: Resume, Settings, Quit game.
+		if (ACampPawn* Pawn = Cast<ACampPawn>(UGameplayStatics::GetPlayerPawn(this, 0)))
+		{
+			Pawn->TogglePauseMenu();
+		}
 	}
 	else if (Action == TEXT("Start"))
 	{

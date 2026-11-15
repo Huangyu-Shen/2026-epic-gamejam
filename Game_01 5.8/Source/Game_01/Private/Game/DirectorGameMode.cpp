@@ -15,6 +15,8 @@
 #include "Enemies/EnemyTypes.h"
 #include "Player/HeroCharacter.h"
 #include "Progression/RunProgressionSubsystem.h"
+#include "UI/PauseMenuWidget.h"
+#include "Containers/Ticker.h"
 #include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
 #include "Misc/App.h"
@@ -69,6 +71,45 @@ void ADirectorGameMode::BeginPlay()
 				FScreenshotRequest::RequestScreenshot(FPaths::ProjectSavedDir() / TEXT("Showcase") / TEXT("2-gun-and-orbit.png"), true, false);
 			}), 3.3f, false);
 			GetWorldTimerManager().SetTimer(Quit, FTimerDelegate::CreateLambda([]() { FPlatformMisc::RequestExit(false); }), 5.0f, false);
+		}), 3.0f, false);
+	}
+
+	if (FParse::Param(FCommandLine::Get(), TEXT("PauseProbe")))
+	{
+		// Esc menu check: open it, open Settings, turn the music down, press Return to camp twice (confirm, then leave).
+		FTimerHandle Handle;
+		GetWorldTimerManager().SetTimer(Handle, FTimerDelegate::CreateWeakLambda(this, [this]()
+		{
+			auto Menu = [this]() -> UPauseMenuWidget*
+			{
+				for (TObjectIterator<UPauseMenuWidget> It; It; ++It)
+				{
+					if (It->GetWorld() == GetWorld())
+					{
+						return *It;
+					}
+				}
+				return nullptr;
+			};
+			auto Snap = [this](const TCHAR* Name)
+			{
+				FScreenshotRequest::RequestScreenshot(FPaths::ProjectSavedDir() / TEXT("PauseProbe") / Name, true, false);
+			};
+			FTimerHandle T1;
+			// The menu pauses the game, and a paused world runs no timers: later steps ride on the engine's own ticker.
+			auto Later = [](float Seconds, TFunction<void()> Function)
+			{
+				FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda([Function](float) { Function(); return false; }), Seconds);
+			};
+			GetWorldTimerManager().SetTimer(T1, FTimerDelegate::CreateWeakLambda(this, [Menu]() { Menu()->Toggle(); }), 0.5f, false);
+			Later(1.0f, [Snap]() { Snap(TEXT("1-menu.png")); });
+			Later(1.5f, [Menu]() { Menu()->PressForProbe(TEXT("Settings")); Menu()->PressForProbe(TEXT("Volume"), 2); Menu()->PressForProbe(TEXT("Volume"), 2); });
+			Later(2.0f, [Snap]() { Snap(TEXT("2-settings.png")); });
+			Later(2.5f, [Menu]() { Menu()->PressReturnToCamp(); });
+			Later(3.0f, [Snap]() { Snap(TEXT("3-confirm.png")); });
+			Later(3.5f, [Menu]() { Menu()->PressReturnToCamp(); });
+			// The map changes after the second press, so the exit rides on the engine's own ticker, which survives it.
+			FTSTicker::GetCoreTicker().AddTicker(FTickerDelegate::CreateLambda([](float) { FPlatformMisc::RequestExit(false); return false; }), 9.0f);
 		}), 3.0f, false);
 	}
 

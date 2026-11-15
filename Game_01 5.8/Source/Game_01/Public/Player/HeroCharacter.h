@@ -10,6 +10,7 @@ class UCameraComponent;
 class UHealthComponent;
 class ULootBagComponent;
 class URunHudWidget;
+class UPauseMenuWidget;
 class USpringArmComponent;
 class UStaticMeshComponent;
 
@@ -103,7 +104,7 @@ private:
 	void DodgeKey();
 	void DebugDieKey();
 
-	/** Esc quits the game. */
+	/** Esc opens or closes the pause menu (not while a level-up offer is showing). */
 	void QuitKey();
 	/** Resets the run systems and applies the camp bonuses and slotted film cards. Called once when the run map loads. */
 	void StartRun();
@@ -115,6 +116,9 @@ private:
 
 	UPROPERTY(Transient)
 	TObjectPtr<URunHudWidget> Hud;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UPauseMenuWidget> PauseMenu;
 
 	UPROPERTY(VisibleAnywhere, Category = "Hero")
 	TObjectPtr<UStaticMeshComponent> BodyMesh;

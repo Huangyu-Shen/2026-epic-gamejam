@@ -1,6 +1,6 @@
 # Day 3 (14 Nov) · Status so far
 
-[Dev log index](../README.md) · [← previous](13-story-012-boss-and-the-void.md)
+[Dev log index](../README.md) · [← previous](14-esc-menu-and-leaving-a-run.md)
 
 This entry is a snapshot. It replaces the earlier one, written after story 010, and it
 will be rewritten as the work goes on.
@@ -17,22 +17,26 @@ will be rewritten as the work goes on.
   author with 1 or 2 cuts.
 - The void around the map: hero, enemies and boss stay on the floor. Confirmed in the
   package.
-- Everything up to the audio and the new level-up rule is merged to main (pull
-  request 4). The boss and the void fix are written but **not committed**.
+- The boss, the void fix, the design and wiki corrections and the dev log are merged to
+  main (pull requests 4 and 5).
+- Leaving a run: an Esc menu in the camp and in a run (Resume, Settings with three
+  volume levels, Return to camp in a run, Quit game). Built after the author described it
+  ([entry 14](14-esc-menu-and-leaving-a-run.md)). Checked in the editor with a test flag;
+  **not committed**, and the packaging of it was started but not tried by hand.
 
 ## Not done
 
 - Story 011 is still In Progress: the boss, vault, extraction and map are still
   plain shapes, and star-ups only make beams thicker.
 - Story 013 (package, texts, video, final checks).
-- Design documents (game brief, master PRD, GDD) and the code wiki still describe the
-  old "cut one, keep two" rule and the 7-option pool. They are wrong about the game.
-- The root README's "By the numbers" (commit and test counts) is out of date.
+- The design docs do not yet mention the Esc menu and its settings (a PRD Should item the
+  author asked for).
 - None of the wiki's known-issues findings was fixed.
 - The extra check on a real development save (moving it to Magnet and Chain) was not run.
-- A package with the fixed boss text: the last package still shows "it a new attack".
 
 ## Not checked
+
+- The Esc menu with a real mouse, Esc after clicking a button, and the camp's menu.
 
 - A build that used all its cuts against the boss.
 - Whether the game is fun for anyone but the author.
